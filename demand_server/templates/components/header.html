@@ -44,7 +44,7 @@
         <ul class="login-menu">
             {% if request.user.is_authenticated %}
                 <li class="active"><a href="#">업체 회원</a></li>
-                <li><a href="{% url '#">마이페이지</a></li>
+                <li><a href="{% url 'profile' %}">마이페이지</a></li>
                 <li><a href="#">알림</a></li>
             {% else %}
                 <ul class="login-button">
@@ -58,7 +58,7 @@
                 function switchToProvider() {
                 let confirmSwitch = confirm("대행사로 전환하시겠습니까?");
                 if (confirmSwitch) {
-                window.location.href = "{% url 'provider:provider_login' %}";  // ✅ 대행사 로그인 페이지로 이동
+                window.location.href = "#";  // ✅ 대행사 로그인 페이지로 이동
             }
             }
         </script>

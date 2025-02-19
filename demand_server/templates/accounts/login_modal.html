@@ -24,16 +24,16 @@
                 <a href="#">
                     <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오톡 로그인">
                 </a>
-                <a href="{% provider_login_url 'google' %}">
+                <a href="#">
                     <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글 로그인">
                 </a>
-                <a href="{% provider_login_url 'naver' %}">
+                <a href="#">
                     <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버 로그인">
                 </a>
             </div>
             <div class="login-links">
                 <span>가입만 하면 무료 견적을 받아보실 수 있어요!</span>
-                <a href="{% url 'accounts/signup' %}" class="btn btn-signup">회원가입</a>
+                <a href="{% url 'signup' %}" class="btn btn-signup">회원가입</a>
             </div>
         </div>
     </div>

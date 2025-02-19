@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard/dashboard.css' %}">
+{% endblock %}
+
+<style>
+    /* static/css/dashboard/status.css */
+.dashboard-container {
+    padding: 40px;
+}
+
+.dashboard-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 24px;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.status-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.card-header img {
+    width: 24px;
+    height: 24px;
+}
+
+.card-header p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #374151;
+    margin: 0;
+}
+
+/* 상태 원형 */
+.status-circles {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 32px;
+}
+
+.circle-item {
+    text-align: center;
+}
+
+.circle {
+    width: 64px;
+    height: 64px;
+    border: 2px solid #2563eb;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.circle span {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.circle-item p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* 프로그레스 바 */
+.progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.progress-item {
+    width: 100%;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* 정산 현황 */
+.metrics-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.metric-item {
+    padding: 16px;
+    background: #f3f4f6;
+    border-radius: 8px;
+}
+
+.metric-label {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.metric-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .circle {
+        width: 56px;
+        height: 56px;
+    }
+
+    .metrics-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 애니메이션 */
+@keyframes progressFill {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+.progress {
+    animation: progressFill 1s ease-out;
+}
+</style>
+{% block content %}
+
+<div class="dashboard-header">
+    <h2 style="margin-left: 100px">환영합니다, {{ request.user.username }}님!</h2>
+</div>
+
+<div class="dashboard-container">
+    <h2 class="dashboard-title">STATUS 상태</h2>
+
+    <div class="status-grid">
+        <!-- 업무 현황 카드 -->
+        <div class="status-card">
+            <div class="card-header">
+                <img src="{% static 'img/icons/document.svg' %}" alt="업무 현황">
+                <p>업무 현황</p>
+            </div>
+
+            <div class="status-circles">
+                <div class="circle-item">
+                    <div class="circle">
+                        <span>2</span>
+                    </div>
+                    <p>진행중</p>
+                </div>
+                <div class="circle-item">
+                    <div class="circle">
+                        <span>4</span>
+                    </div>
+                    <p>모집</p>
+                </div>
+                <div class="circle-item">
+                    <div class="circle">
+                        <span>1</span>
+                    </div>
+                    <p>미팅</p>
+                </div>
+            </div>
+
+            <div class="progress-list">
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>전체 진행률</span>
+                        <span>50%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 50%"></div>
+                    </div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label">
+                        <span>가입 현황</span>
+                        <span>70%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 70%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 정산 현황 카드 -->
+        <div class="status-card">
+            <div class="card-header">
+                <img src="{% static 'img/icons/chart.svg' %}" alt="정산 현황">
+                <p>정산 현황</p>
+            </div>
+
+            <div class="metrics-container">
+                <div class="metric-item">
+                    <p class="metric-label">금일 정산예정</p>
+                    <p class="metric-value">123,456</p>
+                </div>
+                <div class="metric-item">
+                    <p class="metric-label">누적 매출</p>
+                    <p class="metric-value">1,000,000,000</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,209 @@
+
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/provider/accounts/login.css' %}">
+{% endblock %}
+
+<style>
+    /* 기본 스타일 */
+body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+    .main-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        position: relative;
+    }
+
+    .background-image {
+        width: 100%;
+        height: 100%;
+
+        background-image: url("{% static 'img/provider/components/login/background.png' %}");
+        background-size: cover;
+        background-position: center;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .login-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .login-form {
+        position: relative;
+        z-index: 1;
+        width: 400px;
+        padding: 40px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .login-form h2 {
+        margin-bottom: 20px;
+        font-size: 3rem;
+        font-weight: 700;
+        color: #405FAB
+    }
+
+    .login-form h3 {
+        margin-bottom: 20px;
+        font-size: 1rem;
+        font-weight: 300;
+        color: #333;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 10px;
+        margin-top: 20px;
+        background-color: #333;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 1rem;
+        cursor}
+
+    footer {
+        width: 100%;
+    }
+
+    .login-content {
+        display: flex;
+    }
+    .back-img {
+        border: 1px solid #333;
+    }
+    .main-back {
+        position: relative;
+        z-index: 2;
+    }
+</style>
+
+{% block content %}
+<div class="main-container">
+    <div class="background-image">
+        <div class="overlay"></div>
+    </div>
+    <div class="main-back">
+        <a href="demand_server:main">메인으로 돌아가기</a>
+    </div>
+    <div class="login-content">
+        <div class="back-img">
+            <img src="{% static 'img/provider/components/login/background.png'}" alt="">
+        </div>
+        <div class="login-form">
+        <h2>EcoAnE</h2>
+        <h3>대행사 로그인</h3>
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="form-group">
+<!--                <label for="username">아이디를 입력해주세요.</label>-->
+                <input type="text" id="username" name="username" required placeholder="아이디를 입력해주세요.">
+            </div>
+            <div class="form-group">
+<!--                <label for="password">비밀번호를 입력해주세요.</label>-->
+                <input type="password" id="password" name="password" required placeholder="비밀번호를 입력해주세요.">
+            </div>
+            <button type="submit" class="login-btn">로그인</button>
+        </form>
+        <p class="forgot-password">
+            대행사 로그인이 필요하신가요?
+            <a href="{% url 'signup' %}">회원가입</a>
+        </p>
+        <div class="social-login">
+            <a href="#">
+                <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오톡 로그인">
+            </a>
+            <a href="#">
+                <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버 로그인">
+            </a>
+            <a href="#">
+
+                <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글 로그인">
+            </a>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelector(".login-form").addEventListener("submit", async function (e) {
+                e.preventDefault();  // ✅ 기본 폼 제출 방지
+        
+                const formData = new FormData(this);
+                const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;  // ✅ CSRF 토큰 포함
+        
+                try {
+                    const response = await fetch(this.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: { "X-CSRFToken": csrfToken },
+                    });
+        
+                    const data = await response.json();
+        
+                    if (data.success) {
+                        window.location.href = data.redirect_url;  // ✅ 로그인 성공 시 대시보드로 이동
+                    } else {
+                        alert(data.error);  // ✅ 로그인 실패 시 메시지 표시
+                    }
+                } catch (error) {
+                    console.error("로그인 오류:", error);
+                    alert("로그인 처리 중 오류가 발생했습니다.");
+                }
+            });
+        });
+        </script>
+        
+
+</div>
+ {% include 'components/footer.html' %}
+{% endblock %}

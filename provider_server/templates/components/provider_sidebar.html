@@ -1,0 +1,31 @@
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}">
+{% endblock %}
+
+
+<nav class="sidebar">
+    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+    <ul class="nav-menu">
+        <ul>
+            <li><a href="{% url 'dashboard' %}">홈</a></li>
+            <li><a href="{% url 'estimates:estimate_list' %}">견적 찾기</a></li>
+            <li><a href="{% url 'direct_estimates:main' %}">1:1 견적</a></li>
+            <li><a href="{% url 'chat:main' %}">채팅</a></li>
+        </ul>
+
+
+
+
+
+
+    </ul>
+</nav>
+
+<script>
+    function toggleSidebar() {
+    document.querySelector(".sidebar").classList.toggle("open");
+}
+
+</script>

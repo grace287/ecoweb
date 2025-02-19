@@ -168,7 +168,7 @@
         </div>
 
         <div class="welcome-message">
-            <h2><span class="company-name">{{ request.user.username }}</span> 님</h2>
+            <h2><span class="company-name">{{ request.user.username }}user</span> 님</h2>
             <h1>회원가입을 환영합니다!</h1>
             <p class="message-description">가입하신 정보로 로그인해 이용하세요.</p>
         </div>
@@ -177,7 +177,7 @@
             <a href="javascript:void(0);" onclick="openModal()">로그인</a>
         </button>
         <!-- 로그인 모달 include -->
-        {% include 'accounts/demand_login_modal.html' %}
+        {% include 'accounts/login_modal.html' %}
     </div>
 </div>
 
