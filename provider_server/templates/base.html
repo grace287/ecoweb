@@ -1,11 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    {% load static %}
+    <title>EcoAnE - {% block title %}{% endblock %}</title>
+    <style>
+        /* 리셋 및 기본 스타일 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+}
+
+/* 에러 메시지 스타일 */
+.error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 버튼 공통 스타일 */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #405FAB;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #324a89;
+}
+    </style>
+    
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <!-- 공통 스타일시트 -->
+    <link rel="stylesheet" href="{% static 'css/common.css' %}">
+    {% block styles %}{% endblock %}
 </head>
 <body>
-    base
+    <div id="app">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- 공통 스크립트 -->
+    <script>
+        // CSRF 토큰 설정
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        // AJAX 요청을 위한 기본 설정
+        function fetchWithCSRF(url, options = {}) {
+            const defaultOptions = {
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            return fetch(url, { ...defaultOptions, ...options });
+        }
+
+        // 에러 메시지 표시 함수
+        function showError(message, element) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            if (element) {
+                element.parentNode.insertBefore(errorDiv, element.nextSibling);
+            }
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 3000);
+        }
+    </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

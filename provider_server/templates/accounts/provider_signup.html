@@ -1,137 +1,547 @@
 {% load static %}
 
-
-{% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/accounts/signup.css' %}">
-{% endblock %}
 
 {% block content %}
+<style>
+    /* static/css/accounts/signup.css */
+.signup-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.signup-container h1 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 40px;
+}
+
+/* 스텝 스타일 */
+.signup-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 50px;
+    position: relative;
+    padding: 0 40px;
+}
+
+.signup-steps::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 60px;
+    right: 60px;
+    height: 2px;
+    background: #e5e7eb;
+    z-index: 1;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.step-item.active .step-icon {
+    border-color: #2563eb;
+    background: #2563eb;
+}
+
+.step-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.step-description {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.step-item.active .step-label {
+    color: #2563eb;
+}
+
+/* 폼 스타일 */
+.form-section {
+    margin-bottom: 40px;
+}
+
+.form-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 12px;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-verify {
+    padding: 0 16px;
+    background: #fff;
+    border: 1px solid #2563eb;
+    color: #2563eb;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-verify:hover {
+    background: #2563eb;
+    color: #fff;
+}
+
+/* 알림 박스 */
+.notice-box {
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.notice-box h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 12px;
+}
+
+.notice-box ol {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.notice-box li {
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+/* 버튼 스타일 */
+.form-actions {
+    text-align: center;
+}
+
+.btn-submit {
+    background: #e5e7eb;
+    color: #6b7280;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-submit:hover {
+    background: #d1d5db;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 640px) {
+    .signup-steps {
+        padding: 0 20px;
+    }
+
+    .step-description {
+        display: none;
+    }
+
+    .input-with-button {
+        flex-direction: column;
+    }
+
+    .btn-verify {
+        width: 100%;
+        padding: 10px;
+    }
+}
+
+.file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.file-upload-input {
+    display: none;
+}
+
+.file-name {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-upload-btn {
+    padding: 8px 15px;
+    background-color: #4B89DC;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.file-upload-btn:hover {
+    background-color: #357abd;
+}
+
+.file-format-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+
+/* 분야 선택 스타일 */
+.field-selection {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.selected-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.field-tag {
+    background-color: #e9ecef;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.remove-field {
+    cursor: pointer;
+    color: #666;
+}
+
+.add-field-btn {
+    background: none;
+    border: 1px dashed #4B89DC;
+    color: #4B89DC;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5tartapp );
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    width: 90%;
+    max-width: 500px;
+    margin: 50px auto;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.field-categories {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.category {
+    margin-bottom: 20px;
+}
+
+.category h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.field-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.field-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+}
+
+.confirm-btn {
+    background-color: #4B89DC;
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+</style>
+
+<style>
+    .field-tag {
+    display: inline-block;
+    background-color: #e9ecef;
+    padding: 5px 10px;
+    margin: 2px;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.remove-field {
+    margin-left: 5px;
+    cursor: pointer;
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.selected-fields {
+    margin-bottom: 10px;
+    min-height: 30px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 5px;
+    width: 50%;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 20px;
+    cursor: pointer;
+}
+</style>
+
+<style>
+/* 알림 메시지 스타일 */
+.alert {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+
 <div class="signup-container">
     <h1>대행사 회원 가입</h1>
-    <div class="signup-steps">
-        <div class="step-item active">
-            <div class="step-icon">
-                <img src="{% static 'img/components/signup/user-icon.png' %}" alt="">
-            </div>
-            <span class="step-label">STEP 1</span>
-            <span class="step-description">기본정보 입력 입력</span>
 
-        </div>
-        <div class="step-item">
-            <div class="step-icon">
-                <img src="{% static 'img/components/signup/doc-icon.png' %}" alt="">
-            </div>
-            <span class="step-label">STEP 2</span>
-            <span class="step-description">사업자정보 입력</span>
+    {% if error %}
+    <script>
+        window.onload = function() {
+            showAlert("{{ error }}");
+        }
+    </script>
+    {% endif %}
 
-        </div>
-        <div class="step-item">
-            <div class="step-icon">
-                <img src="{% static 'img/components/signup/check-icon.png' %}" alt="">
-            </div>
-            <span class="step-label">STEP 3</span>
-            <span class="step-description">서류 검토</span>
-
-        </div>
-        <div class="step-item">
-            <div class="step-icon">
-                <img src="{% static 'img/components/signup/check-icon.png' %}" alt="">
-            </div>
-            <span class="step-label">STEP 4</span>
-            <span class="step-description">가입 완료</span>
-        </div>
-    </div>
-
-    <form method="post" class="signup-form">
+    <form method="post" class="signup-form" enctype="multipart/form-data" action="{% url 'provider_signup' %}">
         {% csrf_token %}
 
         <div class="form-section">
             <h2>기본 정보</h2>
 
             <div class="form-group">
-                <label for="email">아이디(이메일)</label>
+                <label for="username">아이디</label>
                 <div class="input-with-button">
-                    <input type="email" id="email" name="email" placeholder="client@ecoae.co.kr">
-                    <button type="button" class="btn-verify">중복확인</button>
+                    <input type="text" id="username" name="username" placeholder="아이디를 입력하세요" required>
+                    <button type="button" class="btn-verify" onclick="checkIdDuplicate()">중복확인</button>
                 </div>
             </div>
 
             <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" name="email" placeholder="이메일을 입력하세요" required>
+            </div>
+
+            <div class="form-group">
                 <label for="password">비밀번호</label>
-                <input type="password" id="password" name="password" placeholder="********">
+                <input type="password" id="password" name="password" placeholder="********" required>
             </div>
 
             <div class="form-group">
                 <label for="password-confirm">비밀번호 확인</label>
-                <input type="password" id="password-confirm" name="password_confirm" placeholder="********">
+                <input type="password" id="password-confirm" name="password_confirm" placeholder="********" required>
             </div>
 
             <div class="form-group">
-                <label for="company">업체명</label>
-                <input type="text" id="company" name="company" placeholder="(주)에코에이앤이">
+                <label for="company_name">업체명</label>
+                <input type="text" id="company_name" name="company_name" placeholder="(주)에코에이앤이" required>
             </div>
 
             <div class="form-group">
-                <label for="business-number"></label>사업자등록번호</label>
-                <input type="text" id="business-number" name="business_number" placeholder="155-81-02947">
+                <label for="business_registration_number">사업자등록번호</label>
+                <div class="input-with-button">
+                    <input type="text" id="business_registration_number" name="business_registration_number" placeholder="155-81-02947" required>
+                    <button type="button" class="btn-verify" onclick="verifyBusinessNumber()">검증</button>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="phone">대표번호</label>
-                <input type="tel" id="phone" name="phone" placeholder="042-933-4555">
+                <label for="business_phone_number">대표번호</label>
+                <input type="tel" id="business_phone_number" name="business_phone_number" placeholder="042-933-4555" required>
             </div>
 
-
             <div class="form-group">
-                <label for="consulting-number">상담번호</label>
-                <input type="tel" id="consulting-number" name="consulting_number" placeholder="042-933-4555">
+                <label for="consulting_phone_number">상담번호</label>
+                <input type="tel" id="consulting_phone_number" name="consulting_phone_number" placeholder="042-933-4555">
             </div>
 
-
-
             <div class="form-group">
-
                 <label for="address">주소</label>
-                <input type="text" id="address" name="address" placeholder="대전광역시 유성구 국제과학8로 5(신동)">
+                <div class="input-with-button">
+                    <input type="text" id="address" name="address" placeholder="대전광역시 유성구 국제과학8로 5(신동)" readonly required>
+                    <button type="button" class="btn-verify" onclick="searchAddress()">주소 찾기</button>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="detail-address">나머지 주소</label>
-                <input type="text" id="detail-address" name="detail_address" placeholder="에코에이앤이">
+                <label for="address_detail">나머지 주소</label>
+                <input type="text" id="address_detail" name="address_detail" placeholder="에코에이앤이">
             </div>
 
             <div class="form-group">
-                <label for="business-field">분야</label>
+                <label for="service_category">분야</label>
                 <div class="field-selection">
                     <div class="selected-fields">
                         <!-- 선택된 분야들이 여기에 표시됩니다 -->
                     </div>
                     <button type="button" class="add-field-btn" onclick="showFieldModal()">
-                        <i class="plus-icon"></i> 실내공기질 측정·분석
+                        <i class="plus-icon"></i> 분야 선택
                     </button>
                 </div>
+                <input type="hidden" id="service_category" name="service_category" required>
             </div>
 
             <div class="form-group">
-                <label for="business-registration">첨부파일</label>
+                <label for="attachment">첨부파일</label>
                 <div class="file-upload-wrapper">
                     <input type="file" 
-                           id="business-registration" 
-                           name="business_registration" 
+                           id="attachment" 
+                           name="attachment" 
                            accept=".jpg,.jpeg,.png,.pdf"
                            class="file-upload-input"
+                           multiple
                            onchange="updateFileName(this)">
-                    <span class="file-name">대표자 사업자등록증.JPG, 목차(회원정보등록).JPG</span>
-                    <button type="button" class="file-upload-btn">파일 선택</button>
+                    <span class="file-name">파일을 선택하세요</span>
+                    <button type="button" class="file-upload-btn" onclick="document.getElementById('attachment').click()">파일 선택</button>
                 </div>
                 <p class="file-format-info">* JPG, JPEG, PNG, PDF 파일 업로드 가능</p>
             </div>
-
-            
         </div>
-
-
-        
 
         <div class="form-actions">
             <button type="submit" class="btn-submit">가입신청</button>
@@ -147,24 +557,208 @@
             <button type="button" class="close-btn" onclick="closeFieldModal()">&times;</button>
         </div>
         <div class="field-categories">
+            {% for category in service_categories %}
             <div class="category">
-                <h4>실내공기질</h4>
-                <div class="field-options">
-                    <label><input type="checkbox" name="fields" value="air_quality"> 실내공기질 측정</label>
-                    <label><input type="checkbox" name="fields" value="air_analysis"> 공기질 분석</label>
-                </div>
+                <label>
+                    <input type="checkbox" name="fields" value="{{ category.code }}" 
+                           data-code="{{ category.code }}">
+                    {{ category.name }}
+                </label>
             </div>
-            <div class="category">
-                <h4>소음·진동</h4>
-                <div class="field-options">
-                    <label><input type="checkbox" name="fields" value="noise"> 소음 측정</label>
-                    <label><input type="checkbox" name="fields" value="vibration"> 진동 측정</label>
-                </div>
-            </div>
+            {% endfor %}
         </div>
         <div class="modal-footer">
             <button type="button" class="confirm-btn" onclick="confirmFieldSelection()">확인</button>
         </div>
     </div>
 </div>
+
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+    function checkIdDuplicate() {
+        const username = document.getElementById("username").value;
+        if (!username) {
+            alert("아이디를 입력해주세요.");
+            return;
+        }
+
+        fetch("{% url 'check_id' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+            },
+            body: JSON.stringify({ id: username }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.is_duplicate) {
+                alert("이미 사용 중인 아이디입니다.");
+            } else {
+                alert("사용 가능한 아이디입니다.");
+            }
+        })
+        .catch(error => {
+            console.error("아이디 중복 확인 오류:", error);
+            alert("아이디 확인 중 오류가 발생했습니다.");
+        });
+    }
+
+    function verifyBusinessNumber() {
+        const businessNumber = document.getElementById("business_registration_number").value;
+        if (!businessNumber) {
+            alert("사업자등록번호를 입력해주세요.");
+            return;
+        }
+
+        fetch("{% url 'verify_business_number' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+            },
+            body: JSON.stringify({ business_number: businessNumber }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.is_valid) {
+                alert("유효한 사업자등록번호입니다.");
+            } else {
+                alert("유효하지 않은 사업자등록번호입니다.");
+            }
+        })
+        .catch(error => {
+            console.error("사업자등록번호 검증 오류:", error);
+            alert("사업자등록번호 검증 중 오류가 발생했습니다.");
+        });
+    }
+
+    function searchAddress() {
+        new daum.Postcode({
+            oncomplete: function (data) {
+                document.getElementById("address").value = data.roadAddress;
+                document.getElementById("address_detail").focus();
+            },
+        }).open();
+    }
+
+    function updateFileName(input) {
+        const fileNames = Array.from(input.files).map(file => file.name).join(', ');
+        input.nextElementSibling.textContent = fileNames;
+    }
+
+    function showFieldModal() {
+        document.getElementById("fieldModal").style.display = "block";
+    }
+
+    function closeFieldModal() {
+        document.getElementById("fieldModal").style.display = "none";
+    }
+
+    function confirmFieldSelection() {
+    const selectedFields = document.querySelectorAll("input[name='fields']:checked");
+    const selectedFieldsContainer = document.querySelector(".selected-fields");
+    const serviceCategoryInput = document.getElementById("service_category");
+    selectedFieldsContainer.innerHTML = "";
+
+    if (selectedFields.length === 0) {
+        showAlert("최소 한 개 이상의 분야를 선택해주세요.");
+        return;
+    }
+
+    let selectedCategories = [];
+
+    selectedFields.forEach(field => {
+        const fieldTag = document.createElement("div");
+        fieldTag.className = "field-tag";
+        const categoryName = field.parentElement.textContent.trim();
+        const categoryCode = field.getAttribute('data-code');
+        fieldTag.textContent = categoryName;
+        fieldTag.dataset.code = categoryCode;
+
+        const removeBtn = document.createElement("span");
+        removeBtn.className = "remove-field";
+        removeBtn.textContent = "×";
+        removeBtn.onclick = function() {
+            fieldTag.remove();
+            updateServiceCategoryInput();
+        };
+
+        fieldTag.appendChild(removeBtn);
+        selectedFieldsContainer.appendChild(fieldTag);
+        selectedCategories.push(categoryCode);
+    });
+
+    serviceCategoryInput.value = selectedCategories.join(",");
+    closeFieldModal();
+}
+
+function updateServiceCategoryInput() {
+    const selectedTags = document.querySelectorAll(".field-tag");
+    const serviceCategoryInput = document.getElementById("service_category");
+    const selectedCategories = Array.from(selectedTags).map(tag => tag.dataset.code);
+    serviceCategoryInput.value = selectedCategories.join(",");
+}
+
+// 폼 제출 전 유효성 검사 부분을 수정
+document.querySelector('.signup-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // 필수 필드 검사
+    const requiredFields = [
+        'username', 'email', 'password', 'password-confirm',
+        'company_name', 'business_registration_number',
+        'business_phone_number', 'address'
+    ];
+
+    for (const fieldId of requiredFields) {
+        const field = document.getElementById(fieldId);
+        if (!field.value.trim()) {
+            showAlert(`${field.previousElementSibling.textContent}을(를) 입력해주세요.`);
+            field.focus();
+            return;
+        }
+    }
+
+    // 비밀번호 확인
+    if (document.getElementById('password').value !== 
+        document.getElementById('password-confirm').value) {
+        showAlert('비밀번호가 일치하지 않습니다.');
+        return;
+    }
+
+    // 서비스 카테고리 검사
+    const serviceCategoryInput = document.getElementById("service_category");
+    if (!serviceCategoryInput.value) {
+        showAlert("분야를 선택해주세요.");
+        return;
+    }
+
+    // 폼 제출
+    this.submit();
+});
+
+function showAlert(message, type = 'error') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px;
+        border-radius: 4px;
+        z-index: 1000;
+        background-color: ${type === 'error' ? '#f8d7da' : '#d4edda'};
+        color: ${type === 'error' ? '#721c24' : '#155724'};
+        border: 1px solid ${type === 'error' ? '#f5c6cb' : '#c3e6cb'};
+    `;
+    alertDiv.textContent = message;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+</script>
+
 {% endblock %}

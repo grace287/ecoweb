@@ -1,0 +1,559 @@
+/* 메인 컨테이너 */
+.main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 히어로 섹션 */
+.hero-section {
+    text-align: center;
+    padding: 60px 0;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 40px;
+}
+
+.hero-section h1 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.search-bar {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 15px 50px 15px 20px;
+    border: 2px solid #e1e1e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+    background-color: #e0e0e0;
+}
+
+.search-bar input:focus {
+    border-color: #4285f4;
+    outline: none;
+}
+
+/* 카테고리 섹션 */
+.category-section {
+    margin: 40px 0;
+}
+
+.category-icons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 20px;
+    text-align: center;
+}
+
+.icon-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    transition: transform 0.2s;
+    margin-bottom: 10px;
+}
+
+.icon-item:hover {
+    transform: translateY(-5px);
+}
+
+/* 통계 섹션 */
+.stats-section {
+    margin: 60px 0;
+}
+
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.stats-section {
+    margin: 40px 0;
+    text-align: center;
+}
+
+.stats-section h2 {
+    text-align: left;
+    color: #333;
+    font-weight: bold;
+}
+
+.stats-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+
+.stat-item {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 10px;
+    flex: 1 1 30%; /* 각 카드의 기본 너비를 30%로 설정 */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.stat-item h3 {
+    font-size: 1.5rem;
+    color: #007bff;
+}
+
+.stat-item p {
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+.stat-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+
+/* static/css/statistics_slider.css */
+.statistics-slider {
+    position: relative;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.slider-container {
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    border-radius: 12px;
+}
+
+.slider-item {
+    flex: 0 0 33.333%;
+    min-width: 33.333%;
+    padding: 20px;
+    transition: transform 0.3s ease;
+}
+
+.stat-number {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.count {
+    font-size: 28px;
+    font-weight: bold;
+    color: #2563eb;
+}
+
+.unit {
+    font-size: 16px;
+    color: #4b5563;
+    margin-left: 4px;
+}
+
+.description {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 5px;
+}
+
+.stat-image {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+}
+
+.stat-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.image-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    padding: 15px;
+    color: white;
+}
+
+.company {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.location {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.slider-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #4b5563;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.slider-nav:hover {
+    background: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+.prev {
+    left: -20px;
+}
+
+.next {
+    right: -20px;
+}
+
+.slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dot.active {
+    background: #2563eb;
+    transform: scale(1.2);
+}
+
+/* more */
+.more-button {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 24px;
+    background: transparent;
+    color: #000000;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.more-button .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #007BFF;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.more-button .btn:hover {
+    background: #0056b3;
+}
+
+
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+    .slider-item {
+        flex: 0 0 50%;
+        min-width: 50%;
+    }
+}
+
+@media (max-width: 640px) {
+    .slider-item {
+        flex: 0 0 100%;
+        min-width: 100%;
+    }
+    
+    .slider-nav {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+}
+
+/* 애니메이션 */
+.slider-item:hover .stat-image img {
+    transform: scale(1.05);
+}
+
+/* 접근성 */
+.slider-nav:focus,
+.dot:focus,
+.more-button:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+/* 후기 섹션 */
+.review-section {
+    margin: 60px 0;
+}
+
+.review-slider {
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+.review-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-section h1 {
+        font-size: 1.5rem;
+    }
+}
+
+
+/* 배너 */
+.event-banner {
+    background-color: #007bff; /* 배경색 */
+    color: white; /* 텍스트 색상 */
+    padding: 20px; /* 패딩 */
+    border-radius: 17px; /* 모서리 둥글게 */
+    position: relative; /* 자식 요소의 절대 위치를 위한 기준 설정 */
+    overflow: hidden; /* 자식 요소가 넘칠 경우 숨김 */
+}
+
+.banner-content {
+    text-align: center; /* 텍스트 중앙 정렬 */
+}
+
+.banner-slides {
+    display: flex; /* 슬라이드를 가로로 나열 */
+    transition: transform 0.5s ease; /* 슬라이드 전환 애니메이션 */
+}
+
+.slide {
+    min-width: 100%; /* 슬라이드 너비를 100%로 설정 */
+    display: none; /* 슬라이드 기본 숨김 */
+}
+
+.slide.active {
+    display: block; /* 활성 슬라이드만 표시 */
+}
+
+.banner-title {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-align: left;
+    color: white;
+}
+
+.banner-content p {
+    margin: 5px 0;
+}
+
+.banner-buttons {
+    margin-top: 10px;
+    color: #007bff; /* 버튼 텍스트 색상 */
+    padding: 10px 20px; /* 버튼 패딩 */
+    cursor: pointer; /* 커서 포인터로 변경 */
+    margin-top: 10px; /* 버튼 위 여백 */
+    text-align: right;
+    text-decoration: none;
+}
+
+.event-check-btn {
+    background-color: white; /* 버튼 배경색 */
+    color: #007bff; /* 버튼 텍스트 색상 */
+    border: none; /* 테두리 제거 */
+    border-radius: 5px; /* 버튼 모서리 둥글게 */
+    padding: 10px 20px; /* 버튼 패딩 */
+    cursor: pointer; /* 커서 포인터로 변경 */
+    margin-top: 10px; /* 버튼 위 여백 */
+    text-decoration: none;
+}
+.event-check-btn:hover {
+    background-color: #e0e0e0; /* 호버 시 배경색 */
+}
+
+.banner-navigation {
+    display: flex;
+    align-items: center;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    margin: 0 10px;
+}
+
+.banner-index {
+    color: white;
+}
+
+.banner-controls {
+    position: absolute; /* 절대 위치 설정 */
+    bottom: 10px; /* 아래쪽 여백 */
+    left: 50%; /* 중앙 정렬을 위한 왼쪽 위치 */
+    transform: translateX(-50%); /* 중앙 정렬 */
+    display: flex; /* 플렉스 박스 사용 */
+    align-items: center; /* 수직 중앙 정렬 */
+}
+
+.banner-controls button {
+    background: none; /* 배경 제거 */
+    border: none; /* 테두리 제거 */
+    color: white; /* 텍스트 색상 */
+    font-size: 20px; /* 글자 크기 */
+    cursor: pointer; /* 커서 포인터로 변경 */
+    margin: 0 10px; /* 버튼 간 여백 */
+}
+
+.slide-number {
+    color: white; /* 텍스트 색상 */
+}
+
+
+.reviews-section, {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+
+
+.reviews-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.review-card {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px;
+    flex: 1 1 45%; /* 카드의 기본 너비를 45%로 설정 */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.review-rating {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.review-author {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+
+/* 광장 */
+
+.communication-section {
+    width: 90%;
+    margin: 0 auto;
+    padding: 40px 0;
+}
+
+.communication-section h2 {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.communication-questions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 20px;
+}
+
+.question-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.question-card:hover {
+    transform: translateY(-5px);
+}
+
+.question-card span.question-category {
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.question-card h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 5px 0;
+    color: #333;
+}
+
+.question-card p {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+    flex-grow: 1;
+}
+
+.question-card img {
+    width: 100px;
+    height: 80px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-left: 15px;
+}
+

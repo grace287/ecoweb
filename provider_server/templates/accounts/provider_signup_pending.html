@@ -1,0 +1,43 @@
+
+{% load static %}
+
+{% block content %}
+
+<style>
+    /* static/css/accounts/signup_success.css */
+.success-container {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.btn-submit {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-submit:hover {
+    background-color: #0056b3;
+}
+</style>
+
+<div class="success-container">
+    <h1>대행사 회원 가입</h1>
+    <p>대행사 회원가입 신청이 완료되었습니다.
+        <br>
+        빠른 시일내로 승인 드리겠습니다.
+        <br>
+        감사합니다.
+
+    </p>
+
+    <div class="back-button">
+        <a href="{% url 'provider_login' %}">메인으로 가기</a>
+    </div>
+    
+</div>
+{% endblock %}

@@ -1,0 +1,362 @@
+/* static/css/accounts/signup.css */
+.signup-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.signup-container h1 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 40px;
+}
+
+/* 스텝 스타일 */
+.signup-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 50px;
+    position: relative;
+    padding: 0 40px;
+}
+
+.signup-steps::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 60px;
+    right: 60px;
+    height: 2px;
+    background: #e5e7eb;
+    z-index: 1;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.step-item.active .step-icon {
+    border-color: #2563eb;
+    background: #2563eb;
+}
+
+.step-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.step-description {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.step-item.active .step-label {
+    color: #2563eb;
+}
+
+/* 폼 스타일 */
+.form-section {
+    margin-bottom: 40px;
+}
+
+.form-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+.input-with-button {
+    display: flex;
+    gap: 12px;
+}
+
+.input-with-button input {
+    flex: 1;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.btn-verify {
+    padding: 0 16px;
+    background: #fff;
+    border: 1px solid #2563eb;
+    color: #2563eb;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-verify:hover {
+    background: #2563eb;
+    color: #fff;
+}
+
+/* 알림 박스 */
+.notice-box {
+    background: #f3f4f6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.notice-box h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 12px;
+}
+
+.notice-box ol {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.notice-box li {
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+
+/* 버튼 스타일 */
+.form-actions {
+    text-align: center;
+}
+
+.btn-submit {
+    background: #e5e7eb;
+    color: #6b7280;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-submit:hover {
+    background: #d1d5db;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 640px) {
+    .signup-steps {
+        padding: 0 20px;
+    }
+
+    .step-description {
+        display: none;
+    }
+
+    .input-with-button {
+        flex-direction: column;
+    }
+
+    .btn-verify {
+        width: 100%;
+        padding: 10px;
+    }
+}
+
+.file-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+}
+
+.file-upload-input {
+    display: none;
+}
+
+.file-name {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f9fa;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-upload-btn {
+    padding: 8px 15px;
+    background-color: #4B89DC;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.file-upload-btn:hover {
+    background-color: #357abd;
+}
+
+.file-format-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+
+/* 분야 선택 스타일 */
+.field-selection {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.selected-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.field-tag {
+    background-color: #e9ecef;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.remove-field {
+    cursor: pointer;
+    color: #666;
+}
+
+.add-field-btn {
+    background: none;
+    border: 1px dashed #4B89DC;
+    color: #4B89DC;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    width: 90%;
+    max-width: 500px;
+    margin: 50px auto;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.field-categories {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.category {
+    margin-bottom: 20px;
+}
+
+.category h4 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.field-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.field-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+}
+
+.confirm-btn {
+    background-color: #4B89DC;
+    color: white;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
