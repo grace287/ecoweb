@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<!-- ui가 구현되면 여기에 추가해야함 -->
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>프로필</h1>
+    </div>
+    <h2><span class="company-name">{{ request.user.username }}</span> 님</h2>
+    <div class="profile-body">
+        <!-- 로그아웃 버튼 추가 -->
+        <form action="{% url 'demand:logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">로그아웃</button>
+        </form>
+    </div>
+    
+
+</div>
+<style>
+    .profile-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-top: 100px;
+    }
+    .profile-body a {
+        text-decoration: none;
+        color: black;
+    }
+
+</style>
+
+{% endblock %}

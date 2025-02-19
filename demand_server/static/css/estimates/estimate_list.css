@@ -1,0 +1,50 @@
+.estimate-list-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+th {
+    background-color: #007bff;
+    color: white;
+}
+
+.estimate-row {
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.estimate-row:hover {
+    background-color: #e9ecef; /* 호버 색상 */
+}
+
+.estimate-row:active {
+    background-color: #ced4da; /* 액티브 색상 */
+}
+
+.no-data {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: #666;
+}

@@ -1,0 +1,270 @@
+/* chat_estimate.css */
+.chat-estimate-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.estimate-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.estimate-header h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.estimate-header .highlight {
+    color: #2563eb;
+}
+
+.chat-box {
+    background: #2563eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.chat-title {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.option-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-btn {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.option-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.chat-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.submit-btn {
+    padding: 12px 24px;
+    background: white;
+    color: #2563eb;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    background: #f8f9fa;
+}
+
+.date-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.date-option {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+}
+
+.date-option.selected {
+    background: white;
+    color: #2563eb;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.summary-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.summary-card img {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 8px;
+}
+
+.summary-card .label {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.summary-card .value {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.request-btn {
+    width: 100%;
+    padding: 14px;
+    background: #22c55e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+@media (max-width: 480px) {
+    .input-group {
+        flex-direction: column;
+    }
+
+    .submit-btn {
+        width: 100%;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 회원가입 안내 섹션 스타일 추가 */
+.signup-guide {
+    background: #2563eb;
+    text-align: center;
+}
+
+.signup-guide .chat-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.signup-guide .sub-title {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 24px;
+}
+
+.signup-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.signup-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.signup-btn:hover {
+    transform: translateY(-2px);
+}
+
+.signup-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+.signup-btn.email {
+    background: white;
+    color: #2563eb;
+    border: none;
+}
+
+.signup-btn.kakao {
+    background: #FEE500;
+    color: #000000;
+    border: none;
+}
+
+.signup-btn.naver {
+    background: #03C75A;
+    color: white;
+    border: none;
+}
+
+.signup-btn.payco {
+    background: #FF0000;
+    color: white;
+    border: none;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 480px) {
+    .signup-buttons {
+        padding: 0 20px;
+    }
+
+    .signup-btn {
+        font-size: 14px;
+        padding: 12px;
+    }
+}
+
+/* 애니메이션 효과 */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.signup-guide {
+    animation: slideUp 0.5s ease-out;
+}
+
+/* 접근성 */
+.signup-btn:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}

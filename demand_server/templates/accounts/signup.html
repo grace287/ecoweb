@@ -1,0 +1,292 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/demand/accounts/signup.css' %}">
+<script defer src="{% static 'js/demand/accounts/signup.js' %}"></script>
+
+{% block content %}
+
+<div class="signup-container">
+    <h1>회원 가입</h1>
+    
+    <!-- 진행 단계 표시 -->
+    <div class="signup-progress">
+        <div class="progress-step active">
+            <div class="step-icon"><img src="{% static 'img/components/signup/user-icon.png' %}" alt=""></div>
+            <span>STEP 1</span><p>기본정보 입력</p>
+        </div>
+        <div class="progress-step">
+            <div class="step-icon"><img src="{% static 'img/components/signup/doc-icon.png' %}" alt=""></div>
+            <span>STEP 2</span><p>추가정보 입력</p>
+        </div>
+        <div class="progress-step">
+            <div class="step-icon"><img src="{% static 'img/components/signup/check-icon.png' %}" alt=""></div>
+            <span>STEP 3</span><p>가입 완료</p>
+        </div>
+    </div>
+
+    <form method="post" class="signup-form" action="{% url 'demand:signup' %}">
+        {% csrf_token %}
+
+
+         <!-- 1단계: 기본 정보 -->
+        <section class="form-section">
+            <h3>기본 정보</h3>
+            <div class="form-group">
+                <label for="id">아이디</label>
+                <div class="input-with-button">
+                    <input type="text" id="id" name="id" required>
+                    <button type="button" class="verify-btn" onclick="checkIdDuplicate()">중복확인</button>
+                </div>
+            </div>
+
+            <script>
+// 아이디 중복 확인 함수
+async function checkIdDuplicate() {
+    const userId = document.getElementById("id").value;
+
+    if (!userId) {
+        alert("아이디를 입력해주세요.");
+        return;
+    }
+
+    try {
+        const response = await fetch("/demand/check-id/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+            },
+            body: JSON.stringify({ id: userId }),
+        });
+
+        const data = await response.json();
+
+        if (data.is_duplicate) {
+            alert("이미 사용 중인 아이디입니다.");
+        } else {
+            alert("사용 가능한 아이디입니다.");
+        }
+    } catch (error) {
+        console.error("아이디 중복 확인 오류:", error);
+        alert("아이디 확인 중 오류가 발생했습니다.");
+    }
+}
+
+</script>
+
+            <div class="form-group">
+                <label for="password">이메일</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password_confirm">비밀번호 확인</label>
+                <input type="password" id="password_confirm" name="password_confirm" required>
+            </div>
+        </section>
+
+        <!-- 2단계: 추가 정보 -->
+        <section class="form-section">
+            <h3>추가 정보</h3>
+            <div class="form-group">
+                <label for="company">업체명</label>
+                <input type="text" id="company" name="company" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">담당자 휴대폰 번호</label>
+                <input type="tel" id="phone" name="phone" required>
+            </div>
+
+            <div class="form-group">
+                <label for="address">주소</label>
+                <div class="input-with-button">
+                    <input type="text" id="address" name="address" readonly required>
+                    <button type="button" class="address-search-btn">주소 찾기</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="address_detail">상세 주소</label>
+                <input type="text" id="address_detail" name="address_detail" placeholder="상세 주소 입력">
+            </div>
+        </section>
+            <!-- Daum 우편번호 서비스 스크립트 추가 -->
+            <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+            <script>
+                function searchAddress() {
+                    new daum.Postcode({
+                        oncomplete: function(data) {
+                            // 주소 입력 필드에 데이터 설정
+                            document.getElementById('address').value = data.address;
+                            document.getElementById('address_detail').focus();
+                        }
+                    }).open();
+                }
+            </script>
+
+        <section class="form-section">
+            <h3>추가 정보</h3>
+            
+            <div class="form-group">
+                <label for="recommend">추천인 아이디</label>
+                <div class="input-with-button">
+                    <input type="text" id="recommend" name="recommend">
+                    <button type="button" class="verify-btn">아이디 확인</button>
+                </div>
+            </div>
+
+            <div class="notice-box">
+                <h4>플랫폼 안내 이벤트!</h4>
+                <ol>
+                    <li>추천인 아이디를 남겨주시면 신규회원 10% 할인 쿠폰 증정</li>
+                    <li>신규회원가 웰컴패키지(5만원 쿠폰북 추가 증정)</li>
+                </ol>
+            </div>
+        </section>
+
+        <button type="submit" class="submit-btn">가입하기</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    const signupForm = document.querySelector(".signup-form");
+
+    signupForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;  // ✅ CSRF 토큰 가져오기
+
+        try {
+            const response = await fetch(this.action, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": csrfToken,  // ✅ CSRF 토큰 추가
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = data.redirect_url; // 가입 성공 시 이동
+            } else {
+                alert(data.error); // 에러 메시지 표시
+            }
+        } catch (error) {
+            console.error("Signup error:", error);
+            alert("회원가입 처리 중 오류가 발생했습니다.");
+        }
+    });
+});
+    document.addEventListener("DOMContentLoaded", function () {
+    const signupForm = document.querySelector(".signup-form");
+
+    signupForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch(this.action, {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                },
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = data.redirect_url; // 가입 성공 시 이동
+            } else {
+                alert(data.error); // 에러 메시지 표시
+            }
+        } catch (error) {
+            console.error("Signup error:", error);
+            alert("회원가입 처리 중 오류가 발생했습니다.");
+        }
+    });
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+    let currentStep = 1;
+
+    function showStep(step) {
+        document.querySelectorAll(".form-section").forEach((section, index) => {
+            section.style.display = index + 1 === step ? "block" : "none";
+        });
+
+        document.querySelectorAll(".progress-step").forEach((stepElement, index) => {
+            stepElement.classList.toggle("active", index + 1 <= step);
+        });
+
+        currentStep = step;
+    }
+
+    window.nextStep = function () {
+        if (currentStep < 2) showStep(currentStep + 1);
+    };
+
+    window.prevStep = function () {
+        if (currentStep > 1) showStep(currentStep - 1);
+    };
+
+    // 주소 검색 함수
+    window.searchAddress = function () {
+        new daum.Postcode({
+            oncomplete: function (data) {
+                document.getElementById("address").value = data.roadAddress;
+                document.getElementById("address_detail").focus();
+            },
+        }).open();
+    };
+
+    // 이메일 중복 확인
+    window.checkEmailDuplicate = async function () {
+        const email = document.getElementById("email").value;
+
+        if (!email) {
+            alert("이메일을 입력해주세요.");
+            return;
+        }
+
+        try {
+            const response = await fetch("/accounts/check-email/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            const data = await response.json();
+
+            if (data.is_duplicate) {
+                alert("이미 사용 중인 이메일입니다.");
+            } else {
+                alert("사용 가능한 이메일입니다.");
+            }
+        } catch (error) {
+            console.error("이메일 중복 확인 오류:", error);
+            alert("이메일 확인 중 오류가 발생했습니다.");
+        }
+    };
+});
+
+</script>
+
+
+{% endblock %}

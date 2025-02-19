@@ -1,0 +1,69 @@
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/components/header.css' %}">
+{% endblock %}
+
+
+<header>
+    <div class="nav-logo">
+        <a href="{% url 'main' %}">
+            <h1>EcoAnE</h1>
+            <span class="subtitle">환경 측정 중개 플랫폼</span>
+        </a>
+    </div>
+    <nav class="nav-container">
+        <ul class="nav-menu">
+            <li>
+                <a href="#">서비스</a>
+                <ul class="dropdown-menu">
+                    {% for category in categories %}
+                        <li><a href="{% url 'services:main' %}">{{ category.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+            <li>
+
+                <a href="#">업체 찾기</a>
+                <ul class="dropdown-menu">
+                    <li><a href="#">견적 신청</a></li>
+                    <li><a href="#">대행사 목록</a></li>
+                </ul>
+            </li>
+            
+            <li><a href="#">받은 견적</a></li>
+            <li><a href="#">채팅</a></li>
+        </ul>
+    </nav>
+    <div class="header-menu">
+        <div class="search-bar">
+            <button class="search-btn">
+                <img src="{% static 'img/components/search-icon.png' %}" alt="검색" class="search-icon">
+            </button>
+        </div>
+        <ul class="login-menu">
+            {% if request.user.is_authenticated %}
+                <li class="active"><a href="#">업체 회원</a></li>
+                <li><a href="{% url '#">마이페이지</a></li>
+                <li><a href="#">알림</a></li>
+            {% else %}
+                <ul class="login-button">
+                    <li><a href="javascript:void(0);" onclick="switchToProvider()">업체 회원</a></li>
+                    <li><a href="javascript:void(0);" onclick="openModal()">로그인</a></li>
+                </ul>
+                {% include 'accounts/login_modal.html' %}
+    {% endif %}
+        </ul>
+        <script>
+                function switchToProvider() {
+                let confirmSwitch = confirm("대행사로 전환하시겠습니까?");
+                if (confirmSwitch) {
+                window.location.href = "{% url 'provider:provider_login' %}";  // ✅ 대행사 로그인 페이지로 이동
+            }
+            }
+        </script>
+
+    </div>
+</header>
+
+<script src="{% static 'js/components/navbar.js' %}"></script>

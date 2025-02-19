@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <section class="hero-section">
+        <h1>환경 측정 중개 플랫폼에 오신것을 환영해요!</h1>
+        <div class="search-bar">
+            <img class="search-icon" src="{% static 'img/main/input-search-icon.png' %}" alt="search">
+            <input type="text" placeholder="어떤 서비스가 필요하신가요? (예 : 실내 공기질 측정)">
+            
+        </div>
+    </section>
+
+
+    <!-- 카테고리 섹션 -->
+    <section class="category-section">
+        <div class="category-icons">
+            {% for category in categories %}
+            <div class="icon-item">
+                <img src="{% static category.icon %}" alt="{{ category.name }}">
+                <span>{{ category.name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- 이벤트 배너 -->
+    <div class="event-banner">
+        <div class="banner-content">
+            <div class="banner-navigation">
+                <div class="slide-pagination">
+                    <button class="nav-btn prev" aria-label="이전">
+                        <span>‹</span>
+                    </button>
+                    <div class="slide-numbers">
+                        <span class="current">1</span>
+                        <span class="separator">/</span>
+                        <span class="total">3</span>
+                    </div>
+                    <button class="nav-btn next" aria-label="다음">
+                        <span>›</span>
+                    </button>
+                </div>
+
+            </div>
+            
+            <div class="banner-text">
+                <h2>상담만 해도 경품이 와르르?</h2>
+                <p>플랫폼 오픈 기념 상담 이벤트!</p>
+            </div>
+            
+            <a href="#" class="event-button">이벤트 확인하기</a>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+const totalSlides = 3;
+
+function changeSlide(direction) {
+    currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+    updateSlide();
+}
+
+function updateSlide() {
+    // 도트 업데이트
+    document.querySelectorAll('.dot').forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+    });
+
+    // 텍스트 업데이트 애니메이션
+    const textContainer = document.querySelector('.banner-text');
+    textContainer.style.animation = 'none';
+    textContainer.offsetHeight; // 리플로우 트리거
+    textContainer.style.animation = 'slideIn 0.5s ease-out';
+
+    // 슬라이드 텍스트 업데이트
+    const titles = [
+        "상담만 해도 경품이 와르르?",
+        "상담만 해도 경품이 와르르? 2",
+        "상담만 해도 경품이 와르르? 3"
+    ];
+    
+    textContainer.querySelector('h2').textContent = titles[currentSlide];
+}
+
+// 도트 클릭 이벤트
+document.querySelectorAll('.dot').forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+        currentSlide = index;
+        updateSlide();
+    });
+});
+
+// 자동 슬라이드
+let slideInterval = setInterval(() => changeSlide(1), 5000);
+
+// 마우스 호버 시 자동 슬라이드 정지
+document.querySelector('.event-banner').addEventListener('mouseenter', () => {
+    clearInterval(slideInterval);
+});
+
+document.querySelector('.event-banner').addEventListener('mouseleave', () => {
+    slideInterval = setInterval(() => changeSlide(1), 5000);
+});
+    </script>
+
+    <script src="{% static 'js/banner.js' %}"></script>
+
+    <!-- 통계 섹션 --> 
+    <section class="statistics-section">
+        <h2 class="section-title">지금 이 순간에도 수많은 견적이 오고가고 있어요!</h2>
+        <div class="stat-numbers">
+            <div class="stat-item">
+                <div class="stat-value">53만건<span>이상</span></div>
+                <div class="stat-label">누적 상담수</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">12만건<span>이상</span></div>
+                <div class="stat-label">누적 측정수</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">35,000명<span>이상</span></div>
+                <div class="stat-label">누적 회원수</div>
+            </div>
+        </div>
+
+    <div class="carousel-container">
+        <button class="nav-button prev" aria-label="이전">
+            <span>‹</span>
+        </button>
+        
+        <div class="carousel-track">
+            <div class="carousel-slides">
+                <!-- 첫 번째 그룹 -->
+                <div class="slide-group">
+                    <div class="slide-item">
+                        <img src="{% static 'img/main/status/multi-use.png' %}" alt="지하주차장">
+                        <div class="slide-content">
+                            <h3>지하주차장</h3>
+
+                            <p>(주)한**** 고객님 / 견적 상담중</p>
+                        </div>
+                    </div>
+                    <div class="slide-item">
+                        <img src="{% static 'img/main/status/office.png' %}" alt="사무실">
+                        <div class="slide-content">
+                            <h3>사무실</h3>
+                            <p>(주)상**** 고객님 / 측정 및 분석중</p>
+                        </div>
+                    </div>
+                    <div class="slide-item">
+                        <img src="{% static 'img/main/status/analysis.png' %}" alt="시료 분석">
+                        <div class="slide-content">
+                            <h3>시료 분석</h3>
+                            <p>(주)환**** 고객님 / 성적서 발행 완료</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 추가 그룹들... -->
+            </div>
+        </div>
+
+        <button class="nav-button next" aria-label="다음">
+            <span>›</span>
+        </button>
+    </div>
+
+    <button class="more-button">더 알아보기</button>
+</section>
+
+<script>
+    // static/js/statistics.js
+document.addEventListener('DOMContentLoaded', () => {
+    const track = document.querySelector('.carousel-slides');
+    const groups = document.querySelectorAll('.slide-group');
+    const prevButton = document.querySelector('.nav-button.prev');
+    const nextButton = document.querySelector('.nav-button.next');
+    
+    let currentIndex = 0;
+
+    function updateSlidePosition() {
+        track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        updateNavigationButtons();
+    }
+
+    function updateNavigationButtons() {
+        prevButton.style.display = currentIndex === 0 ? 'none' : 'flex';
+        nextButton.style.display = currentIndex === groups.length - 1 ? 'none' : 'flex';
+    }
+
+    prevButton.addEventListener('click', () => {
+        currentIndex = Math.max(0, currentIndex - 1);
+        updateSlidePosition();
+    });
+
+    nextButton.addEventListener('click', () => {
+        currentIndex = Math.min(groups.length - 1, currentIndex + 1);
+        updateSlidePosition();
+    });
+
+    // 터치 이벤트 처리
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    track.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    });
+
+    track.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].clientX;
+        const difference = touchStartX - touchEndX;
+
+        if (Math.abs(difference) > 50) {
+            if (difference > 0 && currentIndex < groups.length - 1) {
+                currentIndex++;
+            } else if (difference < 0 && currentIndex > 0) {
+                currentIndex--;
+            }
+            updateSlidePosition();
+        }
+    });
+
+    // 초기 버튼 상태 설정
+    updateNavigationButtons();
+
+    // 브라우저 리사이즈 대응
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            updateSlidePosition();
+        }, 200);
+    });
+});
+</script>
+
+    <!-- 후기 섹션 -->
+    <section class="reviews-section">
+        <h2 class="section-title">실제 후기가 궁금하시나요?</h2>
+        
+        <div class="reviews-slider">
+            <button class="nav-btn prev" aria-label="이전 후기">
+                <span>‹</span>
+            </button>
+     
+            <div class="reviews-container">
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="rating">
+                            <span class="stars">★★★★★</span>
+                            <span class="score">5.0</span>
+                        </div>
+                    </div>
+                    <div class="review-content">
+                        <p class="review-text">저희 사업장이 공기질 측정은 처음이라 걱정이
+                            많았는데다행히도 측정 요원분이 오셔서 친절하게
+                            잘 설명 해주셨어요. 하반기에 또 이용하고 싶네요~</p>
+                            <img src="{% static 'img/main/review/review1.png' %}" alt="">
+                        <div class="company-info">
+                            <img src="{% static 'img/main/review/company-logo1.png' %}" alt="회사 로고" class="company-logo">
+                            <div class="company-details">
+                                <span class="company-name">(주)에코에이앤이</span>
+
+                                <span class="service-type">실내공기질 / 소음 / 진동 / 현장평가</span>
+                            </div>
+                            <button class="view-more">›</button>
+                        </div>
+                    </div>
+                </div>
+     
+                <div class="review-card">
+                    <div class="review-header">
+                        <div class="rating">
+                            <span class="stars">★★★★★</span>
+                            <span class="score">5.0</span>
+                        </div>
+                    </div>
+                    <div class="review-content">
+                        <p class="review-text">환자분들과 의료진분들이 있는 병원이여서
+                            공기질이 정말 중요 했는데 중대재해처벌법과
+                            공기질 컨설팅을 동시에 받아서 좋네요~</p>
+                            <img src="{% static 'img/main/review/review2.png' %}" alt="">
+                        <div class="company-info">
+                            <img src="{% static 'img/main/review/company-logo2.png' %}" alt="회사 로고" class="company-logo">
+                            <div class="company-details">
+
+                                <span class="company-name">(주)레스텍</span>
+                                <span class="service-type">실내공기질 / 컨설팅 / 중대재해 처벌법</span>
+                            </div>
+                            <button class="view-more">›</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+     
+            <button class="nav-btn next" aria-label="다음 후기">
+                <span>›</span>
+            </button>
+        </div>
+     
+        <button class="more-reviews-btn">더 찾아보기</button>
+     </section>
+
+     <!-- 소통섹션 -->
+
+    <div class="communication-section">
+        <h2>소통을 하고 싶으신가요?</h2>
+        <div class="communication-questions">
+            <div class="question-card">
+                <span class="question-category">질문 광장</span>
+                <h3>방 개수가 줄 많으면 가격이 많이 나올까요?</h3>
+                <p>저희 건물 특성상 방 개수가 많아서 좀 걱정이네 전체 다 합해서 ㆍㆍㆍ</p>
+                <img src="{% static 'img/main/question/meeting-room.png' %}" alt="">
+            </div>
+            <div class="question-card">
+                <span class="question-category">질문 광장</span>
+                <h3>방 개수가 줄 많으면 가격이 많이 나올까요?</h3>
+                <p>저희 건물 특성상 방 개수가 많아서 좀 걱정이네 전체 다 합해서 ㆍㆍㆍ</p>
+                <img src="{% static 'img/main/question/parking-lot.png' %}" alt="">
+            </div>
+            <div class="question-card">
+                <span class="question-category">정보 광장</span>
+                <h3>수질 측정업체 잘 고르는법</h3>
+                <p>안녕하세요 저는 수질이 안 좋아서 최근에 측정을 받은  경험을 ㆍㆍㆍ</p>
+                <img src="{% static 'img/main/question/parking-lot.png' %}" alt="">
+            </div>
+            <div class="question-card">
+                <span class="question-category">홍보 광장</span>
+                <h3>혹시 사업에 간단한 디자인이 필요하신 업체 있으실까요?</h3>
+                <p>플랫폼 이용하는 회원인데요~ 저희가 디자인을 하는 업체인데 ㆍㆍㆍ</p>
+                <img src="{% static 'img/main/question/parking-lot.png' %}" alt="">
+            </div>
+        </div>
+        <div class="more-button">
+            <a href="#" class="btn">만남의 광장 입장하기</a>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMatch - {% block title %}{% endblock %}</title>
+    {% load static %}
+    <!-- 공통 CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/header.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/footer.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/nav-footer.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- 헤더 섹션 -->
+    <header>
+        {% include 'components/header.html' %}
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <div class="nav-footer">
+        {% include 'components/nav-footer.html' %}
+    </div>
+
+    <footer>
+        {% include 'components/footer.html' %}
+
+    </footer>
+
+    {% block extra_js %}
+    <script src="{% static 'js/base.js' %}"></script>
+    {% endblock %}
+</body>
+</html>

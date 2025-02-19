@@ -1,0 +1,167 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'css/landing.css' %}">
+<script defer src="{% static 'js/landing.js' %}"></script>
+
+
+{% block content %}
+<div class="landing-container">
+    <!-- 히어로 섹션 -->
+    <section class="hero-section">
+        <div class="hero-background"></div>
+        <div class="landing-header">
+            <h1 class="logo">EcoAnE</h1>
+            <p class="contact">고객센터  ｜&nbsp;   042 - 933 - 4555</p>
+        </div>
+        <div class="hr"></div>
+        <div class="hero-content">
+            <h1 class="main-title">환경 측정 · 분석
+                <br>
+                <span class="highlight-text">처음</span><span class="hightlight-text-light">부터</span> 
+            <span class="highlight-text">끝</span><span class="hightlight-text-light">까지</span> 
+            <span class="highlight-text">합친다면?</span>
+            </h1>
+
+            <p class="subtitle">저희 플랫폼이 고객, 대행사 전부 연결해드릴 수 있어요!</p>
+            <button class="cta-button1" id="cta-button" data-target="service-section">기존의 문제점 알아보기</button>
+
+
+            <p class="scroll-indication">스크롤을 내려주세요</p>
+        </div>
+        <div class="hero-overlay"></div>
+    </section>
+
+    <!-- 서비스 안내 섹션 -->
+    <section class="service-section">
+        <h2 class="section-title">
+            <span class="highlight">기존의 문제점</span>은 무엇일까요?
+        </h2>
+        
+        <div class="service-card-section">
+            <div class="service-card">
+                <div class="icon">
+                    <img src="{% static 'img/landing/human-icon.png' %}" alt="사람 아이콘">
+                </div>
+                <h3>아파트 관리업체</h3>
+                <p>"여러 측정을 받아야 하는데 <br>업체가 다 달라서 <span class="highlight-text">복잡해요</span>"</p>
+            </div>
+
+
+            <div class="separator"></div>
+            
+            <div class="service-card">
+                <div class="icon">
+                    <img src="{% static 'img/landing/human-icon.png' %}" alt="사람 아이콘">
+                </div>
+                <h3>건물 관리업체</h3>
+                <p>"측정 대상인가요? 그리고
+                    <br>이번에는 유지인가요? <span class="highlight-text">잘 모르겠어요</span>"</p>
+            </div>
+
+
+            <div class="separator"></div>
+            
+            <div class="service-card">
+                <div class="icon">
+                    <img src="{% static 'img/landing/human-icon.png' %}" alt="사람 아이콘">
+                </div>
+                <h3>어린이집</h3>
+                <p>"전화통화가 너무 많고
+                    <br>협의가 <span class="highlight-text">힘들어요</span>"</p>
+            </div>
+        </div>
+        <button class="cta-button2" id="cta-button" data-target="features-section">3가지 중점 알아보기</button>
+
+        <!-- 각 섹션 마지막에 추가. 위로가기 버튼 -->
+        <div class="scroll-to-top" title="맨 위로 가기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+            <span>맨 위로가기</span>
+        </div>
+        
+    </section>
+
+
+    <!-- 특징 섹션 -->
+    <section class="features-section">
+        <div class="features-content">
+            <h2>고객분들과 대화시스템을 수립한 소통을 통해<br>
+                의견을 모은 결과, <span class="highlight">3가지에 중점을 두기로 했습니다.</span>
+            </h2>
+            
+            <div class="feature-circles">
+                <button class="feature-circle">간편</button>
+                <button class="feature-circle">정확</button>
+                <button class="feature-circle">효율</button>
+            </div>
+        </div>
+        <button class="cta-button2" id="cta-button" data-target="system-section">올인원 시스템 주요 기능</button>
+
+        <!-- 각 섹션 마지막에 추가. 위로가기 버튼 -->
+        <div class="scroll-to-top" title="맨 위로 가기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+            <span>맨 위로가기</span>
+        </div>
+
+    </section>
+
+
+    <!-- 시스템 소개 섹션 -->
+    <section class="system-section">
+        <div class="system-background"></div>
+        <div class="system-overlay"></div>
+        <div class="system-content">
+            <h2>간단하고, 정확하고, 효율적인 올인원 시스템을 소개합니다!</h2>
+
+
+            <div class="slider-container">
+                <div class="slides">
+                    <div class="slide">
+                        <img src="{% static 'img/landing/demo1.png' %}" alt="demo1">
+                        <p class="slide-caption">실내공기질 ESG 관리체계 환경 측정 · 분석 솔루션 시스템</p>
+
+                    </div>
+                    <div class="slide">
+                        <img src="{% static 'img/landing/demo2.png' %}" alt="demo2">
+                        <p class="slide-caption">채팅형 견적요청 시스템</p>
+                    </div>
+                    <div class="slide">
+
+                        <img src="{% static 'img/landing/demo3.png' %}" alt="demo3">
+                        <p class="slide-caption">견적 요청 시스템</p>
+                    </div>
+                    <div class="slide">
+
+                        <img src="{% static 'img/landing/demo4.png' %}" alt="demo4">
+                        <p class="slide-caption">실시간 모니터링 대시보드</p>
+                    </div>
+                </div>
+
+
+                <div class="slider-dots">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+            </div>
+
+            <button class="cta-button1" onclick="location.href='{% url 'main' %}'">매칭 시작하기</button>
+        </div>
+
+        <!-- 각 섹션 마지막에 추가. 위로가기 버튼 -->
+        <div class="scroll-to-top" title="맨 위로 가기">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+            <span>맨 위로가기</span>
+        </div>
+        
+    </section>
+</div>
+
+
+{% endblock %}
