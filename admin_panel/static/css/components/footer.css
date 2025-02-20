@@ -1,0 +1,68 @@
+/* 푸터 스타일 */
+.main-footer {
+    background-color: #3b82f6; /* 푸른 배경 */
+    color: white; /* 흰 텍스트 */
+    padding: 20px 0;
+    font-family: 'Arial', sans-serif;
+    font-size: 14px;
+    text-align: center;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 소셜 아이콘 */
+.social-icons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.social-icons a img {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0) invert(1); /* 아이콘을 흰색으로 표시 */
+    transition: filter 0.3s ease;
+}
+
+.social-icons a img:hover {
+    filter: brightness(1) invert(0); /* 마우스 오버 시 검은색으로 변경 */
+}
+
+/* 회사 정보 */
+.company-info p {
+    margin: 5px 0;
+    line-height: 1.6;
+}
+
+/* 저작권 */
+.copyright p {
+    font-size: 12px;
+    margin: 5px 0;
+    color: #d1d5db; /* 연한 회색 */
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .footer-container {
+        padding: 10px;
+    }
+
+    .social-icons {
+        gap: 10px;
+    }
+
+    .company-info p {
+        font-size: 12px;
+    }
+
+    .copyright p {
+        font-size: 10px;
+    }
+}
