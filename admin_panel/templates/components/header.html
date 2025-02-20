@@ -1,0 +1,77 @@
+
+{% block content %}
+<style>
+    /* 헤더 스타일 */
+    .header {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        
+        /* 카드 스타일 개선 */
+        .card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* 테이블 스타일 개선 */
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+        
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+</style>
+<header class="header d-flex justify-content-end">
+    <div class="nav-logo">
+        <a href="#">
+            <h1>EcoAnE</h1>
+            <span class="subtitle">환경 측정 중개 플랫폼</span>
+        </a>
+    </div>
+    <div class="dropdown">
+        <div class="user-profile" role="button" data-bs-toggle="dropdown">
+            <span>{{ user.username }}</span>
+            <i class="bi bi-person-circle fs-4"></i>
+        </div>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <a class="dropdown-item" href="{% url 'profile' %}">
+                    <i class="bi bi-person me-2"></i> 내 정보
+                </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                    <i class="bi bi-box-arrow-right me-2"></i> 로그아웃
+                </a>
+            </li>
+        </ul>
+    </div>
+</header>
+{% endblock %}

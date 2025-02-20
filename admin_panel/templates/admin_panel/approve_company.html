@@ -1,0 +1,29 @@
+
+{% block content %}
+<h2>업체 가입 승인 요청</h2>
+<table>
+    <tr>
+        <th>업체명</th>
+        <th>사업자등록번호</th>
+        <th>가입 상태</th>
+        <th>관리</th>
+    </tr>
+    {% for company in pending_companies %}
+    <tr>
+        <td>{{ company.company_name }}</td>
+        <td>{{ company.business_registration_number }}</td>
+        <td>{{ company.get_status_display }}</td>
+        <td>
+            <form method="post" action="{% url 'approve_company' company.id %}">
+                {% csrf_token %}
+                <button type="submit">승인</button>
+            </form>
+            <form method="post" action="{% url 'reject_company' company.id %}">
+                {% csrf_token %}
+                <button type="submit">거부</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

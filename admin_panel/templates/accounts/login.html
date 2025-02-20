@@ -1,0 +1,126 @@
+
+{% load static %}
+
+{% block content %}
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background-color: #f8f9fa;
+    }
+    
+    .login-box {
+        background: white;
+        padding: 40px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .login-header h1 {
+        color: #405FAB;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+    
+    .login-header h2 {
+        color: #666;
+        font-size: 1.2rem;
+        font-weight: normal;
+    }
+    
+    .login-form .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .login-form label {
+        display: block;
+        margin-bottom: 5px;
+        color: #333;
+        font-weight: 500;
+    }
+    
+    .login-form input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    
+    .login-form input:focus {
+        border-color: #405FAB;
+        outline: none;
+    }
+    
+    .login-form button {
+        width: 100%;
+        padding: 12px;
+        background-color: #405FAB;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .login-form button:hover {
+        background-color: #324a89;
+    }
+    
+    .error-message {
+        background-color: #fff3f3;
+        color: #dc3545;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        text-align: center;
+        border: 1px solid #ffcdd2;
+    }
+    </style>
+
+<div class="login-container">
+    <div class="login-box">
+        <div class="login-header">
+            <h1>EcoAnE</h1>
+            <h2>관리자 로그인</h2>
+        </div>
+
+        {% if messages %}
+        <div class="error-message">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="login-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" id="remember_me" name="remember_me">
+                <label for="remember_me">자동 로그인</label>
+            </div>
+            <button type="submit">로그인</button>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}

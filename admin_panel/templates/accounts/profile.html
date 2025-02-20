@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/admin/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<style>
+    /* 컨테이너 스타일 */
+.profile-container {
+    padding: 2rem;
+    max-width: 900px;
+    margin: auto;
+}
+
+/* 카드 스타일 */
+.profile-card {
+    border: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+}
+
+.profile-card .card-header {
+    background: linear-gradient(135deg, #405FAB, #334b89);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* 섹션 제목 스타일 */
+.section-title {
+    color: #405FAB;
+    font-weight: 600;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid #405FAB;
+    display: inline-block;
+    font-size: 1.1rem;
+}
+
+/* 입력 필드 스타일 */
+.form-label {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.form-control {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #405FAB;
+    box-shadow: 0 0 10px rgba(64, 95, 171, 0.2);
+}
+
+/* 읽기 전용 필드 스타일 */
+.readonly-field {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* 버튼 스타일 */
+.btn-primary {
+    background-color: #405FAB;
+    border: none;
+    font-size: 1rem;
+    padding: 12px 30px;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #334b89;
+    transform: translateY(-2px);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+
+    .profile-card {
+        padding: 1rem;
+    }
+
+    .btn-primary {
+        width: 100%;
+    }
+}
+
+</style>
+
+<div class="profile-container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card profile-card">
+                <div class="card-header text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="bi bi-person-circle me-2"></i> 내 정보
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="profile-form">
+                        {% csrf_token %}
+                        <div class="row">
+                            <!-- 기본 정보 -->
+                            <div class="col-md-6">
+                                <h5 class="section-title">기본 정보</h5>
+                                <div class="mb-4">
+                                    <label class="form-label">아이디</label>
+                                    <input type="text" class="form-control readonly-field" value="{{ user.username }}" readonly>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">이메일</label>
+                                    <input type="email" class="form-control" name="email" value="{{ user.email }}">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">연락처</label>
+                                    <input type="text" class="form-control" name="phone_number" value="{{ user.phone_number }}">
+                                </div>
+                            </div>
+
+                            <!-- 로그인 정보 -->
+                            <div class="col-md-6">
+                                <h5 class="section-title">로그인 정보</h5>
+                                <div class="mb-4">
+                                    <label class="form-label">최근 로그인</label>
+                                    <input type="text" class="form-control readonly-field" value="{{ user.last_login|date:'Y-m-d H:i' }}" readonly>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">최근 로그인 IP</label>
+                                    <input type="text" class="form-control readonly-field" value="{{ user.last_login_ip }}" readonly>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">로그인 횟수</label>
+                                    <input type="text" class="form-control readonly-field" value="{{ user.login_count }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 버튼 영역 -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check2 me-2"></i>정보 수정
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

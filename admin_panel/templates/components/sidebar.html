@@ -1,0 +1,66 @@
+
+{% load static %}
+{% block content %}
+
+<style>
+    /* 사이드바 스타일 */
+    :root {
+            --sidebar-width: 250px;
+        }
+    .sidebar {
+            width: var(--sidebar-width);
+            background: #2c3e50;
+            color: white;
+            position: fixed;
+            height: 100vh;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,.8);
+            padding: 15px 20px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255,255,255,.1);
+        }
+        
+        .sidebar .nav-link.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+</style>
+
+<nav class="sidebar">
+    <div class="p-3">
+        <h3 class="text-center mb-4">EcoAnE</h3>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                   href="{% url 'dashboard' %}">
+                   <i class="bi bi-speedometer2"></i> 대시보드
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'approve_requests' %}active{% endif %}" 
+                   href="{% url 'approve_requests' %}">
+                   <i class="bi bi-check-circle"></i> 가입요청목록
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'company_list' %}active{% endif %}" 
+                   href="{% url 'company_list' %}">
+                   <i class="bi bi-building"></i> 업체리스트
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+{% endblock %}
