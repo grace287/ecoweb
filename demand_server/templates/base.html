@@ -6,7 +6,6 @@
     <title>EcoMatch - {% block title %}{% endblock %}</title>
     {% load static %}
     <!-- 공통 CSS -->
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/header.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/nav-footer.css' %}">
@@ -31,9 +30,5 @@
         {% include 'components/footer.html' %}
 
     </footer>
-
-    {% block extra_js %}
-    <script src="{% static 'js/base.js' %}"></script>
-    {% endblock %}
 </body>
 </html>

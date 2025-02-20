@@ -1,11 +1,13 @@
 {% load static %}
 {% load account socialaccount %}
 
-<link rel="stylesheet" href="{% static 'css/demand/accounts/login.css' %}">
+<link rel="stylesheet" href="{% static 'css/accounts/login.css' %}">
 
 {% block extra_js %}
-<script src="{% static 'js/demand/accounts/login.js' %}"></script>
+<!-- <script src="{% static 'js/accounts/login.js' %}"></script> -->
 {% endblock %}
+
+{% block content %}
 
 <!-- 로그인 모달 -->
 <div id="login-modal" class="modal">
@@ -38,3 +40,79 @@
         </div>
     </div>
 </div>
+
+<script>
+    function openModal() {
+        document.getElementById('login-modal').style.display = 'block';
+    }
+    
+    function closeModal() {
+        document.getElementById('login-modal').style.display = 'none';
+    }
+    
+    document.querySelector('.close-btn').addEventListener('click', closeModal);
+    
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('login-modal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.querySelector('.login-form');
+        
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitButton = this.querySelector('button[type="submit"]');
+            
+            try {
+                submitButton.disabled = true;
+                submitButton.textContent = '로그인 중...';
+                
+                const response = await fetch('/login/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+    
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.error);  // 서버에서 반환하는 오류 메시지를 alert로 표시
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('로그인 처리 중 오류가 발생했습니다.');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = '로그인';
+            }
+        });
+    
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+    </script>
+    
+
+{% endblock %}

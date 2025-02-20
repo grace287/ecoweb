@@ -25,7 +25,7 @@ def login(request):
 
         if user is not None:
             auth_login(request, user)
-            return JsonResponse({'success': True, 'redirect_url': '/'})
+            return JsonResponse({'success': True, 'redirect_url': '/main'})
         else:
             return JsonResponse({'success': False, 'error': '아이디 또는 비밀번호가 올바르지 않습니다.'}, status=400)
 

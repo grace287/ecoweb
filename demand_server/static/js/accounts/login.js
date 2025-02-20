@@ -48,11 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 window.location.href = data.redirect_url;
             } else {
                 // 에러 메시지 표시
-                const errorDiv = document.querySelector('.error-message');
-                if (errorDiv) {
-                    errorDiv.textContent = data.message;
-                    errorDiv.style.display = 'block';
-                }
+                alert(data.error);  // 서버에서 반환하는 오류 메시지를 alert로 표시
             }
         } catch (error) {
             console.error('Login error:', error);

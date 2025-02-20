@@ -1,7 +1,7 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/provider/accounts/login.css' %}">
+<link rel="stylesheet" href="{% static 'css/accounts/login.css' %}">
 {% endblock %}
 
 
@@ -124,6 +124,42 @@
         .back-img {
             border: 1px solid #333;
         }
+
+
+        .main-back {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 1000;
+            padding: 12px 24px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .main-back a {
+            color: #405FAB;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .main-back:hover {
+            background-color: #405FAB;
+            transform: translateY(-2px);
+        }
+
+        .main-back:hover a {
+            color: white;
+        }
+
+        .main-back i {
+            font-size: 1.2rem;
+        }
 </style>
 
 <div class="main-container">
@@ -131,7 +167,10 @@
         <div class="overlay"></div>
     </div>
     <div class="main-back">
-        <a href="demand_server:main">메인으로 돌아가기</a>
+        <a href="#" id="returnToMain">
+            <i class="bi bi-arrow-left"></i>
+            메인으로 돌아가기
+        </a>
     </div>
     <div class="login-content">
         <div class="back-img">
@@ -141,19 +180,16 @@
         <h2>EcoAnE</h2>
         <h3>대행사 로그인</h3>
         
-        {% if error %}
-        <div class="error-message">
-            {{ error }}
-        </div>
-        {% endif %}
+        <!-- 에러 메시지 div 추가 -->
+        <div class="error-message" style="display: none;"></div>
         
-        <form method="POST" action="{% url 'login' %}">
+        <form method="POST" action="{% url 'provider_login' %}" id="loginForm">
             {% csrf_token %}
             <div class="form-group">
-                <input type="text" id="username" name="username" required placeholder="아이디를 입력해주세요.">
+                <input type="text" id="username" name="username" required placeholder="아이디를 입력해주세요." autocomplete="username">
             </div>
             <div class="form-group">
-                <input type="password" id="password" name="password" required placeholder="비밀번호를 입력해주세요.">
+                <input type="password" id="password" name="password" required placeholder="비밀번호를 입력해주세요." autocomplete="current-password">
             </div>
             <button type="submit" class="login-btn">로그인</button>
         </form>
@@ -176,39 +212,68 @@
             const form = document.getElementById('loginForm');
             const errorMessage = document.querySelector('.error-message');
         
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                errorMessage.style.display = 'none';
-        
-                try {
-                    const formData = new FormData(this);
-                    const response = await fetch(this.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                        },
-                        credentials: 'same-origin'
-                    });
-        
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        throw new Error('서버에서 잘못된 응답을 반환했습니다.');
-                    }
-        
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        window.location.href = data.redirect_url;
-                    } else {
-                        errorMessage.textContent = data.error || '로그인에 실패했습니다.';
+            if (form && errorMessage) {  // null 체크 추가
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    errorMessage.style.display = 'none';
+            
+                    try {
+                        const formData = new FormData(this);
+                        const response = await fetch(this.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            },
+                            credentials: 'same-origin'
+                        });
+            
+                        const contentType = response.headers.get('content-type');
+                        if (!contentType || !contentType.includes('application/json')) {
+                            throw new Error('서버에서 잘못된 응답을 반환했습니다.');
+                        }
+            
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            window.location.href = data.redirect_url;
+                        } else {
+                            errorMessage.textContent = data.error || '로그인에 실패했습니다.';
+                            errorMessage.style.display = 'block';
+                        }
+                    } catch (error) {
+                        console.error('로그인 오류:', error);
+                        errorMessage.textContent = '로그인 처리 중 오류가 발생했습니다.';
                         errorMessage.style.display = 'block';
                     }
+                });
+            }
+
+            const returnButton = document.getElementById('returnToMain');
+    
+            returnButton.addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                try {
+                    const response = await fetch(`${DEMAND_API_URL}/api/main-url/`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('메인 페이지 URL을 가져오는데 실패했습니다.');
+                    }
+                    
+                    const data = await response.json();
+                    window.location.href = data.main_url;
+                    
                 } catch (error) {
-                    console.error('로그인 오류:', error);
-                    errorMessage.textContent = '로그인 처리 중 오류가 발생했습니다.';
-                    errorMessage.style.display = 'block';
+                    console.error('Error:', error);
+                    // 기본 URL로 폴백
+                    window.location.href = 'http://localhost:8000/main';
                 }
             });
         });

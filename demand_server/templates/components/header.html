@@ -48,22 +48,68 @@
                 <li><a href="#">알림</a></li>
             {% else %}
                 <ul class="login-button">
-                    <li><a href="javascript:void(0);" onclick="switchToProvider()">업체 회원</a></li>
+                    <li id="switch-to-provider-btn"><a href="javascript:void(0);" onclick="switchToProvider()">업체 회원</a></li>
                     <li><a href="javascript:void(0);" onclick="openModal()">로그인</a></li>
                 </ul>
                 {% include 'accounts/login_modal.html' %}
     {% endif %}
         </ul>
-        <script>
-                function switchToProvider() {
-                let confirmSwitch = confirm("대행사로 전환하시겠습니까?");
-                if (confirmSwitch) {
-                window.location.href = "#";  // ✅ 대행사 로그인 페이지로 이동
-            }
-            }
-        </script>
-
     </div>
 </header>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const switchToProviderBtn = document.getElementById('switch-to-provider-btn');
+    
+    if (switchToProviderBtn) {
+        switchToProviderBtn.addEventListener('click', switchToProvider);
+    }
+});
+
+async function switchToProvider() {
+    try {
+        const response = await fetch('/api/switch-to-provider/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            // 필요에 따라 페이지를 리로드하거나 다른 작업을 수행할 수 있습니다.
+            window.location.reload();
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('대행사로 전환하는 중 오류가 발생했습니다.');
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+</script>
 
 <script src="{% static 'js/components/navbar.js' %}"></script>

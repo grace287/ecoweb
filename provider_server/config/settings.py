@@ -15,7 +15,8 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+PORT = config('PORT', default='8001')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -34,6 +35,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework.authtoken',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +101,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# CORS 설정
+CORS_ALLOWED_ORIGINS = [
+    # "http://localhost:8000",  # Demand Server
+    "http://localhost:8001",  # Provider Server
+    # "http://localhost:8002",  # Admin Panel
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -115,7 +125,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static')
 ]
@@ -135,3 +145,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Admin Panel API 설정
 ADMIN_API_URL = 'http://localhost:8001'  # Admin Panel 서버 주소
 ADMIN_API_KEY = 'your-secret-api-key'    # API 인증 키
+
+# Demand Server API 설정
+DEMAND_API_URL = config('DEMAND_API_URL', default='http://localhost:8000')
+ADMIN_PANEL_URL = config('ADMIN_PANEL_URL', default='http://localhost:8002')
+DEMAND_API_KEY = config('DEMAND_API_KEY', default=None)
+
+# Provider API 토큰 설정
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
