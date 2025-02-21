@@ -23,16 +23,30 @@
                 </ul>
             </li>
             <li>
-
                 <a href="#">업체 찾기</a>
                 <ul class="dropdown-menu">
-                    <li><a href="#">견적 신청</a></li>
+                    {% if request.user.is_authenticated %}
+                        <li><a href="{% url 'estimate_request_form' %}">견적 신청</a></li>
+                    {% else %}
+                        <li><a href="{% url 'estimate_request_guest' %}">견적 신청</a></li>
+                    {% endif %}
                     <li><a href="#">대행사 목록</a></li>
                 </ul>
             </li>
             
-            <li><a href="#">받은 견적</a></li>
-            <li><a href="#">채팅</a></li>
+            <!-- 항상 보이도록 수정 (비회원 클릭 시 login 함수 호출) -->
+            <li>
+                <a href="{% if request.user.is_authenticated %}{% url 'estimate_list' %}{% else %}#{% endif %}"
+                   {% if not request.user.is_authenticated %}onclick="openLoginModal(); return false;"{% endif %}>
+                    받은 견적
+                </a>
+            </li>
+            <li>
+                <a href="{% if request.user.is_authenticated %}{% url 'chat' %}{% else %}#{% endif %}"
+                   {% if not request.user.is_authenticated %}onclick="openLoginModal(); return false;"{% endif %}>
+                    채팅
+                </a>
+            </li>
         </ul>
     </nav>
     <div class="header-menu">
@@ -67,33 +81,24 @@
 });
 
 async function switchToProvider() {
-    try {
-        const response = await fetch('/api/switch-to-provider/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
+    if (confirm('대행사 서버로 전환하시겠습니까?')) {
+        try {
+            // Provider 서버 로그인 페이지로 직접 이동
+            window.location.href = 'http://localhost:8001/';
+        } catch (error) {
+            console.error('Error:', error);
+            // 기본 URL로 폴백
+            window.location.href = 'http://localhost:8000/main/';
         }
-
-        const data = await response.json();
-        
-        if (data.success) {
-            alert(data.message);
-            // 필요에 따라 페이지를 리로드하거나 다른 작업을 수행할 수 있습니다.
-            window.location.reload();
-        } else {
-            alert(data.error);
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('대행사로 전환하는 중 오류가 발생했습니다.');
     }
 }
+
+// 로그인 모달 열기 함수 (직접 구현하거나 기존 함수 사용)
+function openLoginModal() {
+        // 예시: 로그인 모달을 오픈하는 로직
+        alert('로그인이 필요합니다.');
+        // 또는 window.location.href = '{% url "login" %}';
+    }
 
 function getCookie(name) {
     let cookieValue = null;
@@ -109,7 +114,6 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-
 </script>
 
 <script src="{% static 'js/components/navbar.js' %}"></script>

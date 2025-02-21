@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.hashers import make_password
@@ -9,12 +9,51 @@ import json
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
+import requests
+from django.views.decorators.http import require_http_methods
+from django.middleware.csrf import get_token # 견적 요청 모델
 
 def main(request):
     return render(request, 'main.html') 
 
+@require_http_methods(["GET", "POST"])
 def provider_login(request):
-    return render(request, 'accounts/provider_login.html')
+    if request.method == "POST":
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            
+            if not username or not password:
+                return JsonResponse({
+                    'success': False,
+                    'error': '아이디와 비밀번호를 입력해주세요.'
+                })
+            
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                if user.is_active:
+                    login(request, user)
+                    return JsonResponse({
+                        'success': True,
+                        'redirect_url': '/dashboard/'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': '계정이 비활성화되어 있습니다.'
+                    })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': '아이디 또는 비밀번호가 올바르지 않습니다.'
+                })
+                
+    # GET 요청이거나 일반 POST 요청인 경우
+    return render(request, 'accounts/provider_login.html', {
+        'csrf_token': get_token(request)
+    })
 
 def login(request):
     if request.method == 'POST':
@@ -22,25 +61,45 @@ def login(request):
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         
-        # AJAX 요청 여부 확인
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        # 관리자 서버에서 승인 상태 확인
+        admin_api_url = f"{settings.ADMIN_API_URL}/api/companies/check-status/"
         
         if user is not None:
-            if user.is_approved:
-                auth_login(request, user)
-                return JsonResponse({
-                    'success': True,
-                    'redirect_url': '/dashboard/'
-                })
+            # admin_panel에서 승인 여부 호가인
+            approval_status = requests.get(f"{settings.ADMIN_PANEL_API_URL}/companies/{user.id}/")
+            if approval_status.json().get('status') == 'approved':
+                login(request, user)
+                return redirect('provider_dashboard')
             else:
-                return JsonResponse({
-                    'success': False,
-                    'error': '관리자의 승인이 필요합니다.'
-                })
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': '아이디 또는 비밀번호가 잘못되었습니다.'
+                return render(request, 'accounts/provider_login.html', {'error': '관리자의 승인이 필요합니다.'})
+    
+        try:
+            response = requests.post(
+                admin_api_url,
+                json={'username': username},
+                headers={'Authorization': f'Bearer {settings.ADMIN_API_KEY}'}
+            )
+            
+            if response.status_code == 200:
+                status_data = response.json()
+                if status_data['status'] != 'approved':
+                    return render(request, 'accounts/provider_login.html', {
+                        'error': '관리자 승인 대기 중입니다.'
+                    })
+                    
+                # 승인된 경우 로그인 처리
+                user = authenticate(request, username=username, password=password)
+                if user is not None:
+                    auth_login(request, user)
+                    return redirect('provider_dashboard')
+                    
+            return render(request, 'accounts/provider_login.html', {
+                'error': '아이디 또는 비밀번호가 올바르지 않습니다.'
+            })
+            
+        except requests.RequestException:
+            return render(request, 'accounts/provider_login.html', {
+                'error': '서버 통신 오류가 발생했습니다.'
             })
 
     return render(request, 'accounts/provider_login.html')
@@ -117,7 +176,36 @@ def provider_signup(request):
             for attachment in attachments:
                 Attachment.objects.create(user=user, file=attachment)
 
-            return redirect('provider_signup_pending')
+            # 관리자 서버에 회원가입 요청 전송
+            admin_api_url = f"{settings.ADMIN_API_URL}/api/companies/"
+            
+            company_data = {
+                'username': username,
+                'email': email,
+                'company_name': company_name,
+                'business_number': business_registration_number,
+                'user_type': 'provider',
+                'status': 'pending'
+            }
+            
+            try:
+                response = requests.post(
+                    admin_api_url,
+                    json=company_data,
+                    headers={'Authorization': f'Bearer {settings.ADMIN_API_KEY}'}
+                )
+                
+                if response.status_code == 201:
+                    return redirect('provider_signup_pending')
+                else:
+                    return render(request, 'accounts/provider_signup.html', {
+                        'error': '회원가입 처리 중 오류가 발생했습니다.'
+                    })
+                    
+            except requests.RequestException:
+                return render(request, 'accounts/provider_signup.html', {
+                    'error': '서버 통신 오류가 발생했습니다.'
+                })
 
         except Exception as e:
             return render(request, 'accounts/provider_signup.html', {
@@ -135,6 +223,14 @@ def signup(request):
 
 def provider_signup_pending(request):
     return render(request, 'accounts/provider_signup_pending.html')
+
+# admin_panel_api.py
+def send_signup_request(company_data):
+    """admin_panel 서버에 업체 가입 요청을 전송"""
+    api_url = f"{settings.ADMIN_PANEL_API_URL}/companies/"
+    response = requests.post(api_url, json=company_data)
+
+    return response.json()
 
 @csrf_exempt
 def check_id_duplicate(request):
@@ -178,7 +274,49 @@ def verify_business_number(request):
 
 @login_required
 def provider_dashboard(request):
-    return render(request, 'provider/provider_dashboard.html')
+    context = {
+        'status_data': {
+            'in_progress': {
+                'count': 5,
+                'label': '진행중',
+                'color': '#2563eb'
+            },
+            'recruiting': {
+                'count': 8,
+                'label': '모집',
+                'color': '#059669'
+            },
+            'meeting': {
+                'count': 3,
+                'label': '미팅',
+                'color': '#7C3AED'
+            }
+        },
+        'progress_data': [
+            {
+                'label': '전체 진행률',
+                'value': 65,
+                'color': '#2563eb'
+            },
+            {
+                'label': '가입 현황',
+                'value': 80,
+                'color': '#059669'
+            },
+            {
+                'label': '견적 완료율',
+                'value': 45,
+                'color': '#7C3AED'
+            }
+        ],
+        'financial_data': {
+            'today_settlement': 456789,
+            'total_revenue': 123456789,
+            'monthly_growth': 15.7,
+            'pending_payments': 3
+        }
+    }
+    return render(request, 'provider/provider_dashboard.html', context)
 
 @login_required
 def provider_profile(request):
@@ -189,5 +327,24 @@ def provider_profile(request):
         'user': request.user,
         'service_categories': request.user.service_category.all(),
     }
-    return render(request, 'accounts/provider_profile.html', context)
+    return render(request, 'accounts/profile.html', context)
 
+def provider_estimate_list(request): # 필요에 따라 필터 적용
+    return render(request, 'provider/estimates/provider_estimate_list.html')
+
+
+def provider_estimate_detail(request):
+    return render(request, 'provider/estimates/provider_estimate_detail.html')
+
+# def provider_estimate_detail(request, pk):
+#     return render(request, 'provider/estimates/provider_estimate_detail.html')
+
+def provider_estimate_accept(request, pk):
+    # 수락 처리 로직 추가
+    # 예: estimate.status = 'accepted'
+    # estimate.save()
+    return render(request, 'provider/estimates/provider_estimate_detail.html')
+
+
+def provider_estimate_form(request):
+    return render(request, 'provider/estimates/provider_estimate_form.html')

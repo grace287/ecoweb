@@ -1,149 +1,119 @@
-/* static/css/dashboard/status.css */
 .dashboard-container {
     padding: 2rem;
-    background-color: #f8f9fa;
+    background-color: #f9fafb;
+    min-height: calc(100vh - 64px);
 }
 
-.dashboard-title {
-    font-size: 1.5rem;
-    font-weight: bold;
+.dashboard-header {
     margin-bottom: 2rem;
+    padding: 1rem 2rem;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header h1 {
+    font-size: 1.875rem;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-message {
+    color: #6b7280;
+    font-size: 1rem;
 }
 
 .status-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
 }
 
 .status-card {
     background: white;
-    border-radius: 12px;
+    border-radius: 1rem;
     padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
 }
 
 .card-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 1rem;
 }
 
 .card-header h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #333;
+    font-size: 1.25rem;
+    color: #111827;
+    margin: 0;
 }
 
-/* 상태 원형 스타일 */
-.status-circles {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 2rem;
+.card-header img {
+    width: 1.5rem;
+    height: 1.5rem;
 }
 
-.status-circle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.circle {
-    width: 80px;
-    height: 80px;
-    border: 3px solid #2563eb;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 0.5rem;
-}
-
-.number {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #2563eb;
-}
-
-.label {
-    font-size: 0.9rem;
-    color: #666;
-}
-
-/* 프로그레스 바 스타일 */
-.progress-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.progress-item {
-    width: 100%;
-}
-
-.progress-header {
+.metric-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    color: #666;
 }
 
-.progress-bar {
-    width: 100%;
-    height: 6px;
-    background-color: #e5e7eb;
-    border-radius: 3px;
-    overflow: hidden;
+.metric-trend {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
 }
 
-.progress {
-    height: 100%;
-    background-color: #2563eb;
-    border-radius: 3px;
-    transition: width 0.3s ease;
+.metric-trend.positive {
+    background-color: #dcfce7;
+    color: #059669;
 }
 
-/* 공식 현황 메트릭 스타일 */
-.metrics {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.metric-item {
-    background-color: #f8f9fa;
-    padding: 1.5rem;
-    border-radius: 8px;
-}
-
-.metric-label {
-    display: block;
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 0.5rem;
+.pending-payments {
+    font-size: 0.875rem;
+    color: #9333ea;
+    background-color: #f3e8ff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
 }
 
 .metric-value {
-    display: block;
     font-size: 1.5rem;
-    font-weight: bold;
-    color: #2563eb;
+    font-weight: 600;
+    color: #111827;
 }
 
-/* 반응형 디자인 */
+/* 반응형 디자인 개선 */
 @media (max-width: 768px) {
+    .dashboard-container {
+        padding: 1rem;
+    }
+
     .status-grid {
         grid-template-columns: 1fr;
     }
 
-    .circle {
-        width: 60px;
-        height: 60px;
+    .status-card {
+        padding: 1rem;
     }
+}
 
-    .number {
-        font-size: 1.2rem;
-    }
+/* 애니메이션 효과 */
+.progress {
+    animation: progressFill 1s ease-out forwards;
+}
+
+@keyframes progressFill {
+    from { width: 0; }
+    to { width: var(--progress-width); }
 }

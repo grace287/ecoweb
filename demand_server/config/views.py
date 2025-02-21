@@ -5,7 +5,10 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
 from users.models import CustomUser
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
 import json
+import requests
 
 
 def landing(request):
@@ -125,3 +128,102 @@ def profile(request):
 def logout(request):
     auth_logut(request)
     return redirect('main')
+
+
+
+
+@login_required
+def estimate_list(request):
+    """견적 목록 조회"""
+    try:
+        # Common API 서버에서 견적 목록 조회
+        response = requests.get(
+            f"{settings.COMMON_API_URL}/api/estimates/",
+            params={'demand_user_id': request.user.id},
+            headers={'Authorization': f'Token {settings.COMMON_API_TOKEN}'}
+        )
+        estimates = response.json() if response.status_code == 200 else []
+    except Exception as e:
+        print(f"Error: {e}")
+        estimates = []
+        
+    return render(request, 'demand/estimates/demand_estimate_list.html', {
+        'estimates': estimates
+    })
+
+
+@login_required
+def estimate_detail(request, estimate_id):
+    """견적 상세 조회"""
+    try:
+        # Common API 서버에서 견적 상세 조회
+        response = requests.get(
+            f"{settings.COMMON_API_URL}/api/estimates/{estimate_id}/",
+            headers={'Authorization': f'Token {settings.COMMON_API_TOKEN}'}
+        )
+        if response.status_code == 200:
+            estimate = response.json()
+        else:
+            return redirect('estimate_list')
+    except Exception as e:
+        print(f"Error: {e}")
+        return redirect('estimate_list')
+        
+    return render(request, 'demand/estimates/demand_estimate_detail.html', {
+        'estimate': estimate
+    })
+
+def estimate_request_guest(request):
+    """비회원 견적 요청"""
+    if request.user.is_authenticated:
+        return redirect('estimate_request_form')
+        
+    if request.method == 'POST':
+        try:
+            # Common API 서버로 게스트 견적 요청 전송
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/api/estimates/",
+                json=request.POST.dict(),
+                headers={'Content-Type': 'application/json'}
+            )
+            if response.status_code == 201:
+                return JsonResponse({
+                    'success': True,
+                    'message': '견적 요청이 완료되었습니다. 로그인 후 확인해주세요.'
+                })
+            return JsonResponse({'success': False, 'error': '견적 요청 실패'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            
+    return render(request, 'demand/estimates/estimate_request_guest.html')
+
+@login_required
+def estimate_request_form(request):
+    """회원 견적 요청"""
+    if request.method == 'POST':
+        try:
+            # Common API 서버로 견적 요청 전송
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/api/estimates/",
+                json={
+                    **request.POST.dict(),
+                    'demand_user_id': request.user.id
+                },
+                headers={
+                    'Authorization': f'Token {settings.COMMON_API_TOKEN}',
+                    'Content-Type': 'application/json'
+                }
+            )
+            if response.status_code == 201:
+                return JsonResponse({'success': True, 'redirect_url': '/estimates/list/'})
+            return JsonResponse({'success': False, 'error': '견적 요청 실패'}, status=400)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+            
+    return render(request, 'demand/estimates/estimate_request_form.html')
+
+
+
+@login_required
+def chat(request):
+    return render(request, 'demand/chat/demand_chat.html')

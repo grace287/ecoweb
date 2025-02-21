@@ -3,41 +3,32 @@
 
 {% block extra_css %}
 <style>
+/* 컨테이너 및 헤더 */
 .estimate-list-container {
     max-width: 800px;
-    margin: 0 auto;
+    margin: 100px auto 0 auto;
     padding: 20px;
     background-color: #f5f5f5;
-    margin-top: 100px;
 }
-
-.estimate-header {
-    margin-bottom: 20px;
-}
-
 .estimate-header h1 {
     font-size: 28px;
     font-weight: bold;
     color: #333;
-    display: flex;
-    align-items: 
-    center;
+    margin-bottom: 10px;
 }
-
-
 .subtitle {
     font-size: 18px;
     color: #666;
     margin-left: 10px;
 }
 
+/* 리스트 영역 */
 .estimate-list {
-    background: white;
+    background: #ffffff;
     border-radius: 15px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     padding: 20px;
 }
-
 .list-header {
     display: flex;
     align-items: center;
@@ -46,26 +37,28 @@
     background-color: #f8f9fa;
     border-radius: 8px;
 }
-
 .list-header-icon {
     width: 24px;
     height: 24px;
     margin-right: 10px;
 }
+.list-header span {
+    font-size: 16px;
+    color: #333;
+}
 
+/* 견적 항목 */
 .estimate-item {
     display: flex;
     align-items: center;
-    padding: 20px;
+    padding: 15px;
     border-bottom: 1px solid #eee;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease;
 }
-
 .estimate-item:hover {
-    background-color: #f8f9fa;
+    background-color: #f1f1f1;
 }
-
 .company-initial {
     width: 40px;
     height: 40px;
@@ -79,83 +72,70 @@
     color: #495057;
     font-size: 18px;
 }
-
 .estimate-info {
     flex: 1;
 }
-
 .company-name {
     font-size: 16px;
     font-weight: 600;
     color: #212529;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
-
 .service-type {
     font-size: 14px;
     color: #6c757d;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
-
 .created-at {
     font-size: 12px;
     color: #adb5bd;
 }
 
+/* 액션 버튼 영역 */
 .estimate-stats {
     display: flex;
-    gap: 20px;
     align-items: center;
+    gap: 12px;
 }
-
 .stat-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    color: #868e96;
+    gap: 4px;
     font-size: 13px;
+    color: #868e96;
 }
-
-.stat-icon {
-    width: 18px;
-    height: 18px;
-    opacity: 0.7;
-}
-
-.estimate-actions {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
-
 .action-icon {
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
-
 .action-icon:hover {
     opacity: 1;
 }
-
 .action-icon img {
     width: 20px;
     height: 20px;
 }
-
 .star-icon {
     cursor: pointer;
     color: #adb5bd;
-    transition: color 0.2s;
+    transition: color 0.2s ease;
 }
-
 .star-icon.active {
     color: #ffd43b;
 }
-
 .chevron-right {
     margin-left: 10px;
     color: #ced4da;
+    font-size: 20px;
+}
+
+/* 임시 데이터 영역 */
+.no-estimates {
+    text-align: center;
+    padding: 40px 0;
+    color: #6c757d;
+    font-size: 16px;
 }
 </style>
 {% endblock %}
@@ -167,11 +147,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const starIcons = document.querySelectorAll('.star-icon');
     starIcons.forEach(star => {
         star.addEventListener('click', function(e) {
-            e.stopPropagation(); // 상위 요소 클릭 이벤트 전파 방지
+            e.stopPropagation();
             const estimateId = this.dataset.estimateId;
             this.classList.toggle('active');
             
-            // TODO: 서버에 즐겨찾기 상태 업데이트 요청
+            // 서버에 즐겨찾기 상태 업데이트 요청 (POST)
             fetch(`/estimates/${estimateId}/toggle-star/`, {
                 method: 'POST',
                 headers: {
@@ -209,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 <div class="estimate-stats">
                     <div class="stat-item">
-                        <a href="{% url 'estimates:estimate_detail' pk=estimate.pk %}" class="action-icon">
+                        <a href="{% url 'provider_estimate_detail' %}" class="action-icon">
                             <img src="{% static 'img/estimate/view.png' %}" alt="상세보기">
                         </a>
                     </div>
@@ -223,24 +203,45 @@ document.addEventListener('DOMContentLoaded', function() {
                             <img src="{% static 'img/estimate/estimate.png' %}" alt="견적작성">
                         </a>
                     </div>
-                    
-    
-                    <span class="star-icon {% if estimate.is_starred %}active{% endif %}" 
-                          data-estimate-id="{{ estimate.pk }}">
+                    <span class="star-icon {% if estimate.is_starred %}active{% endif %}" data-estimate-id="{{ estimate.pk }}">
                         ★
                     </span>
                 </div>
-                
-                
                 <span class="chevron-right">›</span>
             </div>
         {% empty %}
             <div class="no-estimates">
-                <p>아직 견적 요청이 없습니다.</p>
+                <p>현재 견적 요청이 없습니다. (임시 데이터 예시)</p>
+                <!-- 임시 데이터 예시 -->
+                <div class="estimate-item">
+                    <div class="company-initial">A</div>
+                    <div class="estimate-info">
+                        <div class="company-name">ABC Corp.</div>
+                        <div class="service-type">실내 공기질</div>
+                        <div class="created-at">2025-02-20</div>
+                    </div>
+                    <div class="estimate-stats">
+                        <div class="stat-item">
+                            <a href="{% url 'provider_estimate_detail'%}" class="action-icon">
+                                <img src="{% static 'img/estimate/view.png' %}" alt="상세보기">
+                            </a>
+                        </div>
+                        <div class="stat-item">
+                            <a href="#" class="action-icon">
+                                <img src="{% static 'img/estimate/chat.png' %}" alt="채팅하기">
+                            </a>
+                        </div>
+                        <div class="stat-item">
+                            <a href="{% url 'provider_estimate_form'%}" class="action-icon">
+                                <img src="{% static 'img/estimate/estimate.png' %}" alt="견적작성">
+                            </a>
+                        </div>
+                        <span class="star-icon">★</span>
+                    </div>
+                    <span class="chevron-right">›</span>
+                </div>
             </div>
         {% endfor %}
     </div>
 </div>
 {% endblock %}
-
-    
