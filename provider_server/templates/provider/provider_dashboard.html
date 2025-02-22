@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-
 {% load static %}
+{% load humanize %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/dashboard/dashboard.css' %}">
@@ -171,62 +171,45 @@
 }
 </style>
 {% block content %}
-
-<div class="dashboard-header">
-    <h2 style="margin-left: 100px">환영합니다, {{ request.user.username }}님!</h2>
-</div>
-
 <div class="dashboard-container">
-    <h2 class="dashboard-title">STATUS 상태</h2>
+    <div class="dashboard-header">
+        <h1>대시보드</h1>
+        <p class="welcome-message">환영합니다, {{ request.user.username }}님!</p>
+    </div>
 
     <div class="status-grid">
         <!-- 업무 현황 카드 -->
         <div class="status-card">
             <div class="card-header">
                 <img src="{% static 'img/icons/document.svg' %}" alt="업무 현황">
-                <p>업무 현황</p>
+                <h3>업무 현황</h3>
             </div>
 
             <div class="status-circles">
+                {% for status in status_data.values %}
                 <div class="circle-item">
-                    <div class="circle">
-                        <span>2</span>
+                    <div class="circle" style="border-color: {{ status.color }}">
+                        <span style="color: {{ status.color }}">{{ status.count }}</span>
                     </div>
-                    <p>진행중</p>
+                    <p>{{ status.label }}</p>
                 </div>
-                <div class="circle-item">
-                    <div class="circle">
-                        <span>4</span>
-                    </div>
-                    <p>모집</p>
-                </div>
-                <div class="circle-item">
-                    <div class="circle">
-                        <span>1</span>
-                    </div>
-                    <p>미팅</p>
-                </div>
+                {% endfor %}
             </div>
 
             <div class="progress-list">
+                {% for progress in progress_data %}
                 <div class="progress-item">
                     <div class="progress-label">
-                        <span>전체 진행률</span>
-                        <span>50%</span>
+                        <span>{{ progress.label }}</span>
+                        <span>{{ progress.value }}%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress" style="width: 50%"></div>
+                        <div class="progress" 
+                             style="width: {{ progress.value }}%; background-color: {{ progress.color }}">
+                        </div>
                     </div>
                 </div>
-                <div class="progress-item">
-                    <div class="progress-label">
-                        <span>가입 현황</span>
-                        <span>70%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress" style="width: 70%"></div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
 
@@ -234,21 +217,26 @@
         <div class="status-card">
             <div class="card-header">
                 <img src="{% static 'img/icons/chart.svg' %}" alt="정산 현황">
-                <p>정산 현황</p>
+                <h3>정산 현황</h3>
             </div>
 
             <div class="metrics-container">
                 <div class="metric-item">
-                    <p class="metric-label">금일 정산예정</p>
-                    <p class="metric-value">123,456</p>
+                    <div class="metric-header">
+                        <p class="metric-label">금일 정산예정</p>
+                        <span class="metric-trend positive">+{{ financial_data.monthly_growth }}%</span>
+                    </div>
+                    <p class="metric-value">₩{{ financial_data.today_settlement|intcomma }}</p>
                 </div>
                 <div class="metric-item">
-                    <p class="metric-label">누적 매출</p>
-                    <p class="metric-value">1,000,000,000</p>
+                    <div class="metric-header">
+                        <p class="metric-label">누적 매출</p>
+                        <span class="pending-payments">{{ financial_data.pending_payments }}건 대기</span>
+                    </div>
+                    <p class="metric-value">₩{{ financial_data.total_revenue|intcomma }}</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}

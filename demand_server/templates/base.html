@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoMatch - {% block title %}{% endblock %}</title>
     {% load static %}
+    
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <!-- 공통 CSS -->
     <link rel="stylesheet" href="{% static 'css/components/header.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/footer.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/nav-footer.css' %}">
-    {% block extra_css %}{% endblock %}
 </head>
 <body>
 

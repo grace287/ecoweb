@@ -1,0 +1,542 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load account socialaccount %}
+
+
+
+{% block content %}
+<style>
+    .chat-estimate-container {
+        max-width: 700px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .estimate-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .estimate-header h1 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 12px;
+    }
+
+    .estimate-header .highlight {
+        color: #2563eb;
+    }
+
+    .estimate-guide {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .guide-message {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 8px;
+    }
+
+    .chat-box {
+        background: #2563eb;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        color: white;
+    }
+
+    .chat-title {
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .option-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .option-btn {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .option-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .input-group {
+        display: flex;
+        gap: 12px;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .chat-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .submit-btn {
+        padding: 12px 24px;
+        background: white;
+        color: #2563eb;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+        background: #f8f9fa;
+    }
+
+    .date-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .date-option {
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+    }
+
+    .date-option.selected {
+        background: white;
+        color: #2563eb;
+    }
+
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .summary-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .summary-card img {
+        width: 24px;
+        height: 24px;
+        margin-bottom: 8px;
+    }
+
+    .summary-card .label {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+
+    .summary-card .value {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+
+    .request-btn {
+        text-align: center;
+        width: 30%;
+        padding: 14px;
+        background: #ffffff;
+        color: #2563eb;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .request-btn:hover {
+        background: #16a34a;
+    }
+
+    .signup-guide {
+        background: #2563eb;
+        text-align: center;
+        padding: 24px;
+        border-radius: 12px;
+    }
+
+    .signup-guide .chat-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .signup-guide .sub-title {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 24px;
+    }
+
+    .signup-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .signup-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .signup-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .signup-btn img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .signup-btn.email {
+        background: white;
+        color: #2563eb;
+        border: none;
+    }
+
+    .signup-btn.kakao {
+        background: #FEE500;
+        color: #000000;
+        border: none;
+    }
+
+    .signup-btn.naver {
+        background: #03C75A;
+        color: white;
+        border: none;
+    }
+
+    .signup-btn.google {
+        background: #ffffff;
+        color: #222222;
+        border: none;
+    }
+
+    @media (max-width: 480px) {
+        .input-group {
+            flex-direction: column;
+        }
+
+        .submit-btn {
+            width: 100%;
+        }
+
+        .summary-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .signup-buttons {
+            padding: 0 20px;
+        }
+
+        .signup-btn {
+            font-size: 14px;
+            padding: 12px;
+        }
+    }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatFlow = {
+        data: {
+            serviceType: '',
+            location: '',
+            date: '',
+            address: ''
+        },
+
+        init() {
+            this.bindEvents();
+        },
+
+        bindEvents() {
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    this.data.serviceType = e.target.dataset.value;
+                    this.updateSummary();
+                });
+            });
+
+            document.querySelectorAll('.submit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const input = e.target.closest('.chat-content').querySelector('input');
+                    if (input && input.value.trim()) {
+                        if (input.classList.contains('chat-input')) {
+                            this.data.address = input.value;
+                        }
+                        this.updateSummary();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.date-option').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.date-option').forEach(b => b.classList.remove('selected'));
+                    e.target.classList.add('selected');
+                    this.data.date = e.target.textContent;
+                    this.updateSummary();
+                });
+            });
+
+            document.querySelector('.request-btn')?.addEventListener('click', () => {
+                this.submitRequest();
+            });
+        },
+
+        updateSummary() {
+            document.querySelector('[data-type="service"]').textContent = this.data.serviceType;
+            document.querySelector('[data-type="location"]').textContent = this.data.location;
+            document.querySelector('[data-type="date"]').textContent = this.data.date;
+            document.querySelector('[data-type="address"]').textContent = this.data.address;
+        },
+
+        async submitRequest() {
+            try {
+                const response = await fetch('/api/estimates/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(this.data)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('견적 요청 성공:', data);
+
+                    // 회원가입 안내 섹션 표시
+                    document.querySelector('[data-step="5"]').style.display = 'block';
+
+                    // 견적 요청 버튼 비활성화
+                    document.querySelector('.request-btn').disabled = true;
+                    document.querySelector('.request-btn').textContent = '견적 요청 완료';
+                } else {
+                    throw new Error('견적 요청 실패');
+                }
+            } catch (error) {
+                console.error('견적 요청 오류:', error);
+                alert('견적 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
+            }
+        }
+    };
+
+    chatFlow.init();
+
+    // CSRF 토큰 가져오기
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+
+function showSignupGuide() {
+    const signupGuide = document.querySelector('.signup-guide');
+    if (signupGuide) {
+        signupGuide.style.display = 'block';
+
+        // 스크롤을 회원가입 안내 섹션으로 부드럽게 이동
+        signupGuide.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+document.querySelector('.request-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    showSignupGuide();
+});
+
+// document.querySelectorAll('.signup-btn').forEach(btn => {
+//     btn.addEventListener('click', (e) => {
+//         const signupType = e.currentTarget.classList[1]; // email, kakao, naver, payco
+
+//         switch(signupType) {
+//             case 'email':
+//                 window.location.href = '/accounts/signup/';
+//                 break;
+//             case 'kakao':
+//                 window.location.href = '/accounts/kakao/login/';
+//                 break;
+//             case 'naver':
+//                 window.location.href = '/accounts/naver/login/';
+//                 break;
+//             case 'payco':
+//                 window.location.href = '/accounts/payco/login/';
+//                 break;
+//         }
+//     });
+// });
+</script>
+<!-- templates/chat_estimate.html -->
+<div class="chat-estimate-container">
+
+    <div class="estimate-header">
+
+        <h1>채팅형 견적요청 <span class="highlight">시스템</span></h1>
+        <p>고객사에서 편리하고 신속한 견적을 드리기 위한<br>메시지 스타일의 견적요청 시스템</p>
+    </div>
+
+    <hr>
+
+    <div class="estimate-guide">
+        <p class="quide-message">채팅형 견적 시스템에 오신 것을 환영합니다</p>
+        <p class="quide-message">원하시는 서비스를 선택해주세요.</p>
+    </div>
+
+
+    <div class="chat-flow">
+        <!-- 선택 옵션 박스들 -->
+        <div class="chat-box-container">
+            <div class="chat-box" data-step="1">
+                <div class="chat-content">
+                    <p class="chat-title">측정이 필요한 항목을 선택하세요.</p>
+                    <div class="option-buttons">
+                        <button class="option-btn" data-value="실내 공기질 측정">실내 공기질 측정</button>
+                        <button class="option-btn" data-value="소음 · 진동">소음 · 진동</button>
+                    </div>
+                    <button class="submit-btn">선택 완료</button>
+                </div>
+            </div>
+
+            <div class="chat-box" data-step="2">
+                <div class="chat-content">
+                    <p class="chat-title">측정 장소를 입력하세요.</p>
+                    <div class="option-buttons">
+                        <button class="option-btn" data-value="air">지하주차장</button>
+                        <button class="option-btn" data-value="noise">사무실</button>
+                    </div>
+                    <button class="submit-btn">선택 완료</button>
+                </div>
+            </div>
+
+            <div class="chat-box" data-step="3">
+                <div class="chat-content">
+                    <p class="chat-title">주소를 입력하세요.</p>
+                    <div class="input-group">
+                        <input type="text" class="chat-input" placeholder="ex) 대전광역시 유성구 국제과학로 5(신동)">
+                        <button class="submit-btn">입력 완료</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-box" data-step="4">
+                <div class="chat-content">
+                    <p class="chat-title">측정 날짜를 선택하세요.</p>
+                    <div class="date-picker-group">
+                        <div class="date-grid">
+                            <button class="date-option">최대한 빨리</button>
+                            <button class="date-option">3일 이내로</button>
+                            <button class="date-option">1주일 이내로</button>
+                            <button class="date-option">한 달 이내로</button>
+                        </div>
+                        <button class="submit-btn">선택 완료</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-box summary" data-step="5">
+                <div class="chat-content">
+                    <p class="chat-title">입력하신 내용을 확인해주세요.</p>
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <img src="{% static 'img/providers/service-type.png' %}" alt="서비스 종류">
+                            <span class="value">서비스 종류</span>
+                            <span class="label" data-type="service">실내 공기질</span>
+                        </div>
+                        <div class="summary-card">
+                            <img src="{% static 'img/providers/location-type.png' %}" alt="건물 종류">
+                            <span class="value">건물 종류</span>
+                            <span class="label" data-type="location">지하주차장</span>
+                        </div>
+                        <div class="summary-card">
+                            <img src="{% static 'img/providers/schedule.png' %}" alt="시기">
+                            <span class="value">시기</span>
+                            <span class="label" data-type="date">3일 이내로</span>
+                        </div>
+                    </div>
+                    <div class="address-container">
+                        <p>주소</p>
+                        <p data-type="address">대전광역시 유성구 국제과학로 5(신동)</p>
+                    </div>
+                    <li><a href="{% url 'estimate_request_guest' %}">견적 신청</a></li>
+
+                    <!-- <button class="request-btn">견적요청 </button> -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 견적 요청 완료 후 회원가입 안내 섹션 추가 -->
+<div class="chat-box signup-guide" data-step="6">
+    <div class="chat-content">
+        <p class="chat-title">요청하신 내용으로 견적을 요청하실 수 있어요.</p>
+        <p class="sub-title">회원가입을 하신 후 무료 견적을 받아보세요!</p>
+
+        <div class="signup-buttons">
+            <button class="signup-btn email" onclick="location.href='{% url 'signup' %}'">
+                <img src="{% static 'img/providers/email-icon.png' %}" alt="이메일">
+                이메일로 가입
+            </button>
+            <button class="signup-btn kakao" onclick="location.href='http://localhost:8003/auth/kakao/'">
+                <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오">
+                카카오로 시작하기
+            </button>
+            <button class="signup-btn naver" onclick="location.href='http://localhost:8003/auth/naver/'">
+                <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버">
+                네이버로 시작하기
+            </button>
+            <button class="signup-btn google onclick="location.href='http://localhost:8003/auth/google/'">
+                <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글">
+                구글로 시작하기
+            </button>
+        </div>
+
+    </div>
+</div>
+</div>
+
+</div>
+{% endblock %}
