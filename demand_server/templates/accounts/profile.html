@@ -1,36 +1,110 @@
 {% extends 'base.html' %}
 {% load static %}
 
-<!-- ui가 구현되면 여기에 추가해야함 -->
+{% block title %}마이페이지{% endblock %}
+
 {% block content %}
 <div class="profile-container">
     <div class="profile-header">
-        <h1>프로필</h1>
+        <h1>내 정보</h1>
     </div>
-    <h2><span class="company-name">{{ request.user.username }}</span> 님</h2>
+
+    <h2><span class="company-name">{{ user.username }}</span> 님</h2>
+
     <div class="profile-body">
-        <!-- 로그아웃 버튼 추가 -->
-        <form action="{% url 'logout' %}" method="post">
+        <h3>기본 정보</h3>
+        <div class="form-group">
+            <label for="username">아이디</label>
+            <input type="text" id="username" name="username" value="{{ user.username }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="email">이메일</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="company_name">업체명</label>
+            <input type="text" id="company_name" name="company_name" value="{{ user.profile.company_name }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="business_phone_number">담당자 휴대폰 번호</label>
+            <input type="tel" id="business_phone_number" name="business_phone_number" value="{{ user.profile.business_phone_number }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="address">주소</label>
+            <input type="text" id="address" name="address" value="{{ user.profile.address }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label for="address_detail">상세 주소</label>
+            <input type="text" id="address_detail" name="address_detail" value="{{ user.profile.address_detail }}" readonly>
+        </div>
+    </div>
+
+    <div class="profile-footer">
+        <form id="logoutForm" action="{% url 'logout' %}" method="post">
             {% csrf_token %}
-            <button type="submit">로그아웃</button>
+            <button type="button" class="logout-btn" onclick="confirmLogout()">로그아웃</button>
         </form>
     </div>
-    
-
 </div>
+
+<script>
+    function confirmLogout() {
+        const logoutConfirm = confirm("로그아웃 하시겠습니까?");
+        if (logoutConfirm) {
+            document.getElementById("logoutForm").submit(); // ✅ 폼 제출 방식으로 로그아웃
+        }
+    }
+</script>
+
 <style>
     .profile-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin-top: 100px;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
     }
-    .profile-body a {
-        text-decoration: none;
-        color: black;
+    .profile-header h1 {
+        font-size: 24px;
+        color: #333;
+        margin-bottom: 20px;
     }
-
+    .profile-body {
+        text-align: left;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .logout-btn {
+        width: 100%;
+        padding: 10px;
+        background-color: #ff4d4d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .logout-btn:hover {
+        background-color: #cc0000;
+    }
 </style>
-
 {% endblock %}
