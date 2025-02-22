@@ -151,25 +151,29 @@ def estimate_list(request):
 
 
 @login_required
-def estimate_detail(request, estimate_id):
-    """견적 상세 조회"""
-    try:
-        # Common API 서버에서 견적 상세 조회
-        response = requests.get(
-            f"{settings.COMMON_API_URL}/api/estimates/{estimate_id}/",
-            headers={'Authorization': f'Token {settings.COMMON_API_TOKEN}'}
-        )
-        if response.status_code == 200:
-            estimate = response.json()
-        else:
-            return redirect('estimate_list')
-    except Exception as e:
-        print(f"Error: {e}")
-        return redirect('estimate_list')
+# def estimate_detail(request, estimate_id):
+#     """견적 상세 조회"""
+#     try:
+#         # Common API 서버에서 견적 상세 조회
+#         response = requests.get(
+#             f"{settings.COMMON_API_URL}/api/estimates/{estimate_id}/",
+#             headers={'Authorization': f'Token {settings.COMMON_API_TOKEN}'}
+#         )
+#         if response.status_code == 200:
+#             estimate = response.json()
+#         else:
+#             return redirect('estimate_list')
+#     except Exception as e:
+#         print(f"Error: {e}")
+#         return redirect('estimate_list')
         
-    return render(request, 'demand/estimates/demand_estimate_detail.html', {
-        'estimate': estimate
-    })
+#     return render(request, 'demand/estimates/demand_estimate_detail.html', {
+#         'estimate': estimate
+#     })
+
+
+def estimate_detail(request):
+    return render(request, 'demand/estimates/demand_estimate_detail.html')
 
 def estimate_request_guest(request):
     """비회원 견적 요청"""
