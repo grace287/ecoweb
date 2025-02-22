@@ -54,12 +54,18 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.naver',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.kakao',
     'corsheaders',
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
 SITE_ID = 1
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # 반드시 CommonMiddleware 앞에 위치
@@ -71,6 +77,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware', 
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # 기본 인증 백엔드
+    'allauth.account.auth_backends.AuthenticationBackend',  # 소셜 로그인 백엔드
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -184,3 +195,10 @@ REST_FRAMEWORK = {
 
 # 토큰 인증 설정
 TOKEN_EXPIRED_AFTER_SECONDS = 86400  # 24시간
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+    }
+}

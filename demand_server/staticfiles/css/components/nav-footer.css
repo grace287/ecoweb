@@ -1,0 +1,181 @@
+/* nav-footer.css */
+.nav-footer {
+    background-color: #f9fafb;
+    padding: 80px 0;
+    border-top: 1px solid #e5e7eb;
+ }
+ 
+ .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 60px;
+ }
+ 
+ /* 연락처 정보 영역 */
+ .contact-info {
+    flex: 0 0 320px;
+ }
+ 
+ .contact-info h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 24px;
+ }
+ 
+ .contact-info p {
+    font-size: 14px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin-bottom: 12px;
+ }
+ 
+ .contact-info strong {
+    color: #2563eb;
+    font-weight: 600;
+ }
+ 
+ /* 네비게이션 정보 영역 */
+ .nav-info {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 40px;
+ }
+ 
+ .nav-info > div {
+    min-width: 140px;
+ }
+ 
+ .nav-info h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 16px;
+ }
+ 
+ .nav-info ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+ }
+ 
+ .nav-info ul li {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+ }
+ 
+ .nav-info ul li:hover {
+    color: #2563eb;
+ }
+ 
+ /* 서비스 정보 섹션 */
+ .service-info ul {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 12px;
+ }
+ 
+ /* 반응형 디자인 */
+ @media (max-width: 1024px) {
+    .footer-content {
+        flex-direction: column;
+        gap: 40px;
+    }
+ 
+    .contact-info {
+        flex: none;
+        width: 100%;
+    }
+ 
+    .nav-info {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+ }
+ 
+ @media (max-width: 768px) {
+    .nav-footer {
+        padding: 40px 0;
+    }
+ 
+    .nav-info {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+    }
+ }
+ 
+ @media (max-width: 480px) {
+    .nav-info {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+ 
+    .contact-info h2 {
+        font-size: 18px;
+    }
+ 
+    .contact-info p {
+        font-size: 13px;
+    }
+ }
+ 
+ /* 접근성 */
+ .nav-info ul li:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+ }
+ 
+ /* 애니메이션 효과 */
+ .nav-info ul li {
+    position: relative;
+ }
+ 
+ .nav-info ul li::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background-color: #2563eb;
+    transition: width 0.3s ease;
+ }
+ 
+ .nav-info ul li:hover::after {
+    width: 100%;
+ }
+ 
+ /* 다크 모드 지원 */
+ @media (prefers-color-scheme: dark) {
+    .nav-footer {
+        background-color: #1f2937;
+        border-top-color: #374151;
+    }
+ 
+    .contact-info h2 {
+        color: #f9fafb;
+    }
+ 
+    .contact-info p {
+        color: #9ca3af;
+    }
+ 
+    .nav-info h3 {
+        color: #f9fafb;
+    }
+ 
+    .nav-info ul li {
+        color: #9ca3af;
+    }
+ 
+    .nav-info ul li:hover {
+        color: #60a5fa;
+    }
+ }

@@ -323,4 +323,20 @@ def estimate_request_form(request):
 
 @login_required
 def chat(request):
-    return render(request, 'demand/chat/demand_chat.html')
+    return render(request, 'demand/estimates/estimate_request_guest.html')
+
+
+def chat_estimate(request):
+    service_type = request.POST.get('service_type', '미선택')  # POST 데이터에서 가져옴
+    location_type = request.POST.get('location_type', '미선택')
+    selected_date = request.POST.get('selected_date', '미선택')
+    selected_address = request.POST.get('selected_address', '미입력')
+    # ...
+    context = {
+        'service_type': service_type,
+        'location_type': location_type,
+        'selected_date': selected_date,
+        'selected_address': selected_address,
+        # ...
+    }
+    return render(request, 'demand/estimates/estimate_request_guest.html', context)

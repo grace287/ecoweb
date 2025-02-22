@@ -1,4 +1,5 @@
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -8,12 +9,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w#g5sx=j*_hbn5b9%qk$2x^amvs&f&cl0!nr9+h9*z^^tl-#1i'
 
+SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+PORT = config('PORT', default='8002')
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -61,12 +63,16 @@ REST_FRAMEWORK = {
 
 # CORS 설정
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",  # Provider Server
+    # "http://localhost:8000",  # Demand Server
+    # "http://localhost:8001",  # Provider Server
+    "http://localhost:8002",  # Admin Panel
 ]
 
+CORS_ALLOW_CREDENTIALS = True
+
 # Provider Server API 설정
-PROVIDER_API_URL = 'http://localhost:8000'  # provider_server URL
-PROVIDER_API_KEY = 'your-api-key'           # provider_server API 키
+PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')  # provider_server URL
+PROVIDER_API_KEY = 'your-api-key-here'      # provider_server에서 발급받은 API 키
 
 ROOT_URLCONF = 'config.urls'
 
@@ -88,8 +94,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-LOGIN_URL = '/'  # 로그인 URL 설정
-LOGIN_REDIRECT_URL = '/dashboard/'  # 로그인 성공 시 리다이렉트 URL
+LOGIN_URL = '/'  # 로그인 페이지 URL
+LOGIN_REDIRECT_URL = '/dashboard/'  # 로그인 성공 후 리디렉션 URL
+SESSION_COOKIE_AGE = 1209600  # 2주 (자동 로그인 시 세션 유지 기간)
 
 
 # Database
@@ -138,6 +145,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

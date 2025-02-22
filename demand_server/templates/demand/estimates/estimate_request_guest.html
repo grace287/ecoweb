@@ -2,418 +2,310 @@
 {% load static %}
 {% load account socialaccount %}
 
-
-
 {% block content %}
 <style>
+    .summary-card .label {
+        font-weight: normal;
+        margin-top: 8px;
+        color: #555;
+    }
+
+    /* 입력 내용 표시 및 스타일 */
+    .chat-box.summary .chat-content {
+        padding: 20px; /* 여백 조정 */
+    }
+    .summary-card {
+        flex: 1;
+        text-align: left; /* 왼쪽 정렬 */
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        color: #333;
+        font-size: 14px;
+        font-weight: normal; /* 기본적으로 normal */
+        display: flex; /* flexbox 사용 */
+        align-items: center; /* 아이템 수직 가운데 정렬 */
+        gap: 10px; /* 이미지와 텍스트 간 간격 */
+    }
+
+    /* 주소 표시 스타일 */
+    .address-container {
+        margin-top: 16px;
+    }
+
+    .address-container p {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 4px; /* 줄 간격 조정 */
+        color: #333;
+    }
+    .address-container .label {
+        color: #555;
+        font-weight: normal;
+    }
+
+
+    /* 회원가입 안내 */
+    .signup-guide {
+        display: none; /* 기본적으로 숨김 */
+        background: #2563eb;
+        text-align: center;
+        padding: 24px;
+        border-radius: 12px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.3s ease;
+        margin-top: 20px;
+        width: 100%;
+        max-width: 700px;
+        margin: 20px auto; /* 컨테이너에 맞춰 margin 조정 */
+    }
+
+
+    .signup-guide.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .signup-guide .chat-title {
+        color: white;
+    }
+
+    .signup-guide .sub-title{
+        color: white;
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+
+    .signup-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center; /* 버튼 가운데 정렬 */
+        gap: 16px;
+    }
+    /* 전체 컨테이너 */
     .chat-estimate-container {
         max-width: 700px;
         margin: 40px auto;
         padding: 0 20px;
+        font-family: 'Segoe UI', sans-serif;
     }
 
+    /* 헤더 */
     .estimate-header {
         text-align: center;
         margin-bottom: 40px;
     }
-
     .estimate-header h1 {
         font-size: 24px;
+        font-weight: bold;
         color: #333;
         margin-bottom: 12px;
     }
-
     .estimate-header .highlight {
         color: #2563eb;
     }
 
-    .estimate-guide {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-
-    .guide-message {
-        font-size: 16px;
-        color: #666;
-        margin-bottom: 8px;
-    }
-
+    /* 채팅 스타일 */
     .chat-box {
         background: #2563eb;
         border-radius: 12px;
         padding: 24px;
         margin-bottom: 20px;
         color: white;
+        transition: all 0.3s ease;
     }
-
     .chat-title {
-        font-size: 16px;
-        margin-bottom: 20px;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 12px;
     }
-
+    
+    /* 옵션 버튼 */
     .option-buttons {
         display: flex;
-        flex-direction: column;
-        gap: 12px;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
     }
-
     .option-btn {
-        width: 100%;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .option-btn:hover {
-        background: rgba(255, 255, 255, 0.2);
-    }
-
-    .input-group {
-        display: flex;
-        gap: 12px;
-    }
-
-    .chat-input {
-        flex: 1;
-        padding: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-    }
-
-    .chat-input::placeholder {
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    .submit-btn {
-        padding: 12px 24px;
-        background: white;
-        color: #2563eb;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .submit-btn:hover {
-        background: #f8f9fa;
-    }
-
-    .date-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-
-    .date-option {
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: white;
-        cursor: pointer;
-    }
-
-    .date-option.selected {
-        background: white;
-        color: #2563eb;
-    }
-
-    .summary-cards {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-
-    .summary-card {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 16px;
-        text-align: center;
-    }
-
-    .summary-card img {
-        width: 24px;
-        height: 24px;
-        margin-bottom: 8px;
-    }
-
-    .summary-card .label {
-        display: block;
-        font-size: 16px;
-        margin-bottom: 4px;
-    }
-
-    .summary-card .value {
-        font-size: 12px;
-        opacity: 0.8;
-    }
-
-    .request-btn {
-        text-align: center;
-        width: 30%;
-        padding: 14px;
-        background: #ffffff;
-        color: #2563eb;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-    }
-
-    .request-btn:hover {
-        background: #16a34a;
-    }
-
-    .signup-guide {
-        background: #2563eb;
-        text-align: center;
-        padding: 24px;
-        border-radius: 12px;
-    }
-
-    .signup-guide .chat-title {
-        font-size: 18px;
-        font-weight: 600;
-        margin-bottom: 8px;
-    }
-
-    .signup-guide .sub-title {
-        font-size: 14px;
-        color: rgba(255, 255, 255, 0.8);
-        margin-bottom: 24px;
-    }
-
-    .signup-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        max-width: 400px;
-        margin: 0 auto;
-    }
-
-    .signup-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 14px;
+        padding: 12px 20px;
         border-radius: 8px;
         font-size: 16px;
         font-weight: 500;
         cursor: pointer;
-        transition: transform 0.2s ease;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        transition: background 0.3s ease;
+    }
+    .option-btn.active, .option-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
     }
 
-    .signup-btn:hover {
-        transform: translateY(-2px);
+    /* 입력 필드 */
+    .input-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
     }
-
-    .signup-btn img {
-        width: 20px;
-        height: 20px;
+    .chat-input {
+        flex: 1;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        font-size: 14px;
+        color: #333;
     }
-
-    .signup-btn.email {
+    .address-search-btn {
+        padding: 10px 16px;
         background: white;
         color: #2563eb;
-        border: none;
+        font-size: 14px;
+        font-weight: bold;
+        border: 1px solid #2563eb;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
     }
-
-    .signup-btn.kakao {
-        background: #FEE500;
-        color: #000000;
-        border: none;
-    }
-
-    .signup-btn.naver {
-        background: #03C75A;
+    .address-search-btn:hover {
+        background: #2563eb;
         color: white;
-        border: none;
     }
 
-    .signup-btn.google {
-        background: #ffffff;
-        color: #222222;
-        border: none;
+    /* 날짜 선택 */
+    .date-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .date-option {
+        padding: 10px;
+        border-radius: 6px;
+        background: white;
+        color: #2563eb;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        border: 1px solid #ddd;
+        transition: background 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
+    .date-option.active, .date-option:hover {
+        background: #2563eb;
+        color: white;
     }
 
-    @media (max-width: 480px) {
-        .input-group {
-            flex-direction: column;
-        }
+    /* 요약 섹션 */
+    .summary-cards {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .summary-card {
+        flex: 1;
+        text-align: center;
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        color: #333;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    .summary-card img {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 8px;
+    }
 
-        .submit-btn {
-            width: 100%;
-        }
+    .address-container p:first-child {
+        font-size: 16px;
+        font-weight: bold;
+        margin: 0 0 4px;
+        color: white;
+    }
+    .address-container p[data-type="selected-address"] {
+        font-size: 16px;
+        color: white;
+        transition: opacity 0.3s ease;
+    }
 
-        .summary-cards {
-            grid-template-columns: 1fr;
-        }
+    /* 회원가입 안내 */
+    .signup-guide {
+        display: none; /* 기본적으로 숨김 */
+        background: #2563eb;
+        text-align: center;
+        padding: 24px;
+        border-radius: 12px;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.3s ease;
+    }
+    .signup-guide.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-        .signup-buttons {
-            padding: 0 20px;
-        }
+    /* 회원가입 버튼 */
+    .signup-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 20px;
+    }
+    .signup-btn {
+        border:none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .signup-btn img {
+        width: 24px;
+        height: 24px;
+    }
+    .signup-btn.email { background: white; color: #2563eb; }
+    .signup-btn.kakao { background: #FEE500; color: black; }
+    .signup-btn.naver { background: #03C75A; color: white; }
+    .signup-btn.google { background: white; color: black; }
 
-        .signup-btn {
-            font-size: 14px;
-            padding: 12px;
-        }
+    .submit-btn {
+        padding: 10px;
+    background: white;
+    color: #2563eb;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    }
+
+    .request-btn {
+        padding: 10px;
+        background: white;
+        color: #2563eb;
+        font-size: 14px;
+        font-weight: bold;
+        border: 1px solid #2563eb;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
     }
 </style>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const chatFlow = {
-        data: {
-            serviceType: '',
-            location: '',
-            date: '',
-            address: ''
-        },
 
-        init() {
-            this.bindEvents();
-        },
-
-        bindEvents() {
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    this.data.serviceType = e.target.dataset.value;
-                    this.updateSummary();
-                });
-            });
-
-            document.querySelectorAll('.submit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const input = e.target.closest('.chat-content').querySelector('input');
-                    if (input && input.value.trim()) {
-                        if (input.classList.contains('chat-input')) {
-                            this.data.address = input.value;
-                        }
-                        this.updateSummary();
-                    }
-                });
-            });
-
-            document.querySelectorAll('.date-option').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.date-option').forEach(b => b.classList.remove('selected'));
-                    e.target.classList.add('selected');
-                    this.data.date = e.target.textContent;
-                    this.updateSummary();
-                });
-            });
-
-            document.querySelector('.request-btn')?.addEventListener('click', () => {
-                this.submitRequest();
-            });
-        },
-
-        updateSummary() {
-            document.querySelector('[data-type="service"]').textContent = this.data.serviceType;
-            document.querySelector('[data-type="location"]').textContent = this.data.location;
-            document.querySelector('[data-type="date"]').textContent = this.data.date;
-            document.querySelector('[data-type="address"]').textContent = this.data.address;
-        },
-
-        async submitRequest() {
-            try {
-                const response = await fetch('/api/estimates/create/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify(this.data)
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('견적 요청 성공:', data);
-
-                    // 회원가입 안내 섹션 표시
-                    document.querySelector('[data-step="5"]').style.display = 'block';
-
-                    // 견적 요청 버튼 비활성화
-                    document.querySelector('.request-btn').disabled = true;
-                    document.querySelector('.request-btn').textContent = '견적 요청 완료';
-                } else {
-                    throw new Error('견적 요청 실패');
-                }
-            } catch (error) {
-                console.error('견적 요청 오류:', error);
-                alert('견적 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
-            }
-        }
-    };
-
-    chatFlow.init();
-
-    // CSRF 토큰 가져오기
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-});
-
-function showSignupGuide() {
-    const signupGuide = document.querySelector('.signup-guide');
-    if (signupGuide) {
-        signupGuide.style.display = 'block';
-
-        // 스크롤을 회원가입 안내 섹션으로 부드럽게 이동
-        signupGuide.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-document.querySelector('.request-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    showSignupGuide();
-});
-
-// document.querySelectorAll('.signup-btn').forEach(btn => {
-//     btn.addEventListener('click', (e) => {
-//         const signupType = e.currentTarget.classList[1]; // email, kakao, naver, payco
-
-//         switch(signupType) {
-//             case 'email':
-//                 window.location.href = '/accounts/signup/';
-//                 break;
-//             case 'kakao':
-//                 window.location.href = '/accounts/kakao/login/';
-//                 break;
-//             case 'naver':
-//                 window.location.href = '/accounts/naver/login/';
-//                 break;
-//             case 'payco':
-//                 window.location.href = '/accounts/payco/login/';
-//                 break;
-//         }
-//     });
-// });
-</script>
 <!-- templates/chat_estimate.html -->
 <div class="chat-estimate-container">
-
     <div class="estimate-header">
-
         <h1>채팅형 견적요청 <span class="highlight">시스템</span></h1>
         <p>고객사에서 편리하고 신속한 견적을 드리기 위한<br>메시지 스타일의 견적요청 시스템</p>
     </div>
@@ -425,7 +317,6 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
         <p class="quide-message">원하시는 서비스를 선택해주세요.</p>
     </div>
 
-
     <div class="chat-flow">
         <!-- 선택 옵션 박스들 -->
         <div class="chat-box-container">
@@ -433,8 +324,8 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
                 <div class="chat-content">
                     <p class="chat-title">측정이 필요한 항목을 선택하세요.</p>
                     <div class="option-buttons">
-                        <button class="option-btn" data-value="실내 공기질 측정">실내 공기질 측정</button>
-                        <button class="option-btn" data-value="소음 · 진동">소음 · 진동</button>
+                        <button class="option-btn" data-target="service" data-value="실내 공기질 측정">실내 공기질 측정</button>
+                        <button class="option-btn" data-target="service" data-value="소음 · 진동">소음 · 진동</button>
                     </div>
                     <button class="submit-btn">선택 완료</button>
                 </div>
@@ -442,10 +333,10 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
 
             <div class="chat-box" data-step="2">
                 <div class="chat-content">
-                    <p class="chat-title">측정 장소를 입력하세요.</p>
+                    <p class="chat-title">측정 장소를 선택하세요.</p>
                     <div class="option-buttons">
-                        <button class="option-btn" data-value="air">지하주차장</button>
-                        <button class="option-btn" data-value="noise">사무실</button>
+                        <button class="option-btn" data-target="location" data-value="지하주차장">지하주차장</button>
+                        <button class="option-btn" data-target="location" data-value="사무실">사무실</button>
                     </div>
                     <button class="submit-btn">선택 완료</button>
                 </div>
@@ -453,10 +344,10 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
 
             <div class="chat-box" data-step="3">
                 <div class="chat-content">
-                    <p class="chat-title">주소를 입력하세요.</p>
+                    <p class="chat-title">주소를 검색하세요.</p>
                     <div class="input-group">
-                        <input type="text" class="chat-input" placeholder="ex) 대전광역시 유성구 국제과학로 5(신동)">
-                        <button class="submit-btn">입력 완료</button>
+                        <input type="text" id="address-input" class="chat-input" placeholder="예) 대전광역시 유성구 국제과학로 5(신동)">
+                        <button class="address-search-btn" onclick="execDaumPostcode()">주소 검색</button>
                     </div>
                 </div>
             </div>
@@ -466,10 +357,10 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
                     <p class="chat-title">측정 날짜를 선택하세요.</p>
                     <div class="date-picker-group">
                         <div class="date-grid">
-                            <button class="date-option">최대한 빨리</button>
-                            <button class="date-option">3일 이내로</button>
-                            <button class="date-option">1주일 이내로</button>
-                            <button class="date-option">한 달 이내로</button>
+                            <button class="date-option" data-target="date" data-value="최대한 빨리">최대한 빨리</button>
+                            <button class="date-option" data-target="date" data-value="3일 이내로">3일 이내로</button>
+                            <button class="date-option" data-target="date" data-value="1주일 이내로">1주일 이내로</button>
+                            <button class="date-option" data-target="date" data-value="한 달 이내로">한 달 이내로</button>
                         </div>
                         <button class="submit-btn">선택 완료</button>
                     </div>
@@ -480,63 +371,146 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
                 <div class="chat-content">
                     <p class="chat-title">입력하신 내용을 확인해주세요.</p>
                     <div class="summary-cards">
+                        <!--  (이전 내용) -->
                         <div class="summary-card">
                             <img src="{% static 'img/providers/service-type.png' %}" alt="서비스 종류">
-                            <span class="value">서비스 종류</span>
-                            <span class="label" data-type="service">실내 공기질</span>
+                            <span>서비스 종류</span>
+                            <span class="label" data-type="service">
+                                <!-- 여기에 값 출력 -->
+                                {{service_type}}
+                            </span>
                         </div>
                         <div class="summary-card">
                             <img src="{% static 'img/providers/location-type.png' %}" alt="건물 종류">
-                            <span class="value">건물 종류</span>
-                            <span class="label" data-type="location">지하주차장</span>
+                            <span>건물 종류</span>
+                            <span class="label" data-type="location">{{location_type}}</span>
                         </div>
                         <div class="summary-card">
                             <img src="{% static 'img/providers/schedule.png' %}" alt="시기">
-                            <span class="value">시기</span>
-                            <span class="label" data-type="date">3일 이내로</span>
+                            <span>시기</span>
+                            <span class="label" data-type="date">{{selected_date}}</span>
                         </div>
                     </div>
                     <div class="address-container">
                         <p>주소</p>
-                        <p data-type="address">대전광역시 유성구 국제과학로 5(신동)</p>
+                        <p class="label" data-type="address">{{selected_address}}</p>
                     </div>
-                    <li><a href="{% url 'estimate_request_guest' %}">견적 신청</a></li>
-
-                    <!-- <button class="request-btn">견적요청 </button> -->
+                    <button class="request-btn">견적 신청</button>
                 </div>
             </div>
-
         </div>
     </div>
+
+    <script>
+        function searchAddress() {
+            const address = document.getElementById("address-input").value;
+            if (address.trim() === "") {
+                alert("주소를 입력해주세요.");
+                return;
+            }
+            document.getElementById("selected-address").innerText = address;
+        }
+    
+        document.querySelector('.request-btn').addEventListener('click', function() {
+            document.querySelector('.signup-guide').classList.add('active');
+        });
+
+        // summary 업데이트 대상 요소
+        const summary = {
+            service: document.querySelector('[data-type="service"]'),
+            location: document.querySelector('[data-type="location"]'),
+            date: document.querySelector('[data-type="date"]'),
+            address: document.querySelector('[data-type="address"]')
+        };
+
+        const serviceType = document.querySelector('[data-type="service"]');
+    const locationType = document.querySelector('[data-type="location"]');
+    const selectedDate = document.querySelector('[data-type="date"]');
+    const addressField = document.querySelector('[data-type="address"]');
+
+    // 예제 데이터 (템플릿에서 변수로 전달받아야 함)
+    let service_type = '미선택';
+    let location_type = '미선택';
+    let selected_date = '미선택';
+    let selected_address = '미입력';
+
+
+    // 여기에 데이터 출력 로직 추가 (Django 템플릿에서 데이터 전달)
+    serviceType.innerText = service_type;
+    locationType.innerText = location_type;
+    selectedDate.innerText = selected_date;
+    addressField.innerText = selected_address;
+
+        // 옵션 버튼 클릭 시 summary 업데이트 (예: STEP 1,2,4)
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const target = this.getAttribute('data-target'); // 예: "service", "location", "date"
+                if(target && summary[target]) {
+                    // 그룹내 active 클래스 조정
+                    document.querySelectorAll(`.option-btn[data-target="${target}"]`).forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                    summary[target].textContent = this.getAttribute('data-value');
+                }
+            });
+        });
+
+        // 주소검색 함수: Daum Postcode API 활용 예시
+        function execDaumPostcode() {
+            // Daum Postcode 스크립트가 로드되어 있어야 함.
+            new daum.Postcode({
+                oncomplete: function(data) {
+                    // 사용자가 선택한 주소
+                    const addr = data.address;
+                    // 주소 입력 필드 업데이트(선택 시)
+                    document.getElementById("address-input").value = addr;
+                    // summary의 주소 업데이트
+                    summary.address.textContent = addr;
+                },
+                onresize : function(size) {
+                    // 크기 조정 필요 시 처리
+                }
+            }).open();
+        }
+
+        // 견적 신청 버튼 클릭 시 회원가입 안내 섹션 표시
+        document.querySelector('.request-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('.signup-guide').classList.add('active');
+            document.querySelector('.signup-guide').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
 
     <!-- 견적 요청 완료 후 회원가입 안내 섹션 추가 -->
-<div class="chat-box signup-guide" data-step="6">
-    <div class="chat-content">
-        <p class="chat-title">요청하신 내용으로 견적을 요청하실 수 있어요.</p>
-        <p class="sub-title">회원가입을 하신 후 무료 견적을 받아보세요!</p>
+    <div class="chat-box signup-guide">
+        <div class="chat-content">
+            <p class="chat-title">요청하신 내용으로 견적을 요청하실 수 있어요.</p>
+            <p class="sub-title">회원가입 후 무료 견적을 받아보세요!</p>
 
-        <div class="signup-buttons">
-            <button class="signup-btn email" onclick="location.href='{% url 'signup' %}'">
-                <img src="{% static 'img/providers/email-icon.png' %}" alt="이메일">
-                이메일로 가입
-            </button>
-            <button class="signup-btn kakao" onclick="location.href='http://localhost:8003/auth/kakao/'">
-                <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오">
-                카카오로 시작하기
-            </button>
-            <button class="signup-btn naver" onclick="location.href='http://localhost:8003/auth/naver/'">
-                <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버">
-                네이버로 시작하기
-            </button>
-            <button class="signup-btn google onclick="location.href='http://localhost:8003/auth/google/'">
-                <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글">
-                구글로 시작하기
-            </button>
+            <div class="signup-buttons">
+                <button class="signup-btn email" onclick="location.href='{% url 'signup' %}'">
+                    <img src="{% static 'img/providers/email-icon.png' %}" alt="이메일">
+                    이메일로 가입
+                </button>
+                <button class="signup-btn kakao" onclick="location.href='http://localhost:8003/auth/kakao/'">
+                    <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오">
+                    카카오로 시작하기
+                </button>
+                <button class="signup-btn naver" onclick="location.href='http://localhost:8003/auth/naver/'">
+                    <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버">
+                    네이버로 시작하기
+                </button>
+                <button class="signup-btn google" onclick="location.href='http://localhost:8003/auth/google/'">
+                    <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글">
+                    구글로 시작하기
+                </button>
+            </div>
         </div>
-
     </div>
 </div>
-</div>
 
-</div>
+<script>
+    document.querySelector('.request-btn').addEventListener('click', function() {
+        document.querySelector('.signup-guide').classList.add('active');
+    });
+</script>
 {% endblock %}

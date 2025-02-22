@@ -1,11 +1,9 @@
 {% load static %}
-{% load account socialaccount %}
+{% load socialaccount %}
 
 <link rel="stylesheet" href="{% static 'css/accounts/login.css' %}">
 
-{% block extra_js %}
-<!-- <script src="{% static 'js/accounts/login.js' %}"></script> -->
-{% endblock %}
+{% block extra_js %}{% endblock %}
 
 {% block content %}
 
@@ -24,10 +22,10 @@
             <div class="error-message" style="display: none; color: red;"></div>
             <div class="social-login">
                 <a href="#">
-                    <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오톡 로그인">
+                    <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글 로그인">
                 </a>
                 <a href="#">
-                    <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글 로그인">
+                    <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오톡 로그인">
                 </a>
                 <a href="#">
                     <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버 로그인">
@@ -112,7 +110,7 @@
             return cookieValue;
         }
     });
-    </script>
+</script>
     
 
 {% endblock %}

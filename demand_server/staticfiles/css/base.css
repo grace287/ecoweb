@@ -1,0 +1,38 @@
+    /* 기본 바디 설정 */
+    body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+    }
+    
+    header {
+        background-color: #ffffff;
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .main-content {
+        flex: 1;
+        padding: 20px;
+        background-color: #ffffff;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+        padding-top: 100px;
+    }
+    
+    /* 네비게이션 푸터 영역 */
+    .nav-footer {
+        background-color: #fafafa;
+        padding: 15px 20px;
+        margin-top: 20px;
+        border-top: 1px solid #e0e0e0;
+    }
+    
+    /* 실제 푸터 영역: 배경색, 중앙 정렬 및 내부 여백 */
+    footer {
+        text-align: center;
+        margin-top: auto;
+    }
