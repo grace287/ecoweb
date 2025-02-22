@@ -5,6 +5,124 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/accounts/profile.css' %}">
 
+<style>
+    /* 📌 프로필 컨테이너 */
+.profile-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+/* 📌 프로필 섹션 */
+.profile-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.profile-section:last-child {
+    border-bottom: none;
+}
+
+/* 📌 제목 스타일 */
+.profile-header h1 {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* 📌 정보 그룹 */
+.info-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0;
+    padding: 8px 0;
+}
+
+.info-group label {
+    font-weight: bold;
+    color: #444;
+    font-size: 14px;
+    min-width: 140px;
+}
+
+.info-group span {
+    font-size: 14px;
+    color: #555;
+    flex-grow: 1;
+    text-align: right;
+}
+
+/* 📌 카테고리 태그 */
+.service-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.category-tag {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 15px;
+    font-size: 13px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+/* 📌 로그아웃 버튼 */
+.logout-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    background: #ff4d4d;
+    color: white;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 20px;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s ease-in-out;
+}
+
+.logout-btn:hover {
+    background: #cc0000;
+}
+
+/* 📌 반응형 디자인 */
+@media (max-width: 768px) {
+    .profile-container {
+        max-width: 90%;
+        padding: 20px;
+    }
+
+    .info-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .info-group span {
+        text-align: left;
+        margin-top: 5px;
+    }
+
+    .category-tag {
+        font-size: 12px;
+    }
+}
+
+</style>
+
 <div class="profile-container">
     <div class="profile-header">
         <h1>프로필 정보</h1>

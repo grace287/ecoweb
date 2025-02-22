@@ -5,6 +5,159 @@
 {% block title %}대시보드{% endblock %}
 
 {% block content %}
+<style>
+    /* 📌 대시보드 컨테이너 */
+.dashboard-container {
+    padding: 40px;
+    background-color: #f9fafb;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* 📌 대시보드 제목 */
+.dashboard-title {
+    font-size: 26px;
+    font-weight: bold;
+    color: #1f2937;
+    margin-bottom: 24px;
+}
+
+/* 📌 상태 카드 정렬 */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* 📌 카드 기본 스타일 */
+.status-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease-in-out;
+}
+.status-card:hover {
+    transform: scale(1.02);
+}
+
+/* 📌 카드 헤더 */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.card-header h3 {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.detail-link {
+    font-size: 14px;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* 📌 원형 상태 */
+.status-circles {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 32px;
+}
+
+.circle-item {
+    text-align: center;
+}
+
+.circle {
+    width: 70px;
+    height: 70px;
+    border: 4px solid;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* 📌 프로그레스 바 */
+.progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 6px;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease-in-out;
+}
+
+/* 📌 정산 현황 */
+.metrics-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+}
+
+.metric-item {
+    padding: 16px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.metric-label {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+
+.metric-value {
+    font-size: 22px;
+    font-weight: bold;
+    color: #2563eb;
+}
+
+/* 📌 반응형 디자인 */
+@media (max-width: 768px) {
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .circle {
+        width: 60px;
+        height: 60px;
+    }
+
+    .metrics-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+
 <div class="dashboard-container">
     <h1 class="dashboard-title">STATUS 상태</h1>
 
@@ -65,145 +218,5 @@
     </div>
 </div>
 
-<style>
-/* 컨테이너 */
-.dashboard-container {
-    padding: 40px;
-    background-color: #f9fafb;
-}
 
-/* 제목 */
-.dashboard-title {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1f2937;
-    margin-bottom: 24px;
-}
-
-/* 상태 카드 정렬 */
-.status-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-}
-
-/* 카드 디자인 */
-.status-card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-/* 카드 헤더 */
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.card-header h3 {
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.detail-link {
-    font-size: 14px;
-    color: #2563eb;
-    text-decoration: none;
-}
-
-/* 원형 상태 */
-.status-circles {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 32px;
-}
-
-.circle-item {
-    text-align: center;
-}
-
-.circle {
-    width: 64px;
-    height: 64px;
-    border: 3px solid;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: bold;
-}
-
-/* 프로그레스 바 */
-.progress-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.progress-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 14px;
-    color: #6b7280;
-    margin-bottom: 6px;
-}
-
-.progress-bar {
-    height: 8px;
-    background: #e5e7eb;
-    border-radius: 4px;
-}
-
-.progress {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.3s ease-in-out;
-}
-
-/* 정산 현황 */
-.metrics-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-}
-
-.metric-item {
-    padding: 16px;
-    background: #f3f4f6;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.metric-label {
-    font-size: 14px;
-    color: #6b7280;
-    margin-bottom: 8px;
-}
-
-.metric-value {
-    font-size: 20px;
-    font-weight: bold;
-    color: #2563eb;
-}
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-    .status-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .circle {
-        width: 56px;
-        height: 56px;
-    }
-
-    .metrics-container {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
 {% endblock %}
