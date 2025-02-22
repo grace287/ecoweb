@@ -19,13 +19,36 @@
         </div>
         <ul class="login-menu">
             {% if request.user.is_authenticated %}
-                <li class="active"><a href="http://localhost:8000/main">메인</a></li>
+                <li class="active"><a id="main-link" href="http://localhost:8000/main">메인</a></li>
                 <li><a href="{% url 'provider_profile' %}">마이페이지</a></li>
                 <li><a href="#">알림</a></li>
-                <li><a href="{% url 'provider_logout' %}">로그아웃</a></li>
+                <li><a id="logout-link" href="{% url 'provider_logout' %}">로그아웃</a></li>
             {% endif %}
         </ul>
     </div>
 </header>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var mainLink = document.getElementById("main-link");
+    var logoutLink = document.getElementById("logout-link");
+    
+    if (mainLink) {
+        mainLink.addEventListener("click", function (event) {
+            if (!confirm("메인 페이지로 이동하시겠습니까?")) {
+                event.preventDefault(); // 이동 취소
+            }
+        });
+    }
+    
+    if (logoutLink) {
+        logoutLink.addEventListener("click", function (event) {
+            if (!confirm("로그아웃 하시겠습니까?")) {
+                event.preventDefault(); // 로그아웃 취소
+            }
+        });
+    }
+});
+</script>
 
 <script src="{% static 'js/components/navbar.js' %}"></script>

@@ -5,125 +5,244 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoMatch - {% block title %}{% endblock %}</title>
     {% load static %}
-    <!-- 공통 CSS -->
-<!--    <link rel="stylesheet" href="{% static 'css/base.css' %}">-->
-    <link rel="stylesheet" href="{% static 'css/base-dashboard.css'}">
-    <link rel="stylesheet" href="{% static 'css/components/header.css' %}">
-    <link rel="stylesheet" href="{% static 'css/components/footer.css' %}">
-    <link rel="stylesheet" href="{% static 'css/components/nav-footer.css' %}">
-    {% block extra_css %}{% endblock %}
+    
     <style>
-            /* Grid를 사용한 레이아웃 */
+/* 📌 전체 레이아웃 */
 body {
-    min-height: 100vh;
-    text-decoration: none;
-    list-style: none;
     margin: 0;
+    min-height: 100vh;
     display: grid;
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 220px 1fr;
     grid-template-areas:
         "header header"
         "sidebar main"
         "footer footer";
-    grid-template-columns: 250px 1fr; /* 사이드바 너비 250px, 메인 영역은 남은 공간 차지 */
-    grid-template-rows: auto 1fr auto; /* 헤더/푸터는 컨텐츠 크기만큼, 메인 영역은 남은 공간 차지 */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9fafb;
+    transition: all 0.3s ease;
 }
 
+/* 📌 헤더 */
 header {
     grid-area: header;
-    /* 헤더 스타일링 */
-}
-
-nav {
-    grid-area: sidebar;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-right: 1px solid #dee2e6;
-}
-
-.main-content {
-    grid-area: main;
-    padding: 20px;
-    overflow-y: auto; /* 컨텐츠가 많을 경우 스크롤 */
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-    position: relative;
-}
-
-.nav-footer {
-    position: absolute; /* 절대 위치 설정 */
-    bottom: 0; /* 하단에 배치 */
+    box-sizing: border-box;
+    position: fixed;
+    top: 0;
     left: 0;
-    right: 0;
-    padding: 10px 20px;
-    background-color: white;
-    border-top: 1px solid #dee2e6;
-    font-size: 12px;
-    background: none;
-}
-
-
-/* nav-footer를 메인 콘텐츠 영역 안에 배치 */
-
-.footer-content {
-    max-width: 1200px; /* 콘텐츠의 최대 너비 설정 */
-    margin: 0 auto;
-    padding: 0 20px;
+    width: 100%;
+    height: 60px;
+    background-color: #3b82f6;
+    padding: 15px 20px;
     display: flex;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 40px;
-}
-/* 소셜 미디어 아이콘 등 컴포넌트 스타일 */
-.social-icons {
-    display: flex;
-    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    z-index: 1001; /* 헤더가 가장 위에 위치하도록 설정 */
 }
 
-/* 반응형 스타일 */
-@media (max-width: 768px) {
-    .nav-footer {
-        padding: 8px 15px;
-    }
-
-    .footer-content {
-        flex-direction: column;
-        gap: 5px;
-    }
+/* 📌 사이드바 */
+nav {
+    grid-area: sidebar;
+    position: fixed;
+    top: 60px; /* 헤더 높이만큼 내려오도록 설정 */
+    left: 0;
+    width: 180px;
+    height: calc(100vh - 60px);
+    background-color: #2979FF;
+    color: #ffffff;
+    padding: 20px;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    z-index: 1000;
 }
 
+nav a {
+    display: block;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 12px 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    transition: background 0.2s ease-in-out;
+}
+
+nav a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+
+/* 📌 메인 컨텐츠 */
+.main-content {
+    grid-area: main;
+    padding: 30px;
+    background: #ffffff;
+    overflow-y: auto;
+    max-width: 1200px;
+    width: 100%;
+    margin: 80px auto 0 auto; /* 헤더 높이만큼 여백 추가 */
+    transition: padding-left 0.3s ease-in-out;
+}
+
+.main-content.sidebar-active {
+    padding-left: 40px; /* 사이드바가 활성화될 때 메인 컨텐츠의 여백 변경 */
+}
+
+/* 사이드바 토글 버튼 */
+.sidebar-toggle {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #2563eb;
+    padding: 10px;
+    display: none; /* 기본적으로 숨김 */
+}
+/* 📌 푸터 */
 footer {
     grid-area: footer;
-    /* 푸터 스타일링 */
+    color: #ffffff;
+    text-align: center;
+    font-size: 14px;
+    margin-top: 20px;
 }
 
+/* 📌 푸터 내 아이콘 정렬 */
+.footer-icons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
 
+.footer-icons img {
+    width: 22px;
+    height: 22px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease-in-out;
+}
 
+.footer-icons img:hover {
+    opacity: 1;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    body {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "header"
+            "sidebar"
+            "main"
+            "footer";
+        padding-left: 0; /* 사이드바가 없는 경우 패딩 제거 */
+    }
+
+    .sidebar-toggle {
+        display: block;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        z-index: 1000; /* 중요! */
+        background-color: #ffffff;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 999;
+    }
+    
+    nav.active {
+        transform: translateX(0);
+    }
+    
+    .main-content{
+        padding-left: 0;
+    }
+    
+    .main-content.sidebar-active {
+      padding-left: 220px; /* 사이드바가 활성화될 때 메인 컨텐츠의 여백 변경 */
+    }
+
+    .main-content{
+        margin-left: 0;
+    }
+    
+    .main-content {
+        padding: 30px 20px; /* 사이드바 존재 여부 상관 없이 margin을 적용해 padding을 조정 */
+    }
+
+    
+}
+
+/* 푸터 스타일 (필요에 따라 수정) */
+footer {
+    grid-area: footer;
+    color: #ffffff;
+    text-align: center;
+    font-size: 14px;
+}
+
+.footer-icons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.footer-icons img {
+    width: 22px;
+    height: 22px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.footer-icons img:hover {
+    opacity: 1;
+}
     </style>
 </head>
 <body>
-
-    <!-- 헤더 섹션 -->
     <header>
+        <button class="sidebar-toggle" aria-label="사이드바 열기/닫기">☰</button>
         {% include 'components/provider_header.html' %}
     </header>
-    <nav>
+    
+    <nav id="sidebar">
         {% include 'components/provider_sidebar.html' %}
     </nav>
-
+    
     <main class="main-content">
         {% block content %}{% endblock %}
     </main>
-
-
-
+    
     <footer>
         {% include 'components/footer.html' %}
-
     </footer>
-
-    {% block extra_js %}
-    <script src="{% static 'js/base.js' %}"></script>
-    {% endblock %}
 </body>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("active");
+        // 메인 컨텐츠 넓이 조절
+        const mainContent = document.querySelector('.main-content');
+        if (sidebar.classList.contains("active")) {
+            mainContent.classList.add('sidebar-active'); // 추가
+        } else {
+            mainContent.classList.remove('sidebar-active'); // 추가
+        }
+    }
+</script>
 </html>

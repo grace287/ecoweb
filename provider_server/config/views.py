@@ -1,3 +1,4 @@
+from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import login as auth_login
@@ -55,54 +56,54 @@ def provider_login(request):
         'csrf_token': get_token(request)
     })
 
-def login(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+# def login(request):
+#     if request.method == 'POST':
+#         username = request.POST.get('username')
+#         password = request.POST.get('password')
+#         user = authenticate(request, username=username, password=password)
         
-        # 관리자 서버에서 승인 상태 확인
-        admin_api_url = f"{settings.ADMIN_API_URL}/api/companies/check-status/"
+#         # 관리자 서버에서 승인 상태 확인
+#         admin_api_url = f"{settings.ADMIN_API_URL}/api/companies/check-status/"
         
-        if user is not None:
-            # admin_panel에서 승인 여부 호가인
-            approval_status = requests.get(f"{settings.ADMIN_PANEL_API_URL}/companies/{user.id}/")
-            if approval_status.json().get('status') == 'approved':
-                login(request, user)
-                return redirect('provider_dashboard')
-            else:
-                return render(request, 'accounts/provider_login.html', {'error': '관리자의 승인이 필요합니다.'})
+#         if user is not None:
+#             # admin_panel에서 승인 여부 호가인
+#             approval_status = requests.get(f"{settings.ADMIN_PANEL_API_URL}/companies/{user.id}/")
+#             if approval_status.json().get('status') == 'approved':
+#                 login(request, user)
+#                 return redirect('provider_dashboard')
+#             else:
+#                 return render(request, 'accounts/provider_login.html', {'error': '관리자의 승인이 필요합니다.'})
     
-        try:
-            response = requests.post(
-                admin_api_url,
-                json={'username': username},
-                headers={'Authorization': f'Bearer {settings.ADMIN_API_KEY}'}
-            )
+#         try:
+#             response = requests.post(
+#                 admin_api_url,
+#                 json={'username': username},
+#                 headers={'Authorization': f'Bearer {settings.ADMIN_API_KEY}'}
+#             )
             
-            if response.status_code == 200:
-                status_data = response.json()
-                if status_data['status'] != 'approved':
-                    return render(request, 'accounts/provider_login.html', {
-                        'error': '관리자 승인 대기 중입니다.'
-                    })
+#             if response.status_code == 200:
+#                 status_data = response.json()
+#                 if status_data['status'] != 'approved':
+#                     return render(request, 'accounts/provider_login.html', {
+#                         'error': '관리자 승인 대기 중입니다.'
+#                     })
                     
-                # 승인된 경우 로그인 처리
-                user = authenticate(request, username=username, password=password)
-                if user is not None:
-                    auth_login(request, user)
-                    return redirect('provider_dashboard')
+#                 # 승인된 경우 로그인 처리
+#                 user = authenticate(request, username=username, password=password)
+#                 if user is not None:
+#                     auth_login(request, user)
+#                     return redirect('provider_dashboard')
                     
-            return render(request, 'accounts/provider_login.html', {
-                'error': '아이디 또는 비밀번호가 올바르지 않습니다.'
-            })
+#             return render(request, 'accounts/provider_login.html', {
+#                 'error': '아이디 또는 비밀번호가 올바르지 않습니다.'
+#             })
             
-        except requests.RequestException:
-            return render(request, 'accounts/provider_login.html', {
-                'error': '서버 통신 오류가 발생했습니다.'
-            })
+#         except requests.RequestException:
+#             return render(request, 'accounts/provider_login.html', {
+#                 'error': '서버 통신 오류가 발생했습니다.'
+#             })
 
-    return render(request, 'accounts/provider_login.html')
+#     return render(request, 'accounts/provider_login.html')
 
 @login_required
 @csrf_exempt
