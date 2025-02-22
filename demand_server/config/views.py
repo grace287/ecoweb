@@ -16,7 +16,30 @@ def landing(request):
     return render(request, "landing.html")
 
 def main(request):
-    return render(request, "main.html")
+    categories = [
+        {'name': '전체보기', 'icon': ('img/main/category/all.png')},
+        {'name': '실내공기질', 'icon': ('img/main/category/indoor-air.png')},
+        {'name': '소음·진동', 'icon': ('img/main/category/noise-vibration.png')},
+        {'name': '악취', 'icon': ('img/main/category/odor.png')},
+        {'name': '수질', 'icon': ('img/main/category/water.png')},
+        {'name': '대기', 'icon': ('img/main/category/air.png')},
+        {'name': '중대재해', 'icon': ('img/main/category/major-disaster.png')},
+        {'name': '사무실', 'icon': ('img/main/category/office.png')},
+        {'name': 'ESG경영', 'icon': ('img/main/category/esg.png')},
+    ]
+
+    statistics = [
+        {"value": "0", "unit": "만건 이상", "description": "누적 상담수", "image": ("status/multi-use.png"), "title": "지하주차장", "details": "(주)한**** 고객님 / 견적 상담중"},
+        {"value": "0", "unit": "만건 이상", "description": "누적 측정수", "image": ("status/office.png"), "title": "사무실", "details": "(주)상**** 고객님 / 측정 및 분석중"},
+        {"value": "35,000", "unit": "명 이상", "description": "누적 회원수", "image": ("status/analysis.png"), "title": "시료 분석", "details": "(주)일**** 고객님 / 분석 완료"},
+    ]
+
+    context = {
+        "categories": categories,
+        "statistics": statistics
+    }
+
+    return render(request, "main.html", context)
 
 @csrf_exempt
 def login(request):
