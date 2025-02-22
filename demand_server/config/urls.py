@@ -29,6 +29,7 @@ urlpatterns = [
     path('estimates_request_form/', views.estimate_request_form, name='estimate_request_form'),
     path('estimates_list/', views.estimate_list, name='estimate_list'),
     path('estimate_detail/', views.estimate_detail, name='estimate_detail'),
+    path('estimate_accept/', views.estimate_accept, name='estimate_accept'),
     # path('estimates/detail/<int:estimate_id>/', views.estimate_detail, name='estimate_detail'),
 
     # Chat

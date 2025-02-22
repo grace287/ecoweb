@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 import json
 import requests
+from django.core.paginator import Paginator
 
 
 def landing(request):
@@ -132,6 +133,24 @@ def logout(request):
 
 @login_required
 def estimate_list(request):
+    # 임시 데이터 리스트
+    estimates = [
+        {"id": 10, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "측정 진행중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 9, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 8, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 7, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 6, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 5, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 4, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 3, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 2, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
+        {"id": 1, "type": "중대재해처벌법 컨설팅", "location": "사무실 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-04", "views": 7},
+    ]
+
+    # 페이지네이션 적용 (한 페이지당 5개 항목)
+    paginator = Paginator(estimates, 5)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
     """견적 목록 조회"""
     try:
         # Common API 서버에서 견적 목록 조회
@@ -173,7 +192,60 @@ def estimate_list(request):
 
 
 def estimate_detail(request):
-    return render(request, 'demand/estimates/demand_estimate_detail.html')
+    # 임시 데이터
+    estimate = {
+        "title": "(주)ABC 고객님.",
+        "request_date": "2025.01.05(화), 15:21",
+        "client_name": "(주)ABC 고객님",
+        "client_phone": "02-123-4567",
+        "client_fax": "02-3456-7890",
+        "client_email": "abc@naver.com",
+        "location": "서울특별시 강남구 테헤란로 129(역삼동)",
+        "estimate_date": "2025.01.13",
+        "company_phone": "02-123-4567",
+        "company_fax": "02-3456-7890",
+        "company_email": "air@naver.com",
+        "note": "측정완료 후 보고서를 제공해드립니다.",
+        "measurements": [
+            {"type": "실내공기질 측정(BPM 10, PM 2.5, 라돈 등)", "maintain": 2, "recommend": 4, "unit_price": 450000, "subtotal": 2700000},
+            {"type": "소음·진동 측정(작업환경측정, 층간소음 등)", "maintain": 2, "recommend": 1, "unit_price": 450000, "subtotal": 1350000},
+        ],
+        "supply_price": 4050000,
+        "discount": 405000,
+        "vat": 364500,
+        "total": 4009500,
+        "company_name": "(주)측정하는업체",
+        "signature_date": "2025.01.13"
+    }
+    return render(request, "demand/estimates/demand_estimate_detail.html", {"estimate": estimate})
+
+def estimate_accept(request):
+    # 임시 데이터
+    estimate = {
+        "title": "(주)ABC 고객님.",
+        "request_date": "2025.01.05(화), 15:21",
+        "client_name": "(주)ABC 고객님",
+        "client_phone": "02-123-4567",
+        "client_fax": "02-3456-7890",
+        "client_email": "abc@naver.com",
+        "location": "서울특별시 강남구 테헤란로 129(역삼동)",
+        "estimate_date": "2025.01.13",
+        "company_phone": "02-123-4567",
+        "company_fax": "02-3456-7890",
+        "company_email": "air@naver.com",
+        "note": "측정완료 후 보고서를 제공해드립니다.",
+        "measurements": [
+            {"type": "실내공기질 측정(BPM 10, PM 2.5, 라돈 등)", "maintain": 2, "recommend": 4, "unit_price": 450000, "subtotal": 2700000},
+            {"type": "소음·진동 측정(작업환경측정, 층간소음 등)", "maintain": 2, "recommend": 1, "unit_price": 450000, "subtotal": 1350000},
+        ],
+        "supply_price": 4050000,
+        "discount": 405000,
+        "vat": 364500,
+        "total": 4009500,
+        "company_name": "(주)측정하는업체",
+        "signature_date": "2025.01.13"
+    }
+    return render(request, 'demand/estimates/demand_estimate_accept.html',{"estimate": estimate})
 
 def estimate_request_guest(request):
     """비회원 견적 요청"""
