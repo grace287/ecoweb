@@ -75,52 +75,10 @@
 function confirmProviderSwitch() {
     const userConfirmed = confirm("대행사로 전환하시겠습니까?");
     
-<<<<<<< HEAD
     if (userConfirmed) {
         window.location.href = "http://localhost:8001/";
     }
 }
-=======
-    if (switchToProviderBtn) {
-        switchToProviderBtn.addEventListener('click', switchToProvider);
-    }
-});
-
-async function switchToProvider() {
-    if (confirm('대행사 서버로 전환하시겠습니까?')) {
-        try {
-            // Provider 서버 로그인 페이지로 직접 이동
-            window.location.href = 'http://localhost:8001/';
-        } catch (error) {
-            console.error('Error:', error);
-            // 기본 URL로 폴백
-            window.location.href = 'http://localhost:8000/main/';
-        }
-    }
-}
-
-// 로그인 모달 열기 함수 (직접 구현하거나 기존 함수 사용)
-function openLoginModal() {
-        // 예시: 로그인 모달을 오픈하는 로직
-        alert('로그인이 필요합니다.');
-        // 또는 window.location.href = '{% url "login" %}';
-    }
-
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
->>>>>>> origin/main
 </script>
 
 <script src="{% static 'js/components/navbar.js' %}"></script>

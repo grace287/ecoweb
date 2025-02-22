@@ -130,10 +130,6 @@ def logout(request):
     return redirect('main')
 
 
-<<<<<<< HEAD
-=======
-
-
 @login_required
 def estimate_list(request):
     """견적 목록 조회"""
@@ -229,4 +225,3 @@ def estimate_request_form(request):
 @login_required
 def chat(request):
     return render(request, 'demand/chat/demand_chat.html')
->>>>>>> origin/main
