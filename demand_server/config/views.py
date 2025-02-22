@@ -125,3 +125,5 @@ def profile(request):
 def logout(request):
     auth_logut(request)
     return redirect('main')
+
+
