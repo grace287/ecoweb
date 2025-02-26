@@ -263,6 +263,45 @@ html {
     }
 }
 
+/* 추가: 768px 이하 (태블릿 이하) */
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 36px;
+    padding: 60px 20px;
+  }
+  .hero-content .subtitle {
+    font-size: 16px;
+  }
+  .cta-button1, .cta-button2 {
+    padding: 12px 30px;
+    font-size: 14px;
+  }
+  .service-section .section-title {
+    font-size: 24px;
+    margin-bottom: 40px;
+  }
+  .service-card-section {
+    width: 90%;
+    padding: 20px;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .service-card {
+    padding: 16px;
+    margin: 0 auto;
+  }
+  .feature-circles {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .system-content h2 {
+    font-size: 24px;
+  }
+  .slider-container {
+    margin: 0 10px 20px;
+  }
+}
+
 /* 글로우 효과 */
 .hero-section::after {
     content: '';
@@ -479,6 +518,56 @@ html {
         width: 60px;
         height: 60px;
     }
+}
+
+/* 추가: 480px 이하 (모바일) */
+@media (max-width: 480px) {
+  .landing-header {
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px;
+  }
+  .hero-content h1 {
+    font-size: 28px;
+    line-height: 1.3;
+    padding: 40px 10px;
+  }
+  .hero-content .subtitle {
+    font-size: 14px;
+  }
+  .cta-button1, .cta-button2 {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  .service-section .section-title {
+    font-size: 20px;
+    margin-bottom: 30px;
+  }
+  .service-card-section {
+    width: 100%;
+    padding: 10px;
+  }
+  .service-card {
+    padding: 10px;
+    margin-bottom: 20px;
+  }
+  .feature-circles {
+    gap: 10px;
+  }
+  .feature-circle {
+    width: 60px;
+    height: 60px;
+    font-size: 14px;
+  }
+  .system-content h2 {
+    font-size: 20px;
+  }
+  .slider-container {
+    margin: 0 5px 10px;
+  }
+  .scroll-to-top {
+    margin-top: 10px;
+  }
 }
 
 /* 시스템 섹션 */

@@ -1013,3 +1013,131 @@
     outline-offset: 2px;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
  }
+
+/* 반응형 디자인 추가 */
+@media (max-width: 1024px) {
+    .main-container {
+        padding: 10px;
+    }
+
+    .hero-section {
+        padding: 40px 0;
+    }
+
+    .hero-section h1 {
+        font-size: 1.5rem;
+    }
+
+    .search-bar input {
+        padding: 10px 40px 10px 15px;
+    }
+
+    .category-icons {
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    }
+
+    .event-banner {
+        padding: 20px;
+    }
+
+    .banner-text h2 {
+        font-size: 20px;
+    }
+
+    .banner-text p {
+        font-size: 14px;
+    }
+
+    .statistics-section .section-title {
+        font-size: 24px;
+    }
+
+    .stat-numbers {
+        flex-direction: column;
+        gap: 24px;
+        padding: 0;
+    }
+
+    .slide-group {
+        flex-direction: column;
+    }
+
+    .reviews-container {
+        flex-direction: column;
+    }
+
+    .review-card {
+        flex: 0 0 100%;
+    }
+
+    .communication-questions {
+        grid-template-columns: 1fr;
+    }
+
+    .question-card h3 {
+        font-size: 16px;
+    }
+
+    .question-card img {
+        height: 140px;
+    }
+
+    .more-button .btn {
+        width: 100%;
+        padding: 16px;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-section h1 {
+        font-size: 1.2rem;
+    }
+
+    .search-bar input {
+        padding: 8px 35px 8px 10px;
+    }
+
+    .category-icons {
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    }
+
+    .event-banner {
+        padding: 15px;
+    }
+
+    .banner-text h2 {
+        font-size: 18px;
+    }
+
+    .banner-text p {
+        font-size: 12px;
+    }
+
+    .statistics-section .section-title {
+        font-size: 20px;
+    }
+
+    .stat-numbers {
+        gap: 16px;
+    }
+
+    .reviews-container {
+        gap: 16px;
+    }
+
+    .review-card {
+        padding: 16px;
+    }
+
+    .communication-questions {
+        gap: 16px;
+    }
+
+    .question-card {
+        padding: 16px;
+    }
+
+    .more-button .btn {
+        padding: 12px;
+    }
+}
