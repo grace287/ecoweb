@@ -5,16 +5,17 @@
         signupForm.addEventListener("submit", async function (e) {
             e.preventDefault();
 
-            const formData = new FormData(this);
-            const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+            const csrftoken = document.querySelector("[name=csrfmiddlewaretoken]").value;
 
+            const formData = new FormData(signupForm);
+    
             try {
-                const response = await fetch(this.action, {
+                const response = await fetch("/signup/", {
                     method: "POST",
-                    body: formData,
                     headers: {
-                        "X-CSRFToken": csrfToken,
+                        "X-CSRFToken": csrftoken,  // ✅ CSRF 토큰 추가
                     },
+                    body: formData,  // ✅ JSON이 아닌 FormData 전송
                 });
 
                 const data = await response.json();

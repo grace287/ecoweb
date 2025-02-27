@@ -4,283 +4,6 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/accounts/signup.css' %}">
-<script defer src="{% static 'js/accounts/signup.js' %}"></script>
-
-<style>
-    /* static/css/accounts/signup.css */
-    .signup-container {
-        max-width: 800px;
-        margin: 40px auto;
-        padding: 0 20px;
-    }
-
-    .signup-container h1 {
-        text-align: center;
-        font-size: 24px;
-        color: #333;
-        margin-bottom: 40px;
-    }
-
-    .signup-progress {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 60px;
-        position: relative;
-        transform: translateY(20px);
-        transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-
-    .progress-step {
-        flex: 1;
-        text-align: center;
-        position: relative;
-    }
-
-    .progress-step::after {
-        content: '';
-        position: absolute;
-        top: 30px;
-        left: 50%;
-        width: 100%;
-        height: 2px;
-        background: #e5e7eb;
-    }
-
-    .progress-step.active {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .progress-step:last-child::after {
-        display: none;
-    }
-
-    /* 애니메이션 스타일 추가 */
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    .slide-in {
-        animation: slideIn 0.5s ease forwards;
-    }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease forwards;
-    }
-
-    .progress-step {
-        transition: all 0.3s ease;
-    }
-
-    .progress-step.active .step-icon {
-        transform: scale(1.1);
-    }
-
-    .step-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        background: #f3f4f6;
-        margin: 0 auto 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
-        z-index: 1;
-    }
-
-    .progress-step.active .step-icon {
-        background: #2563eb;
-        color: white;
-    }
-
-    .progress-step span {
-        font-size: 14px;
-        color: #6b7280;
-        margin-bottom: 4px;
-        display: block;
-    }
-
-    .progress-step p {
-        font-size: 12px;
-        color: #9ca3af;
-    }
-
-    .form-section {
-        background: white;
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-section h3 {
-        font-size: 18px;
-        color: #1f2937;
-        margin-bottom: 24px;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        font-size: 14px;
-        color: #4b5563;
-        margin-bottom: 8px;
-    }
-
-    .input-with-button {
-        display: flex;
-        gap: 12px;
-    }
-
-    .input-with-button input {
-        flex: 1;
-    }
-
-    input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        font-size: 14px;
-    }
-
-    input:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .verify-btn {
-        padding: 0 16px;
-        background: white;
-        border: 1px solid #2563eb;
-        color: #2563eb;
-        border-radius: 6px;
-        font-size: 14px;
-        cursor: pointer;
-    }
-
-    .notice-box {
-        background: #f3f4f6;
-        border-radius: 8px;
-        padding: 16px;
-        margin-top: 24px;
-    }
-
-    .notice-box h4 {
-        font-size: 16px;
-        color: #2563eb;
-        margin-bottom: 12px;
-    }
-
-    .notice-box ol {
-        padding-left: 20px;
-        font-size: 14px;
-        color: #4b5563;
-    }
-
-    .submit-btn {
-        width: 100%;
-        padding: 12px;
-        background: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
-
-    .submit-btn:hover {
-        background: #1d4ed8;
-    }
-
-    @media (max-width: 640px) {
-        .input-with-button {
-            flex-direction: column;
-        }
-
-        .verify-btn {
-            width: 100%;
-        }
-    }
-
-    /* 주소 */
-    .address-search-btn {
-        padding: 0 16px;
-        background: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        white-space: nowrap;
-    }
-
-    .address-search-btn:hover {
-        background: #1d4ed8;
-    }
-
-    #address {
-        background-color: #f9fafb;
-        cursor: default;
-    }
-
-    #address:focus {
-        outline: none;
-        border-color: #d1d5db;
-        box-shadow: none;
-    }
-
-    .input-with-button {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-    }
-
-    /* 모달 스타일 커스터마이징 */
-    .layer {
-        border-radius: 12px !important;
-    }
-
-    .layer .panel {
-        border-radius: 12px !important;
-    }
-
-    /* 반응형 대응 */
-    @media (max-width: 640px) {
-        .input-with-button {
-            flex-direction: column;
-        }
-
-        .address-search-btn {
-            width: 100%;
-            padding: 12px;
-        }
-    }
-</style>
 
 <div class="signup-container">
     <h1>회원 가입</h1>
@@ -311,7 +34,7 @@
                 <label for="username">아이디</label>
                 <div class="input-with-button">
                     <input type="text" id="username" name="username" required>
-                <button type="button" class="verify-btn" onclick="checkIdDuplicate()">중복확인</button>
+                <button type="button" class="verify-btn" onclick="checkDuplicate('username')">중복확인</button>
                 </div>
                 
             </div>
@@ -320,6 +43,7 @@
                 <label for="email">이메일</label>
                 <div class="input-with-button">
                     <input type="email" id="email" name="email" required>
+                    <button type="button" class="verify-btn" onclick="checkDuplicate('email')">중복확인</button>
                 </div>
             </div>
 
@@ -387,115 +111,143 @@
 
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const signupForm = document.querySelector(".signup-form");
+document.addEventListener("DOMContentLoaded", () => {
+    const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+    const signupForm = document.querySelector(".signup-form");
 
-        signupForm.addEventListener("submit", async function (e) {
-            e.preventDefault();
+    if (!signupForm || !csrfToken) {
+        console.error("Signup form or CSRF token not found.");
+        return;
+    }
 
-            const formData = new FormData(this);
-            const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+    signupForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-            try {
-                const response = await fetch(this.action, {
-                    method: "POST",
-                    body: formData,
-                    headers: {
-                        "X-CSRFToken": csrfToken,
-                    },
-                });
+        const requiredFields = ["username", "email", "password", "password_confirm", "company_name", "business_phone_number", "address"];
+        let missingFields = [];
 
-                const data = await response.json();
-
-                if (data.success) {
-                    window.location.href = "{% url 'signup_success' %}"; // 가입 성공 시 이동
-                } else {
-                    alert(data.error); // 에러 메시지 표시
-                }
-            } catch (error) {
-                console.error("Signup error:", error);
-                alert("회원가입 처리 중 오류가 발생했습니다.");
+        requiredFields.forEach(field => {
+            const input = document.getElementById(field);
+            if (!input.value.trim()) {
+                missingFields.push(field);
+                input.style.border = "2px solid red";  // UI 개선 (빈 필드 강조)
+            } else {
+                input.style.border = "";  // 정상 입력 시 원래 스타일 복원
             }
         });
 
-        let currentStep = 1;
-
-        function showStep(step) {
-            document.querySelectorAll(".form-section").forEach((section, index) => {
-                section.style.display = index + 1 === step ? "block" : "none";
-            });
-
-            document.querySelectorAll(".progress-step").forEach((stepElement, index) => {
-                stepElement.classList.toggle("active", index + 1 <= step);
-            });
-
-            currentStep = step;
+        if (missingFields.length > 0) {
+            alert(`🚨 필수 정보를 입력해주세요: ${missingFields.join(", ")}`);
+            return;
         }
 
-        window.nextStep = function () {
-            if (currentStep < 2) showStep(currentStep + 1);
-        };
+        const formData = new FormData(this);
+        const jsonData = Object.fromEntries(formData.entries()); // ✅ JSON 변환
 
-        window.prevStep = function () {
-            if (currentStep > 1) showStep(currentStep - 1);
-        };
+        console.log("📌 전송할 JSON 데이터:", jsonData); // ✅ 디버깅 로그 추가
 
-        // 주소찾기
-
-        window.searchAddress = function () {
-            new daum.Postcode({
-                oncomplete: function (data) {
-                    document.getElementById("address").value = data.roadAddress;
-                    document.getElementById("address_detail").focus();
+        try {
+            const response = await fetch(this.action, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
                 },
-            }).open();
-        };
+                body: JSON.stringify(jsonData),
+            });
+            
 
-        // 중복 확인 함수 (아이디, 이메일, 추천인)
-        window.checkDuplicate = async function (type) {
-            let value = "";
-            let url = "";
-
-            if (type === "id") {
-                value = document.getElementById("username").value;
-                url = "/demand/check-id/";
-            } else if (type === "email") {
-                value = document.getElementById("email").value;
-                url = "/demand/check-email-duplicate/";
-            } else if (type === "recommend") {
-                value = document.getElementById("recommend").value;
-                url = "/demand/check-id/";
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("📌 서버 오류 응답:", errorText);
+                throw new Error(errorText);
             }
 
-            if (!value) {
-                alert(`${type === "id" ? "아이디" : type === "email" ? "이메일" : "추천인 아이디"}를 입력해주세요.`);
-                return;
+            const data = await response.json();
+            console.log("📌 서버 응답:", data); // ✅ 디버깅 로그 추가
+
+            if (data.success) {
+                window.location.href = data.redirect_url; // ✅ 올바른 URL로 이동
+            } else {
+                alert("회원가입 실패: " + (data.error || JSON.stringify(data.errors)));
             }
-
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-                    },
-                    body: JSON.stringify({ [type]: value }),
-                });
-
-                const data = await response.json();
-
-                if (data.is_duplicate) {
-                    alert(`이미 사용 중인 ${type === "id" ? "아이디" : "이메일"}입니다.`);
-                } else {
-                    alert(`사용 가능한 ${type === "id" ? "아이디" : "이메일"}입니다.`);
-                }
-            } catch (error) {
-                console.error(`${type} 중복 확인 오류:`, error);
-                alert(`${type === "id" ? "아이디" : "이메일"} 확인 중 오류가 발생했습니다.`);
-            }
-        };
+        } catch (error) {
+            console.error("Signup error:", error);
+            alert("회원가입 처리 중 오류가 발생했습니다.");
+        }
     });
-        
+
+    /** ✅ 단계 이동 기능 */
+    let currentStep = 1;
+    function showStep(step) {
+        document.querySelectorAll(".form-section").forEach((section, index) => {
+            section.style.display = index + 1 === step ? "block" : "none";
+        });
+
+        document.querySelectorAll(".progress-step").forEach((stepElement, index) => {
+            stepElement.classList.toggle("active", index + 1 <= step);
+        });
+
+        currentStep = step;
+    }
+
+    window.nextStep = () => {
+        if (currentStep < 2) showStep(currentStep + 1);
+    };
+
+    window.prevStep = () => {
+        if (currentStep > 1) showStep(currentStep - 1);
+    };
+
+    /** ✅ 주소 검색 */
+    window.searchAddress = function () {
+        new daum.Postcode({
+            oncomplete: function (data) {
+                document.getElementById("address").value = data.roadAddress;
+                document.getElementById("address_detail").focus();
+            },
+        }).open();
+    };
+
+    /** ✅ 중복 확인 (아이디, 이메일) */
+    window.checkDuplicate = async function (type) {
+        const inputField = document.getElementById(type);
+        if (!inputField) {
+            alert(`${type === "username" ? "아이디" : "이메일"} 입력란을 찾을 수 없습니다.`);
+            return;
+        }
+
+        const value = inputField.value.trim();
+        if (!value) {
+            alert(`${type === "username" ? "아이디" : "이메일"}를 입력해주세요.`);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/check-${type}-duplicate/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken,
+                },
+                body: JSON.stringify({ [type]: value }),
+            });
+
+            const data = await response.json();
+            if (data.is_duplicate) {
+                alert(`❌ 이미 사용 중인 ${type === "username" ? "아이디" : "이메일"}입니다.`);
+                inputField.style.border = "2px solid red"; // UI 개선
+            } else {
+                alert(`✅ 사용 가능한 ${type === "username" ? "아이디" : "이메일"}입니다.`);
+                inputField.style.border = "2px solid green"; // UI 개선
+            }
+        } catch (error) {
+            console.error(`${type} 중복 확인 오류:`, error);
+            alert(`${type === "username" ? "아이디" : "이메일"} 확인 중 오류가 발생했습니다.`);
+        }
+    };
+});
+
 </script>
 
 {% endblock %}

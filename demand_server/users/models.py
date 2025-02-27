@@ -4,6 +4,7 @@ from .managers import DemandUserManager
 
 class DemandUser(AbstractUser):
     objects = DemandUserManager()
+    
     groups = models.ManyToManyField(
         Group,
         related_name="demanduser_groups",
@@ -15,11 +16,10 @@ class DemandUser(AbstractUser):
         blank=True
     )
     """수요업체 사용자 모델"""
-    company_name = models.CharField(max_length=255, verbose_name="회사명")
-    business_registration_number = models.CharField(max_length=20, unique=True, verbose_name="사업자등록번호")
-    business_phone_number = models.CharField(max_length=20, verbose_name="대표번호")
+    company_name = models.CharField(max_length=255, verbose_name="회사명", null=True, blank=True)
+    business_phone_number = models.CharField(max_length=20, verbose_name="대표번호", null=True, blank=True)
     contact_phone_number = models.CharField(max_length=20, verbose_name="담당자 연락처", null=True, blank=True)
-    address = models.CharField(max_length=255, verbose_name="주소")
+    address = models.CharField(max_length=255, verbose_name="주소", null=True, blank=True)
     address_detail = models.CharField(max_length=255, verbose_name="상세 주소", null=True, blank=True)
     recommend_id = models.CharField(max_length=100, verbose_name="추천인 아이디", blank=True, null=True)
     

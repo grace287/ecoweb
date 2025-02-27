@@ -20,9 +20,10 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('signup/', views.signup, name='signup'),
     path('signup/success/', views.signup_success, name='signup_success'),
-    path("check-id/", check_id_duplicate, name="check_id"),
+    path("check-username-duplicate/", check_id_duplicate, name="check_id"),
     path("check-email-duplicate/", check_email_duplicate, name="check_email_duplicate"),
     path("profile", views.profile, name="profile"),
+    path("profile/edit/", views.profile_edit, name="profile_edit"),
     path("profile/customization/update/", views.customization_update, name="customization_update"),
 
     # Estimates
