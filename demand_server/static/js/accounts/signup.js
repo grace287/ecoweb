@@ -1,146 +1,91 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('.signup-form');
-    const steps = document.querySelectorAll('.progress-step');
-    const sections = document.querySelectorAll('.form-section');
-    let currentStep = 1;
 
-    // 주소 검색 함수
-    window.searchAddress = function() {
-        new daum.Postcode({
-            oncomplete: function(data) {
-                document.getElementById('address').value = data.roadAddress;
-                document.getElementById('address_detail').focus();
+    document.addEventListener("DOMContentLoaded", function () {
+        const signupForm = document.querySelector(".signup-form");
+
+        signupForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector("[name=csrfmiddlewaretoken]").value;
+
+            try {
+                const response = await fetch(this.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-CSRFToken": csrfToken,
+                    },
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = "{% url 'signup_success' %}"; // 가입 성공 시 이동
+                } else {
+                    alert(data.error); // 에러 메시지 표시
+                }
+            } catch (error) {
+                console.error("Signup error:", error);
+                alert("회원가입 처리 중 오류가 발생했습니다.");
             }
-        }).open();
-    };
+        });
 
-    // 이메일 중복 확인
-    async function checkEmailDuplicate(email) {
-        try {
-            const response = await fetch('/accounts/check-email/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({ email })
+        let currentStep = 1;
+
+        function showStep(step) {
+            document.querySelectorAll(".form-section").forEach((section, index) => {
+                section.style.display = index + 1 === step ? "block" : "none";
             });
-            const data = await response.json();
-            return data.available;
-        } catch (error) {
-            console.error('이메일 중복 확인 오류:', error);
-            return false;
+
+            document.querySelectorAll(".progress-step").forEach((stepElement, index) => {
+                stepElement.classList.toggle("active", index + 1 <= step);
+            });
+
+            currentStep = step;
         }
-    }
 
-    // 비밀번호 유효성 검사
-    function validatePassword(password) {
-        const minLength = 8;
-        const hasNumber = /\d/.test(password);
-        const hasLetter = /[a-zA-Z]/.test(password);
-        const hasSpecial = /[!@#$%^&*]/.test(password);
+        window.nextStep = function () {
+            if (currentStep < 2) showStep(currentStep + 1);
+        };
 
-        return password.length >= minLength && hasNumber && hasLetter && hasSpecial;
-    }
+        window.prevStep = function () {
+            if (currentStep > 1) showStep(currentStep - 1);
+        };
 
-    // 단계 변경 함수
-    function updateStep(step) {
-        steps.forEach((s, index) => {
-            if (index + 1 <= step) {
-                s.classList.add('active');
-                s.classList.add('slide-in');
-            } else {
-                s.classList.remove('active');
-            }
-        });
+        // 주소찾기
 
-        sections.forEach((section, index) => {
-            if (index + 1 === step) {
-                section.style.display = 'block';
-                section.classList.add('fade-in');
-            } else {
-                section.style.display = 'none';
-            }
-        });
+        window.searchAddress = function () {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    document.getElementById("address").value = data.roadAddress;
+                    document.getElementById("address_detail").focus();
+                },
+            }).open();
+        };
 
-        currentStep = step;
-    }
-
-    // 이메일 중복 확인 버튼 이벤트
-    document.querySelector('.verify-btn').addEventListener('click', async function() {
-        const emailInput = document.getElementById('email');
-        const email = emailInput.value;
-
-        if (!email) {
-            alert('이메일을 입력해주세요.');
+        // 중복 확인 (아이디, 이메일)
+    window.checkDuplicate = async function (type) {
+        const value = document.getElementById(type).value;
+        if (!value) {
+            alert(`${type === "username" ? "아이디" : "이메일"}를 입력해주세요.`);
             return;
         }
 
-        const isAvailable = await checkEmailDuplicate(email);
-        if (isAvailable) {
-            alert('사용 가능한 이메일입니다.');
-            emailInput.dataset.verified = 'true';
-        } else {
-            alert('이미 사용중인 이메일입니다.');
-            emailInput.dataset.verified = 'false';
+        try {
+            const response = await fetch(`/check-${type}-duplicate/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                },
+                body: JSON.stringify({ [type]: value }),
+            });
+
+            const data = await response.json();
+            alert(data.is_duplicate ? `이미 사용 중인 ${type === "username" ? "아이디" : "이메일"}입니다.` : `사용 가능한 ${type === "username" ? "아이디" : "이메일"}입니다.`);
+        } catch (error) {
+            console.error(`${type} 중복 확인 오류:`, error);
+            alert(`${type === "username" ? "아이디" : "이메일"} 확인 중 오류가 발생했습니다.`);
         }
-    });
-
-    // 폼 제출 처리
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        if (currentStep === 1) {
-            // 첫 번째 단계 유효성 검사
-            const email = document.getElementById('email');
-            const password = document.getElementById('password');
-            const passwordConfirm = document.getElementById('password_confirm');
-
-            if (email.dataset.verified !== 'true') {
-                alert('이메일 중복 확인이 필요합니다.');
-                return;
-            }
-
-            if (!validatePassword(password.value)) {
-                alert('비밀번호는 8자 이상, 숫자, 문자, 특수문자를 포함해야 합니다.');
-                return;
-            }
-
-            if (password.value !== passwordConfirm.value) {
-                alert('비밀번호가 일치하지 않습니다.');
-                return;
-            }
-
-            updateStep(2);
-        } else if (currentStep === 2) {
-            // 두 번째 단계 유효성 검사
-            const company = document.getElementById('company');
-            const phone = document.getElementById('phone');
-            const address = document.getElementById('address');
-
-            if (!company.value || !phone.value || !address.value) {
-                alert('모든 필수 정보를 입력해주세요.');
-                return;
-            }
-
-            // 최종 제출
-            const formData = new FormData(this);
-            try {
-                const response = await fetch('/accounts/signup/', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (response.ok) {
-                    updateStep(3);
-                    window.location.href = '/accounts/signup-success/';
-                } else {
-                    alert('회원가입 처리 중 오류가 발생했습니다.');
-                }
-            } catch (error) {
-                console.error('회원가입 오류:', error);
-                alert('회원가입 처리 중 오류가 발생했습니다.');
-            }
-        }
-    });
+    };
 });

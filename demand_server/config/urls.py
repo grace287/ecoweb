@@ -23,6 +23,7 @@ urlpatterns = [
     path("check-id/", check_id_duplicate, name="check_id"),
     path("check-email-duplicate/", check_email_duplicate, name="check_email_duplicate"),
     path("profile", views.profile, name="profile"),
+    path("profile/customization/update/", views.customization_update, name="customization_update"),
 
     # Estimates
     path('estimates_request_guest/', views.estimate_request_guest, name='estimate_request_guest'),

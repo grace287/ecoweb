@@ -9,10 +9,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BASE_DIR.parent
 
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)  # ✅ 운영 환경에서는 False 유지
+
 
 PORT = config('PORT', default='8000')
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+
 
 # API URL 설정
 PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')
@@ -21,14 +23,9 @@ PROVIDER_API_KEY = config('PROVIDER_API_KEY')
 if not PROVIDER_API_KEY:
     raise ValueError('PROVIDER_API_KEY must be set in .env file')
 
-# CORS 설정
-CORS_ALLOWED_ORIGINS = [
-    # "http://localhost:8000",  # Demand Server
-    "http://localhost:8001",  # Provider Server
-    # "http://localhost:8002",  # Admin Panel
-]
-
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:8000').split(',')
 CORS_ALLOW_CREDENTIALS = True
+
 
 # Application definition
 
@@ -47,7 +44,7 @@ INSTALLED_APPS = [
 
     # 기본앱
     'api.apps.ApiConfig',
-    'users.apps.UsersConfig',
+    'users',
 
     # social login
     'django.contrib.sites',
@@ -60,10 +57,12 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = "users.DemandUser"
+
 
 SITE_ID = 1
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+# 아이디 또는 이메일로 로그인 가능
+ACCOUNT_LOGIN_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 
@@ -181,7 +180,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',

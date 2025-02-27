@@ -1,9 +1,8 @@
 {% load static %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/components/header.css' %}">
-{% endblock %}
+{% block content %}
 
+<link rel="stylesheet" href="{% static 'css/components/header.css' %}">
 
 <header>
     <div class="nav-logo">
@@ -58,8 +57,8 @@
         <ul class="login-menu">
             {% if request.user.is_authenticated %}
                 <li class="active"><a href="#">업체 회원</a></li>
-                <li><a href="{% url 'profile' %}">마이페이지</a></li>
-                <li><a href="#">알림</a></li>
+                <li><a href="{% url 'profile' %}"><img src="{% static 'img/components/header/myinfo.png' %}" alt=""></a></li>
+                <li><a href="#"><img src="{% static 'img/components/header/notification.png' %}" alt=""></a></li>
             {% else %}
                 <ul class="login-button">
                     <li id="switch-to-provider-btn"><a href="javascript:void(0);" onclick="confirmProviderSwitch()">업체 회원</a></li>
@@ -82,3 +81,5 @@ function confirmProviderSwitch() {
 </script>
 
 <script src="{% static 'js/components/navbar.js' %}"></script>
+
+{% endblock %}

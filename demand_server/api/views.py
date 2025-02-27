@@ -10,7 +10,28 @@ import requests
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
-from users.models import CustomUser
+
+from django.shortcuts import get_object_or_404
+from users.models import DemandUser
+
+def get_demand_user(request, user_id):
+    """Demand 서버에서 특정 사용자 정보 제공"""
+    user = get_object_or_404(DemandUser, id=user_id)
+    
+    data = {
+        "id": user.id,
+        "username": user.username,
+        "company_name": user.company_name,
+        "email": user.email,
+        "business_registration_number": user.business_registration_number,
+        "business_phone_number": user.business_phone_number,
+        "contact_phone_number": user.contact_phone_number,
+        "address": user.address,
+        "address_detail": user.address_detail,
+        "is_approved": user.is_approved
+    }
+    return JsonResponse(data)
+
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])

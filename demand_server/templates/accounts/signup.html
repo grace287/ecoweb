@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
-<link rel="stylesheet" href="{% static 'css/demand/accounts/signup.css' %}">
-<script defer src="{% static 'js/demand/accounts/signup.js' %}"></script>
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/accounts/signup.css' %}">
+<script defer src="{% static 'js/accounts/signup.js' %}"></script>
 
 <style>
     /* static/css/accounts/signup.css */
@@ -320,7 +320,6 @@
                 <label for="email">이메일</label>
                 <div class="input-with-button">
                     <input type="email" id="email" name="email" required>
-                    <!-- <button type="button" class="verify-btn" onclick="checkEmailDuplicate()">중복확인</button> -->
                 </div>
             </div>
 
@@ -441,6 +440,8 @@
             if (currentStep > 1) showStep(currentStep - 1);
         };
 
+        // 주소찾기
+
         window.searchAddress = function () {
             new daum.Postcode({
                 oncomplete: function (data) {
@@ -450,99 +451,51 @@
             }).open();
         };
 
-        window.checkIdDuplicate = async function () {
-            const userId = document.getElementById("id").value;
+        // 중복 확인 함수 (아이디, 이메일, 추천인)
+        window.checkDuplicate = async function (type) {
+            let value = "";
+            let url = "";
 
-            if (!userId) {
-                alert("아이디를 입력해주세요.");
+            if (type === "id") {
+                value = document.getElementById("username").value;
+                url = "/demand/check-id/";
+            } else if (type === "email") {
+                value = document.getElementById("email").value;
+                url = "/demand/check-email-duplicate/";
+            } else if (type === "recommend") {
+                value = document.getElementById("recommend").value;
+                url = "/demand/check-id/";
+            }
+
+            if (!value) {
+                alert(`${type === "id" ? "아이디" : type === "email" ? "이메일" : "추천인 아이디"}를 입력해주세요.`);
                 return;
             }
 
             try {
-                const response = await fetch("/demand/check-id/", {
+                const response = await fetch(url, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
                     },
-                    body: JSON.stringify({ id: userId }),
+                    body: JSON.stringify({ [type]: value }),
                 });
 
                 const data = await response.json();
 
                 if (data.is_duplicate) {
-                    alert("이미 사용 중인 아이디입니다.");
+                    alert(`이미 사용 중인 ${type === "id" ? "아이디" : "이메일"}입니다.`);
                 } else {
-                    alert("사용 가능한 아이디입니다.");
+                    alert(`사용 가능한 ${type === "id" ? "아이디" : "이메일"}입니다.`);
                 }
             } catch (error) {
-                console.error("아이디 중복 확인 오류:", error);
-                alert("아이디 확인 중 오류가 발생했습니다.");
-            }
-        };
-
-        window.checkEmailDuplicate = async function () {
-            const email = document.getElementById("email").value;
-
-            if (!email) {
-                alert("이메일을 입력해주세요.");
-                return;
-            }
-
-            try {
-                const response = await fetch("/demand/check-email-duplicate/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-                    },
-                    body: JSON.stringify({ email }),
-                });
-
-                const data = await response.json();
-
-                if (data.is_duplicate) {
-                    alert("이미 사용 중인 이메일입니다.");
-                } else {
-                    alert("사용 가능한 이메일입니다.");
-                }
-            } catch (error) {
-                console.error("이메일 중복 확인 오류:", error);
-                alert("이메일 확인 중 오류가 발생했습니다.");
-            }
-        };
-
-        window.checkRecommendId = async function () {
-            const recommendId = document.getElementById("recommend").value;
-
-            if (!recommendId) {
-                alert("추천인 아이디를 입력해주세요.");
-                return;
-            }
-
-            try {
-                const response = await fetch("/demand/check-id/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
-                    },
-                    body: JSON.stringify({ id: recommendId }),
-                });
-
-                const data = await response.json();
-
-                if (data.is_duplicate) {
-                    alert("유효한 추천인 아이디입니다.");
-                } else {
-                    alert("추천인 아이디가 존재하지 않습니다.");
-                }
-            } catch (error) {
-                console.error("추천인 아이디 확인 오류:", error);
-                alert("추천인 아이디 확인 중 오류가 발생했습니다.");
+                console.error(`${type} 중복 확인 오류:`, error);
+                alert(`${type === "id" ? "아이디" : "이메일"} 확인 중 오류가 발생했습니다.`);
             }
         };
     });
+        
 </script>
 
 {% endblock %}
