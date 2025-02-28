@@ -37,7 +37,10 @@ def get_demand_user(request, user_id):
     return JsonResponse(data)
 
 
+# 로그인 시 랜딩페이지말고 main으로 리다이렉트.
 def landing(request):
+    if request.user.is_authenticated:
+        return redirect('main')
     return render(request, "landing.html")
 
 def main(request):
