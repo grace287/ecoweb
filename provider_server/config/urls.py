@@ -17,7 +17,7 @@ urlpatterns = [
     path('check-id/', check_id_duplicate, name='check_id'),
     path('verify-business-number/', verify_business_number, name='verify_business_number'),
     
-    path('dashboard/', views.provider_dashboard, name='dashboard'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('logout/', views.provider_logout, name='provider_logout'),
     path('profile/', views.provider_profile, name='provider_profile'),
 

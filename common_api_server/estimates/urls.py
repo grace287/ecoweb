@@ -1,6 +1,8 @@
 from django.urls import path
+from . import views
 
 urlpatterns = [
+    path("service-categories/", views.service_category_list, name="service_category_list"),
     path('request/guest/', estimate_request_guest, name='estimate_request_guest'),  # 비회원용
     path('request/form/', estimate_request_form, name='request_form'),  # 회원용
     path('request/submit/', estimate_request_submit, name='request_submit'),  # 견적 제출

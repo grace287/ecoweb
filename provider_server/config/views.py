@@ -3,8 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth import authenticate
-from users.models import CustomUser, ServiceCategory, Attachment  # 올바른 경로로 수정
+from django.contrib.auth import authenticate  # 올바른 경로로 수정
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
@@ -14,6 +13,28 @@ from django.conf import settings
 import requests
 from django.views.decorators.http import require_http_methods
 from django.middleware.csrf import get_token # 견적 요청 모델
+
+from users.models import ProviderUser, Attachment
+
+
+def get_provider_user(request, provider_id):
+    """Provider 서버에서 특정 사용자 정보 제공"""
+    provider = get_object_or_404(ProviderUser, id=provider_id)
+    
+    data = {
+        "id": provider.id,
+        "username": provider.username,
+        "company_name": provider.company_name,
+        "email": provider.email,
+        "business_registration_number": provider.business_registration_number,
+        "business_phone_number": provider.business_phone_number,
+        "consultation_phone_number": provider.consultation_phone_number,
+        "address": provider.address,
+        "address_detail": provider.address_detail,
+        "is_approved": provider.is_approved,
+        "service_category": list(provider.service_category.values_list("name", flat=True))
+    }
+    return JsonResponse(data)
 
 def main(request):
     return render(request, 'main.html') 
@@ -135,26 +156,26 @@ def provider_signup(request):
                 })
 
             # 중복 체크
-            if CustomUser.objects.filter(username=username).exists():
+            if ProviderUser.objects.filter(username=username).exists():
                 return render(request, 'accounts/provider_signup.html', {
                     'error': '이미 사용 중인 아이디입니다.',
                     'service_categories': ServiceCategory.objects.all()
                 })
 
-            if CustomUser.objects.filter(email=email).exists():
+            if ProviderUser.objects.filter(email=email).exists():
                 return render(request, 'accounts/provider_signup.html', {
                     'error': '이미 사용 중인 이메일입니다.',
                     'service_categories': ServiceCategory.objects.all()
                 })
 
-            if CustomUser.objects.filter(business_registration_number=business_registration_number).exists():
+            if ProviderUser.objects.filter(business_registration_number=business_registration_number).exists():
                 return render(request, 'accounts/provider_signup.html', {
                     'error': '이미 등록된 사업자등록번호입니다.',
                     'service_categories': ServiceCategory.objects.all()
                 })
 
             # 사용자 생성
-            user = CustomUser(
+            user = ProviderUser(
                 username=username,
                 email=email,
                 password=make_password(password),
@@ -243,7 +264,7 @@ def check_id_duplicate(request):
             if not user_id:
                 return JsonResponse({"error": "아이디를 입력해주세요."}, status=400)
 
-            is_duplicate = CustomUser.objects.filter(username=user_id).exists()
+            is_duplicate = ProviderUser.objects.filter(username=user_id).exists()
             return JsonResponse({"is_duplicate": is_duplicate})
 
         except json.JSONDecodeError:
@@ -273,52 +294,81 @@ def verify_business_number(request):
     return JsonResponse({"error": "잘못된 요청"}, status=400)
 
 
-@login_required
-def provider_dashboard(request):
-    context = {
-        'status_data': {
-            'in_progress': {
-                'count': 5,
-                'label': '진행중',
-                'color': '#2563eb'
-            },
-            'recruiting': {
-                'count': 8,
-                'label': '모집',
-                'color': '#059669'
-            },
-            'meeting': {
-                'count': 3,
-                'label': '미팅',
-                'color': '#7C3AED'
-            }
-        },
-        'progress_data': [
-            {
-                'label': '전체 진행률',
-                'value': 65,
-                'color': '#2563eb'
-            },
-            {
-                'label': '가입 현황',
-                'value': 80,
-                'color': '#059669'
-            },
-            {
-                'label': '견적 완료율',
-                'value': 45,
-                'color': '#7C3AED'
-            }
-        ],
-        'financial_data': {
-            'today_settlement': 456789,
-            'total_revenue': 123456789,
-            'monthly_growth': 15.7,
-            'pending_payments': 3
-        }
-    }
-    return render(request, 'provider/provider_dashboard.html', context)
+# @login_required
+# def provider_dashboard(request):
+#     context = {
+#         'status_data': {
+#             'in_progress': {
+#                 'count': 5,
+#                 'label': '진행중',
+#                 'color': '#2563eb'
+#             },
+#             'recruiting': {
+#                 'count': 8,
+#                 'label': '모집',
+#                 'color': '#059669'
+#             },
+#             'meeting': {
+#                 'count': 3,
+#                 'label': '미팅',
+#                 'color': '#7C3AED'
+#             }
+#         },
+#         'progress_data': [
+#             {
+#                 'label': '전체 진행률',
+#                 'value': 65,
+#                 'color': '#2563eb'
+#             },
+#             {
+#                 'label': '가입 현황',
+#                 'value': 80,
+#                 'color': '#059669'
+#             },
+#             {
+#                 'label': '견적 완료율',
+#                 'value': 45,
+#                 'color': '#7C3AED'
+#             }
+#         ],
+#         'financial_data': {
+#             'today_settlement': 456789,
+#             'total_revenue': 123456789,
+#             'monthly_growth': 15.7,
+#             'pending_payments': 3
+#         }
+#     }
+#     return render(request, 'provider/provider_dashboard.html', context)
 
+@login_required
+def dashboard(request):
+    status_data = {
+        "in_progress": {"label": "진행중", "count": 2, "color": "#2563eb"},
+        "requested": {"label": "요청", "count": 4, "color": "#374151"},
+        "completed": {"label": "완료", "count": 1, "color": "#10b981"},
+    }
+
+    progress_data = [
+        {"label": "측정 완료율", "value": 80, "color": "#2563eb"},
+        {"label": "견적 완료율", "value": 75, "color": "#22c55e"},
+        {"label": "채팅 완료율", "value": 80, "color": "#fbbf24"},
+        {"label": "정산 완료율", "value": 40, "color": "#ec4899"},
+    ]
+
+    financial_data = {
+        "today_settlement": 123456,
+        "total_revenue": 100000000,
+        "monthly_growth": 5,
+        "pending_payments": 3,
+    }
+
+    return render(request, "provider/dashboard.html", {
+        "status_data": status_data,
+        "progress_data": progress_data,
+        "financial_data": financial_data,
+    })
+
+    
 @login_required
 def provider_profile(request):
     if not request.user.is_authenticated:
