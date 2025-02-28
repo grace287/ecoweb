@@ -14,7 +14,7 @@ import requests
 from django.views.decorators.http import require_http_methods
 from django.middleware.csrf import get_token # 견적 요청 모델
 
-from users.models import ProviderUser, Attachment
+from users.models import ProviderUser, Attachment, ServiceCategory
 
 
 def get_provider_user(request, provider_id):

@@ -1,19 +1,20 @@
 /* 공통 스타일 */
-
-
 .header-menu {
     display: flex;
     align-items: center;
+    justify-content: space-between; /* 공간을 균등하게 분배 */
+    padding: 10px 20px;
+    background-color: #007bff; /* 배경색 */
 }
-
 
 /* 검색 바 스타일 */
 
 header .search-bar {
     display: flex;
+    align-items: center;
 }
 
-header.search-bar input {
+header .search-bar input {
     padding: 10px;
     border: none;
     border-radius: 5px 0 0 5px;
@@ -21,13 +22,13 @@ header.search-bar input {
 
 header .search-bar .search-btn {
     border: none;
-    background: none;;
+    background: none;
     cursor: pointer;
     padding: 10px; /* 버튼 크기 조정 */
     border-radius: 0 5px 5px 0;
 }
 
-header.search-icon {
+header .search-icon {
     width: 20px; /* 아이콘 크기 조정 */
     height: 20px; /* 아이콘 크기 조정 */
 }
@@ -103,55 +104,44 @@ header.search-icon {
     color: #3b82f6;
 }
 
-/* 반응형 스타일 */
-@media (max-width: 768px) {
-    header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .nav-container {
-        margin-top: 10px;
-        justify-content: flex-start;
-    }
-
-    .nav-menu {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .nav-menu li {
-        margin: 5px 0;
-    }
-}
-
-
 /* 로그인 */
 .login-menu {
-    list-style: none;
     display: flex;
-    gap: 15px;
+    align-items: center; /* 아이콘 수직 중앙 정렬 */
+    justify-content: center; /* 가운데 정렬 (필요에 따라 변경 가능) */
+    gap: 15px; /* 아이콘 간 간격 */
+    list-style: none; /* 기본 리스트 스타일 제거 */
+    padding: 0;
+    margin: 0;
+    background-color: #4285F4; /* 기존 배경색 유지 */
+    padding: 10px 20px;
+    border-radius: 8px; /* 모서리 둥글게 */
 }
 
 .login-menu li {
-    display: inline;
+    display: flex;
+    align-items: center;
 }
 
-.login-menu a {
-    color: white;
-    text-decoration: none;
-    padding: 10px;
-    border-radius: 5px;
+.login-menu li a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px; /* 아이콘 크기 조정 */
+    height: 50px;
+    border-radius: 10px; /* 아이콘 주변 테두리 둥글게 */
+    transition: background-color 0.3s ease;
 }
 
-.login-menu a:hover {
-    background-color: rgba(255, 255, 255, 0.2); /* 호버 시 배경색 */
+.login-menu li a:hover {
+    background-color: rgba(255, 255, 255, 0.2); /* 호버 효과 */
 }
 
-.login-menu .active a {
-    background-color: rgba(255, 255, 255, 0.5); /* 액티브 버튼 배경색 */
+.login-menu li img {
+    width: 30px; /* 아이콘 크기 조정 */
+    height: 30px;
+    filter: brightness(100%); /* 아이콘 가독성 향상 */
 }
-
 
 .login-button li {
     padding: 10px;
@@ -202,3 +192,36 @@ header.search-icon {
 .nav-menu li:hover .dropdown-menu {
     display: block; /* 호버 시 드롭다운 표시 */
 }
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-container {
+        margin-top: 10px;
+        justify-content: flex-start;
+    }
+
+    .nav-menu {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .nav-menu li {
+        margin: 5px 0;
+    }
+
+    .login-menu {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .login-menu li {
+        margin: 5px 0;
+    }
+}
+
+
