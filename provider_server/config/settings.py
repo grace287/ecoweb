@@ -20,6 +20,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(','
 
 # API URL 설정
 DEMAND_API_URL = config('DEMAND_API_URL', default='http://localhost:8000')
+ADMIN_PANEL_URL = config('ADMIN_PANEL_URL', default='http://localhost:8002')
 COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003')
 
 

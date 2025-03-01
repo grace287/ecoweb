@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="company-list-container">
+    <h1>회원업체 목록</h1>
+
+    <div class="filters">
+        <button class="filter-btn active" data-filter="all">전체</button>
+        <button class="filter-btn" data-filter="provider">대행사</button>
+        <button class="filter-btn" data-filter="demand">수요처</button>
+    </div>
+
+    {% if companies %}
+    <table class="company-table">
+        <thead>
+            <tr>
+                <th>업체명</th>
+                <th>유형</th>
+                <th>승인상태</th>
+                <th>가입일</th>
+                <th>관리</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for company in companies %}
+            <tr class="company-row" data-type="{{ company.user_type }}">
+                <td>{{ company.company_name }}</td>
+                <td>{{ company.get_user_type_display }}</td>
+                <td>
+                    {% if company.user_type == "provider" %}
+                        {{ company.get_status_display }}
+                    {% else %}
+                        자동 가입
+                    {% endif %}
+                </td>
+                <td>{{ company.created_at|date:"Y-m-d" }}</td>
+                <td>
+                    <a href="{% url 'company_detail' company.pk %}" class="btn-detail">상세보기</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>등록된 업체가 없습니다.</p>  <!-- ✅ 데이터가 없을 경우 대비 -->
+    {% endif %}  <!-- ✅ if 블록을 올바르게 닫음 -->
+
+</div>
+
+<style>
+.company-list-container {
+    padding: 20px;
+}
+
+.filters {
+    margin-bottom: 20px;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+.filter-btn.active {
+    background-color: #405FAB;
+    color: white;
+}
+
+.company-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.company-table th,
+.company-table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.company-table th {
+    background-color: #f8f9fa;
+}
+
+.btn-detail {
+    padding: 6px 12px;
+    background-color: #405FAB;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const companyRows = document.querySelectorAll('.company-row');
+
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const filter = this.dataset.filter;
+
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            companyRows.forEach(row => {
+                if (filter === 'all' || row.dataset.type === filter) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+
+{% endblock %}

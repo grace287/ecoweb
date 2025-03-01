@@ -17,6 +17,11 @@ DEBUG = True
 PORT = config('PORT', default='8002')
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+# Provider Server API 설정
+DEMAND_API_URL = config('DEMAND_API_URL', default='http://localhost:8000')
+PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')  # provider_server URL
+COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003') 
+
 
 # Application definition
 
@@ -70,9 +75,7 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-# Provider Server API 설정
-PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')  # provider_server URL
-PROVIDER_API_KEY = 'your-api-key-here'      # provider_server에서 발급받은 API 키
+
 
 ROOT_URLCONF = 'config.urls'
 

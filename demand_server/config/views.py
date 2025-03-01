@@ -37,6 +37,12 @@ def get_demand_user(request, user_id):
     return JsonResponse(data)
 
 
+def get_demand_users(request):
+    """Demand User 목록 반환"""
+    demand_users = list(DemandUser.objects.values("id", "username", "email", "company_name", "created_at"))
+    return JsonResponse({"demand_users": demand_users}, safe=False)
+
+
 # 로그인 시 랜딩페이지말고 main으로 리다이렉트.
 def landing(request):
     if request.user.is_authenticated:

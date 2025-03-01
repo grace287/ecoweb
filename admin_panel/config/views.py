@@ -4,11 +4,34 @@ from django.utils import timezone
 from users.models import Company, AdminUser  # Company 모델로 변경
 from django.db.models import Q, Count
 import requests
+from django.conf import settings
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import login as auth_login
+from django.core.exceptions import ValidationError
+
+import logging
+
+DEMAND_API_URL = settings.DEMAND_API_URL
+PROVIDER_API_URL = settings.PROVIDER_API_URL
+COMMON_API_URL = settings.COMMON_API_URL
+
+logger = logging.getLogger(__name__)
+
+@login_required
+def demand_user_list(request):
+    """Demand 유저 목록을 외부 API에서 가져옴"""
+    try:
+        response = requests.get(f"{settings.DEMAND_API_URL}/demand-users/", timeout=5)
+        response.raise_for_status()  # HTTP 에러 발생 시 예외 처리
+        demand_users = response.json()
+    except requests.RequestException as e:
+        logger.error(f"⚠️ Demand Server API 요청 실패: {e}")
+        demand_users = []
+
+    return JsonResponse({"demand_users": demand_users}, status=200)
 
 @login_required
 def approve_provider_requests(request):
@@ -17,42 +40,73 @@ def approve_provider_requests(request):
     - POST: 승인 처리 및 provider_server에 알림
     - GET: 승인 대기 중인 대행사 목록 표시
     """
+    
     if request.method == "POST":
         user_id = request.POST.get("user_id")
-        company = Company.objects.get(id=user_id)
         
+        # ✅ 예외 처리: 존재하지 않는 ID 요청 방지
+        try:
+            company = Company.objects.get(id=user_id)
+        except Company.DoesNotExist:
+            return JsonResponse({"error": "해당 ID의 회사가 존재하지 않습니다."}, status=404)
+
         # 승인 처리
-        company.status = 'approved'
+        company.status = "approved"
         company.approved_at = timezone.now()
         company.approved_by = request.user
         company.save()
 
         # provider_server에 승인 상태 업데이트
-        api_url = "http://provider-server.com/api/update_user_status/"
+        api_url = f"{settings.PROVIDER_API_URL}/api/update_user_status/"
         data = {
-            'username': company.username,
-            'is_approved': True
+            "username": company.username,
+            "is_approved": True
         }
 
         try:
-            response = requests.post(api_url, json=data)
-            if response.status_code == 200:
-                return redirect("admin_approve_requests")
-            else:
-                return JsonResponse({"error": "Provider 서버 업데이트 실패"}, status=500)
-        except requests.exceptions.RequestException as e:
-            return JsonResponse({"error": str(e)}, status=500)
+            response = requests.post(api_url, json=data, timeout=5)
+            response.raise_for_status()  # ✅ HTTP 에러 발생 시 예외 처리
+            return redirect("admin_approve_requests")
+        except requests.RequestException as e:
+            logger.error(f"⚠️ Provider 서버 업데이트 실패: {e}")
+            return JsonResponse({"error": "Provider 서버 업데이트 실패"}, status=500)
 
-    # 승인 대기 중인 대행사 목록 조회
-    pending_providers = Company.objects.filter(
-        status='pending',
-        user_type='provider'
-    ).select_related('approved_by')
-    
-    return render(request, "admin_panel/approve_requests.html", {
-        "pending_providers": pending_providers
-    })
+    # ✅ provider_server에서 가입 요청 데이터 가져오기
+    try:
+        response = requests.get(
+            f"{settings.PROVIDER_API_URL}/signup/pending/",
+            timeout=5
+        )
 
+        response.raise_for_status()  # ✅ HTTP 에러 발생 시 예외 처리
+        provider_companies = response.json()  # ✅ API 응답이 JSON이 아닐 경우 예외 발생 가능
+    except requests.RequestException as e:
+        logger.error(f"⚠️ API 요청 실패: {e}")
+        provider_companies = []
+
+    # ✅ 로컬 DB에서 가입 요청 목록 가져오기
+    local_companies = Company.objects.filter(status="pending")
+
+    # ✅ 중복 제거: 사업자번호 기준 병합 (KeyError 방지)
+    company_dict = {company.get("business_registration_number", ""): company for company in provider_companies}
+
+    for company in local_companies:
+        brn = company.business_registration_number  # business_registration_number
+        if brn and brn not in company_dict:
+            company_dict[brn] = {
+                "id": company.id,
+                "company_name": company.company_name,
+                "user_type": company.user_type,
+                "business_registration_number": brn,
+                "email": company.email,
+                "business_phone_number": company.business_phone_number,
+                "created_at": company.created_at.isoformat(),
+                "source": "local"
+            }
+
+    pending_companies = list(company_dict.values())
+
+    return render(request, "admin_panel/approve_requests.html", {"pending_companies": pending_companies})
 
 @login_required
 def dashboard(request):
@@ -82,15 +136,16 @@ def dashboard(request):
 
     return render(request, 'dashboard/dashboard.html', context)
 
+
 @login_required
 def company_list(request):
-    companies = CompanyUser.objects.all().order_by('-created_at')
-    return render(request, 'company/list.html', {'companies': companies})
+    companies = Company.objects.all().order_by('-created_at')
+    return render(request, 'dashboard/company_list.html', {'companies': companies})
 
 @login_required
 def company_detail(request, pk):
-    company = CompanyUser.objects.get(pk=pk)
-    return render(request, 'company/detail.html', {'company': company})
+    company = Company.objects.get(pk=pk)
+    return render(request, 'dashboard/company_detail.html', {'company': company})
 
 def admin_login(request):
     """관리자 로그인 뷰"""
@@ -127,3 +182,7 @@ def logout(request):
 def profile(request):
     """관리자 프로필 뷰"""
     return render(request, 'accounts/profile.html')
+
+
+def pending_companies(request):
+    return JsonResponse({"error": "This is a test response"}, status=200)

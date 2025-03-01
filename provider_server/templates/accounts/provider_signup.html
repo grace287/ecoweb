@@ -3,439 +3,7 @@
 <link rel="stylesheet" href="{% static 'css/accounts/signup.css' %}">
 
 {% block content %}
-<style>
-    /* static/css/accounts/signup.css */
-.signup-container {
-    max-width: 800px;
-    margin: 40px auto;
-    padding: 0 20px;
-}
 
-.signup-container h1 {
-    text-align: center;
-    font-size: 24px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 40px;
-}
-
-/* 스텝 스타일 */
-.signup-steps {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 50px;
-    position: relative;
-    padding: 0 40px;
-}
-
-.signup-steps::before {
-    content: '';
-    position: absolute;
-    top: 25px;
-    left: 60px;
-    right: 60px;
-    height: 2px;
-    background: #e5e7eb;
-    z-index: 1;
-}
-
-.step-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-}
-
-.step-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
-}
-
-.step-item.active .step-icon {
-    border-color: #2563eb;
-    background: #2563eb;
-}
-
-.step-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #6b7280;
-    margin-bottom: 4px;
-}
-
-.step-description {
-    font-size: 12px;
-    color: #9ca3af;
-}
-
-.step-item.active .step-label {
-    color: #2563eb;
-}
-
-/* 폼 스타일 */
-.form-section {
-    margin-bottom: 40px;
-}
-
-.form-section h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 14px;
-    color: #4b5563;
-    margin-bottom: 8px;
-}
-
-.input-with-button {
-    display: flex;
-    gap: 12px;
-}
-
-.input-with-button input {
-    flex: 1;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.btn-verify {
-    padding: 0 16px;
-    background: #fff;
-    border: 1px solid #2563eb;
-    color: #2563eb;
-    border-radius: 6px;
-    font-size: 14px;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-verify:hover {
-    background: #2563eb;
-    color: #fff;
-}
-
-/* 알림 박스 */
-.notice-box {
-    background: #f3f4f6;
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 24px;
-}
-
-.notice-box h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #2563eb;
-    margin-bottom: 12px;
-}
-
-.notice-box ol {
-    padding-left: 20px;
-    margin: 0;
-}
-
-.notice-box li {
-    font-size: 14px;
-    color: #4b5563;
-    margin-bottom: 8px;
-}
-
-/* 버튼 스타일 */
-.form-actions {
-    text-align: center;
-}
-
-.btn-submit {
-    background: #e5e7eb;
-    color: #6b7280;
-    border: none;
-    padding: 12px 40px;
-    border-radius: 6px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-submit:hover {
-    background: #d1d5db;
-}
-
-/* 반응형 스타일 */
-@media (max-width: 640px) {
-    .signup-steps {
-        padding: 0 20px;
-    }
-
-    .step-description {
-        display: none;
-    }
-
-    .input-with-button {
-        flex-direction: column;
-    }
-
-    .btn-verify {
-        width: 100%;
-        padding: 10px;
-    }
-}
-
-.file-upload-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 5px;
-}
-
-.file-upload-input {
-    display: none;
-}
-
-.file-name {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: #f8f9fa;
-    color: #666;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.file-upload-btn {
-    padding: 8px 15px;
-    background-color: #4B89DC;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.file-upload-btn:hover {
-    background-color: #357abd;
-}
-
-.file-format-info {
-    font-size: 12px;
-    color: #666;
-    margin-top: 5px;
-}
-
-
-/* 분야 선택 스타일 */
-.field-selection {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 10px;
-}
-
-.selected-fields {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 10px;
-}
-
-.field-tag {
-    background-color: #e9ecef;
-    padding: 4px 10px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.remove-field {
-    cursor: pointer;
-    color: #666;
-}
-
-.add-field-btn {
-    background: none;
-    border: 1px dashed #4B89DC;
-    color: #4B89DC;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-/* 모달 스타일 */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5tartapp );
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: #fff;
-    width: 90%;
-    max-width: 500px;
-    margin: 50px auto;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.modal-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.field-categories {
-    padding: 20px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.category {
-    margin-bottom: 20px;
-}
-
-.category h4 {
-    margin-bottom: 10px;
-    color: #333;
-}
-
-.field-options {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-}
-
-.field-options label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-}
-
-.modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #ddd;
-    text-align: right;
-}
-
-.confirm-btn {
-    background-color: #4B89DC;
-    color: white;
-    padding: 8px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-</style>
-
-<style>
-    .field-tag {
-    display: inline-block;
-    background-color: #e9ecef;
-    padding: 5px 10px;
-    margin: 2px;
-    border-radius: 3px;
-    font-size: 14px;
-}
-
-.remove-field {
-    margin-left: 5px;
-    cursor: pointer;
-    color: #dc3545;
-    font-weight: bold;
-}
-
-.selected-fields {
-    margin-bottom: 10px;
-    min-height: 30px;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: #fff;
-    margin: 15% auto;
-    padding: 20px;
-    border-radius: 5px;
-    width: 50%;
-    position: relative;
-}
-
-.close-btn {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    font-size: 20px;
-    cursor: pointer;
-}
-</style>
-
-<style>
-/* 알림 메시지 스타일 */
-.alert {
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-</style>
 
 <div class="signup-container">
     <h1>대행사 회원 가입</h1>
@@ -513,17 +81,16 @@
                 <input type="text" id="address_detail" name="address_detail" placeholder="에코에이앤이">
             </div>
 
+            <!-- 분야 선택 버튼 (모달 열기) -->
             <div class="form-group">
                 <label for="service_category">분야</label>
-                <div class="field-selection">
-                    <div class="selected-fields">
-                        <!-- 선택된 분야들이 여기에 표시됩니다 -->
+                <div class="category-input-container">
+                    <div id="selected_categories_display" class="selected-categories">
+                        <!-- Selected categories will appear here as tags -->
                     </div>
-                    <button type="button" class="add-field-btn" onclick="showFieldModal()">
-                        <i class="plus-icon"></i> 분야 선택
-                    </button>
+                    <button type="button" class="search-btn" onclick="openFieldModal()">🔍</button>
                 </div>
-                <input type="hidden" id="service_category" name="service_category" required>
+                <input type="hidden" id="service_category_codes" name="service_category_codes" value="">
             </div>
 
             <div class="form-group">
@@ -554,24 +121,198 @@
     <div class="modal-content">
         <div class="modal-header">
             <h3>분야 선택</h3>
-            <button type="button" class="close-btn" onclick="closeFieldModal()">&times;</button>
+            <input type="text" id="categorySearch" placeholder="분야 검색 (코드/이름)" oninput="searchCategories()">
+            <button type="button" class="close-btn" onclick="closeFieldModal()">×</button>
         </div>
-        <div class="field-categories">
-            {% for category in service_categories %}
-            <div class="category">
-                <label>
-                    <input type="checkbox" name="fields" value="{{ category.code }}" 
-                           data-code="{{ category.code }}">
-                    {{ category.name }}
-                </label>
-            </div>
-            {% endfor %}
+        <div class="field-categories" id="fieldCategoriesList">
+            <!-- Categories dynamically added here -->
         </div>
         <div class="modal-footer">
             <button type="button" class="confirm-btn" onclick="confirmFieldSelection()">확인</button>
         </div>
     </div>
 </div>
+
+<script>
+    const categoriesData = {{ categories|safe }};
+    const selectedCategoriesDisplay = document.getElementById('selected_categories_display');
+    const serviceCategoryCodesInput = document.getElementById('service_category_codes');
+    const fieldCategoriesList = document.getElementById('fieldCategoriesList');
+
+    let selectedCategories = [];
+
+    function openFieldModal() {
+        document.getElementById('fieldModal').style.display = 'block';
+        displayCategories(categoriesData);
+    }
+
+    function closeFieldModal() {
+        document.getElementById('fieldModal').style.display = 'none';
+    }
+
+    function displayCategories(categories) {
+        fieldCategoriesList.innerHTML = '';
+        categories.forEach(category => {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'category-option';
+            categoryDiv.innerHTML = `
+                <label>
+                    <input type="checkbox" value="${category.category_code}" data-name="${category.name}" 
+                           onchange="toggleCategorySelection(this)">
+                    ${category.name} (${category.category_code})
+                </label>
+            `;
+            fieldCategoriesList.appendChild(categoryDiv);
+        });
+    }
+
+    function searchCategories() {
+        const searchTerm = document.getElementById('categorySearch').value.toLowerCase();
+        const filteredCategories = categoriesData.filter(category =>
+            category.name.toLowerCase().includes(searchTerm) ||
+            category.category_code.toLowerCase().includes(searchTerm)
+        );
+        displayCategories(filteredCategories);
+    }
+
+    function toggleCategorySelection(checkbox) {
+        const categoryCode = checkbox.value;
+        const categoryName = checkbox.getAttribute('data-name');
+
+        if (checkbox.checked) {
+            if (!selectedCategories.some(cat => cat.code === categoryCode)) {
+                selectedCategories.push({ code: categoryCode, name: categoryName });
+            }
+        } else {
+            selectedCategories = selectedCategories.filter(cat => cat.code !== categoryCode);
+        }
+        updateSelectedCategoriesDisplay();
+    }
+
+    function updateSelectedCategoriesDisplay() {
+        selectedCategoriesDisplay.innerHTML = '';
+        selectedCategories.forEach(category => {
+            const tag = document.createElement('div');
+            tag.className = 'category-tag';
+            tag.innerHTML = `${category.name} <span onclick="removeCategory('${category.code}')">×</span>`;
+            selectedCategoriesDisplay.appendChild(tag);
+        });
+        serviceCategoryCodesInput.value = JSON.stringify(selectedCategories.map(cat => cat.code));
+    }
+
+    function removeCategory(code) {
+        selectedCategories = selectedCategories.filter(cat => cat.code !== code);
+        updateSelectedCategoriesDisplay();
+    }
+
+    function confirmFieldSelection() {
+        closeFieldModal();
+        updateSelectedCategoriesDisplay();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        closeFieldModal();
+    });
+</script>
+
+<style>
+    /* 분야 선택 검색 UI 스타일 */
+.category-input-container {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    padding: 8px;
+    border-radius: 4px;
+    min-height: 40px;
+}
+
+.selected-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex-grow: 1;
+}
+
+.category-tag {
+    display: flex;
+    align-items: center;
+    background-color: #3B82F6;
+    color: white;
+    border-radius: 15px;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.category-tag span {
+    margin-left: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.search-btn {
+    background: #3B82F6;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.search-btn:hover {
+    background: #2563EB;
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    width: 400px;
+    padding: 20px;
+    margin: 10% auto;
+    border-radius: 8px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header input {
+    flex-grow: 1;
+    padding: 5px;
+    margin-left: 10px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.field-categories {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.category-option {
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+}
+
+</style>
 
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
@@ -647,59 +388,6 @@
         input.nextElementSibling.textContent = fileNames;
     }
 
-    function showFieldModal() {
-        document.getElementById("fieldModal").style.display = "block";
-    }
-
-    function closeFieldModal() {
-        document.getElementById("fieldModal").style.display = "none";
-    }
-
-    function confirmFieldSelection() {
-    const selectedFields = document.querySelectorAll("input[name='fields']:checked");
-    const selectedFieldsContainer = document.querySelector(".selected-fields");
-    const serviceCategoryInput = document.getElementById("service_category");
-    selectedFieldsContainer.innerHTML = "";
-
-    if (selectedFields.length === 0) {
-        showAlert("최소 한 개 이상의 분야를 선택해주세요.");
-        return;
-    }
-
-    let selectedCategories = [];
-
-    selectedFields.forEach(field => {
-        const fieldTag = document.createElement("div");
-        fieldTag.className = "field-tag";
-        const categoryName = field.parentElement.textContent.trim();
-        const categoryCode = field.getAttribute('data-code');
-        fieldTag.textContent = categoryName;
-        fieldTag.dataset.code = categoryCode;
-
-        const removeBtn = document.createElement("span");
-        removeBtn.className = "remove-field";
-        removeBtn.textContent = "×";
-        removeBtn.onclick = function() {
-            fieldTag.remove();
-            updateServiceCategoryInput();
-        };
-
-        fieldTag.appendChild(removeBtn);
-        selectedFieldsContainer.appendChild(fieldTag);
-        selectedCategories.push(categoryCode);
-    });
-
-    serviceCategoryInput.value = selectedCategories.join(",");
-    closeFieldModal();
-}
-
-function updateServiceCategoryInput() {
-    const selectedTags = document.querySelectorAll(".field-tag");
-    const serviceCategoryInput = document.getElementById("service_category");
-    const selectedCategories = Array.from(selectedTags).map(tag => tag.dataset.code);
-    serviceCategoryInput.value = selectedCategories.join(",");
-}
-
 // 폼 제출 전 유효성 검사 부분을 수정
 document.querySelector('.signup-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -713,8 +401,11 @@ document.querySelector('.signup-form').addEventListener('submit', function(e) {
 
     for (const fieldId of requiredFields) {
         const field = document.getElementById(fieldId);
+        const labelElement = field.closest('.form-group').querySelector('label'); // ✅ 수정: label 요소 찾기
+
         if (!field.value.trim()) {
-            showAlert(`${field.previousElementSibling.textContent}을(를) 입력해주세요.`);
+            const labelText = labelElement ? labelElement.textContent : '필수 필드'; // ✅ label 요소가 없을 경우 대비
+            showAlert(`${labelText}을(를) 입력해주세요.`);
             field.focus();
             return;
         }
@@ -724,13 +415,6 @@ document.querySelector('.signup-form').addEventListener('submit', function(e) {
     if (document.getElementById('password').value !== 
         document.getElementById('password-confirm').value) {
         showAlert('비밀번호가 일치하지 않습니다.');
-        return;
-    }
-
-    // 서비스 카테고리 검사
-    const serviceCategoryInput = document.getElementById("service_category");
-    if (!serviceCategoryInput.value) {
-        showAlert("분야를 선택해주세요.");
         return;
     }
 

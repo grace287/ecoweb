@@ -31,9 +31,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Local apps
+    'services',
     'authentication',
     'api',
-    'services',
     'estimates',
     
 

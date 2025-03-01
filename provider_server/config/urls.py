@@ -6,12 +6,9 @@ from .views import provider_signup, check_id_duplicate, verify_business_number
 app_name = 'provider_server'
 
 urlpatterns = [
-    path('', views.provider_login, name='login'),
+    path('', views.provider_login, name='provider_login'),
     path('admin/', admin.site.urls),
-
-    path('login/', views.provider_login, name='provider_login'),
-    path('accounts/provider-login/', views.provider_login, name='provider_login'),
-
+    
     path('signup/', provider_signup, name='provider_signup'),
     path('signup/pending/', views.provider_signup_pending, name='provider_signup_pending'),
     path('check-id/', check_id_duplicate, name='check_id'),
