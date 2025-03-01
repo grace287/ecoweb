@@ -61,15 +61,20 @@ class ServiceCategory(models.Model):
         """공통 API 서버에서 `ServiceCategory` 데이터를 동기화하는 메서드"""
         try:
             response = requests.get(f"{settings.COMMON_API_URL}/service-categories/")
+            print(f"🔍 API 응답 코드: {response.status_code}")  # ✅ 응답 코드 확인
+            print(f"🔍 API 응답 데이터: {response.json()}")  # ✅ 데이터 확인
+
             if response.status_code == 200:
                 categories = response.json()
                 for category in categories:
-                    ServiceCategory.objects.update_or_create(
+                    obj, created = ServiceCategory.objects.update_or_create(
                         category_code=category["category_code"],
                         defaults={"name": category["name"]}
                     )
+                    print(f"✅ 저장됨: {obj}, 새로 생성됨: {created}")  # ✅ 저장 여부 확인
         except Exception as e:
             print(f"⚠️ 서비스 카테고리 동기화 오류: {e}")
+
 
 
 

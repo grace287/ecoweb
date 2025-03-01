@@ -10,13 +10,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7k(o@v0%hq6!0rlcwfmz$=b(e%@&oiqp#ioz1vkm$qu(%fjiu$'
 
 SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+PORT = config('PORT', default='8003')
 
 
 # Application definition
@@ -32,7 +33,9 @@ INSTALLED_APPS = [
     # Local apps
     'authentication',
     'api',
+    'services',
     'estimates',
+    
 
     # Third party apps
     'rest_framework',
@@ -46,6 +49,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.kakao',
 ]
 
+DEMAND_SERVER_URL = "http://127.0.0.1:8000"  # Demand 서버 주소
+PROVIDER_SERVER_URL = "http://127.0.0.1:8001"  # Provider 서버 주소
 
 
 SITE_ID = 1  # django.contrib.sites에서 사용할 사이트 ID

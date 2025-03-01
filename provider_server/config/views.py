@@ -3,7 +3,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth import authenticate  # 올바른 경로로 수정
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
@@ -12,8 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 import requests
 from django.views.decorators.http import require_http_methods
-from django.middleware.csrf import get_token # 견적 요청 모델
-
+from django.middleware.csrf import get_token
 from users.models import ProviderUser, Attachment, ServiceCategory
 
 
@@ -77,182 +75,116 @@ def provider_login(request):
         'csrf_token': get_token(request)
     })
 
-# def login(request):
-#     if request.method == 'POST':
-#         username = request.POST.get('username')
-#         password = request.POST.get('password')
-#         user = authenticate(request, username=username, password=password)
-        
-#         # 관리자 서버에서 승인 상태 확인
-#         admin_api_url = f"{settings.ADMIN_API_URL}/api/companies/check-status/"
-        
-#         if user is not None:
-#             # admin_panel에서 승인 여부 호가인
-#             approval_status = requests.get(f"{settings.ADMIN_PANEL_API_URL}/companies/{user.id}/")
-#             if approval_status.json().get('status') == 'approved':
-#                 login(request, user)
-#                 return redirect('provider_dashboard')
-#             else:
-#                 return render(request, 'accounts/provider_login.html', {'error': '관리자의 승인이 필요합니다.'})
-    
-#         try:
-#             response = requests.post(
-#                 admin_api_url,
-#                 json={'username': username},
-#                 headers={'Authorization': f'Bearer {settings.ADMIN_API_KEY}'}
-#             )
-            
-#             if response.status_code == 200:
-#                 status_data = response.json()
-#                 if status_data['status'] != 'approved':
-#                     return render(request, 'accounts/provider_login.html', {
-#                         'error': '관리자 승인 대기 중입니다.'
-#                     })
-                    
-#                 # 승인된 경우 로그인 처리
-#                 user = authenticate(request, username=username, password=password)
-#                 if user is not None:
-#                     auth_login(request, user)
-#                     return redirect('provider_dashboard')
-                    
-#             return render(request, 'accounts/provider_login.html', {
-#                 'error': '아이디 또는 비밀번호가 올바르지 않습니다.'
-#             })
-            
-#         except requests.RequestException:
-#             return render(request, 'accounts/provider_login.html', {
-#                 'error': '서버 통신 오류가 발생했습니다.'
-#             })
-
-#     return render(request, 'accounts/provider_login.html')
-
 @login_required
-@csrf_exempt
 def provider_logout(request):
+    logout(request)
     return redirect('provider_login')
 
 @csrf_exempt
+@require_http_methods(["GET", "POST"])
 def provider_signup(request):
-    if request.method == 'POST':
+    """회원가입 API"""
+    if request.method == "GET":
+        categories = ServiceCategory.objects.all()
+        return JsonResponse({"categories": categories}, status=200)
+
+    if request.method == "POST":
         try:
-            username = request.POST.get('username')
-            email = request.POST.get('email')
-            password = request.POST.get('password')
-            company_name = request.POST.get('company_name')
-            business_registration_number = request.POST.get('business_registration_number')
-            business_phone_number = request.POST.get('business_phone_number')
-            consulting_phone_number = request.POST.get('consulting_phone_number')
-            address = request.POST.get('address')
-            address_detail = request.POST.get('address_detail')
-            service_category = request.POST.get('service_category')
-            attachments = request.FILES.getlist('attachment')
+            data = json.loads(request.body)
 
-            # 기본 유효성 검사
-            if not all([username, email, password, company_name, 
-                       business_registration_number, business_phone_number, address]):
-                return render(request, 'accounts/provider_signup.html', {
-                    'error': '필수 항목을 모두 입력해주세요.',
-                    'service_categories': ServiceCategory.objects.all()
-                })
+            username = data.get("username")
+            email = data.get("email")
+            password = data.get("password")
+            password_confirm = data.get("password_confirm")
+            company_name = data.get("company_name")
+            business_registration_number = data.get("business_registration_number")
+            business_phone_number = data.get("business_phone_number")
+            address = data.get("address")
+            address_detail = data.get("address_detail")
+            recommend_id = data.get("recommend_id")
+            service_category_ids = data.get("service_category_ids", [])
 
-            # 중복 체크
+            if not username or not email or not password or not company_name or not business_phone_number or not address:
+                return JsonResponse({"success": False, "error": "필수 정보를 모두 입력해주세요."}, status=400)
+
+            if password != password_confirm:
+                return JsonResponse({"success": False, "error": "비밀번호가 일치하지 않습니다."}, status=400)
+
             if ProviderUser.objects.filter(username=username).exists():
-                return render(request, 'accounts/provider_signup.html', {
-                    'error': '이미 사용 중인 아이디입니다.',
-                    'service_categories': ServiceCategory.objects.all()
-                })
-
+                return JsonResponse({"success": False, "error": "이미 사용 중인 아이디입니다."}, status=400)
             if ProviderUser.objects.filter(email=email).exists():
-                return render(request, 'accounts/provider_signup.html', {
-                    'error': '이미 사용 중인 이메일입니다.',
-                    'service_categories': ServiceCategory.objects.all()
-                })
-
+                return JsonResponse({"success": False, "error": "이미 사용 중인 이메일입니다."}, status=400)
             if ProviderUser.objects.filter(business_registration_number=business_registration_number).exists():
-                return render(request, 'accounts/provider_signup.html', {
-                    'error': '이미 등록된 사업자등록번호입니다.',
-                    'service_categories': ServiceCategory.objects.all()
-                })
+                return JsonResponse({"success": False, "error": "이미 등록된 사업자등록번호입니다."}, status=400)
 
-            # 사용자 생성
             user = ProviderUser(
                 username=username,
                 email=email,
-                password=make_password(password),
                 company_name=company_name,
                 business_registration_number=business_registration_number,
                 business_phone_number=business_phone_number,
-                consultation_phone_number=consulting_phone_number,
                 address=address,
                 address_detail=address_detail,
+                recommend_id=recommend_id
             )
+            # ✅ 선택한 서비스 카테고리 저장 (API에서 가져온 코드만 저장)
+            user.set_password(password)
             user.save()
 
-            # 서비스 카테고리 설정
-            if service_category:
-                category_codes = service_category.split(',')
-                categories = ServiceCategory.objects.filter(category_code__in=category_codes)
-                user.service_category.set(categories)
+            
 
-            # 첨부파일 저장
-            for attachment in attachments:
-                Attachment.objects.create(user=user, file=attachment)
+            # 선택한 서비스 카테고리 연결
+            if service_category_ids:
+                categories = ServiceCategory.objects.filter(id__in=service_category_ids)
+                user.service_category.set(categories)
 
             # 관리자 서버에 회원가입 요청 전송
             admin_api_url = f"{settings.ADMIN_API_URL}/api/companies/"
-            
             company_data = {
-                'username': username,
-                'email': email,
-                'company_name': company_name,
-                'business_number': business_registration_number,
-                'user_type': 'provider',
-                'status': 'pending'
+                "username": username,
+                "email": email,
+                "company_name": company_name,
+                "business_registration_number": business_registration_number,
+                "business_number": business_registration_number,
+                "status": "pending"
             }
-            
+
             try:
                 response = requests.post(
                     admin_api_url,
                     json=company_data,
-                    headers={'Authorization': f'Bearer {settings.ADMIN_API_KEY}'}
+                    headers={"Authorization": f"Bearer {settings.ADMIN_API_KEY}"}
                 )
-                
+
                 if response.status_code == 201:
-                    return redirect('provider_signup_pending')
+                    return redirect("provider_signup_pending")
                 else:
-                    return render(request, 'accounts/provider_signup.html', {
-                        'error': '회원가입 처리 중 오류가 발생했습니다.'
+                    return render(request, "accounts/provider_signup.html", {
+                        "error": "회원가입 처리 중 오류가 발생했습니다.",
+                        "categories": ServiceCategory.objects.all()
                     })
-                    
+
             except requests.RequestException:
-                return render(request, 'accounts/provider_signup.html', {
-                    'error': '서버 통신 오류가 발생했습니다.'
+                return render(request, "accounts/provider_signup.html", {
+                    "error": "서버 통신 오류가 발생했습니다.",
+                    "categories": ServiceCategory.objects.all()
                 })
 
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "잘못된 JSON 데이터 형식입니다."}, status=400)
+
         except Exception as e:
-            return render(request, 'accounts/provider_signup.html', {
-                'error': str(e),
-                'service_categories': ServiceCategory.objects.all()
+            return render(request, "accounts/provider_signup.html", {
+                "error": str(e),
+                "categories": ServiceCategory.objects.all()
             })
 
-    else:
-        return render(request, 'accounts/provider_signup.html', {
-            'service_categories': ServiceCategory.objects.all()
-        })
+        return JsonResponse({"success": True, "user_id": user.id}, status=201)
 
-def signup(request):
-    return render(request, 'accounts/provider_signup.html')
+    return JsonResponse({"success": False, "error": "잘못된 요청 방식입니다."}, status=405)
 
 def provider_signup_pending(request):
-    return render(request, 'accounts/provider_signup_pending.html')
-
-# admin_panel_api.py
-def send_signup_request(company_data):
-    """admin_panel 서버에 업체 가입 요청을 전송"""
-    api_url = f"{settings.ADMIN_PANEL_API_URL}/companies/"
-    response = requests.post(api_url, json=company_data)
-
-    return response.json()
+    return render(request, "accounts/provider_signup_pending.html")
 
 @csrf_exempt
 def check_id_duplicate(request):
@@ -292,53 +224,6 @@ def verify_business_number(request):
             return JsonResponse({"error": "잘못된 JSON 데이터 형식입니다."}, status=400)
 
     return JsonResponse({"error": "잘못된 요청"}, status=400)
-
-
-# @login_required
-# def provider_dashboard(request):
-#     context = {
-#         'status_data': {
-#             'in_progress': {
-#                 'count': 5,
-#                 'label': '진행중',
-#                 'color': '#2563eb'
-#             },
-#             'recruiting': {
-#                 'count': 8,
-#                 'label': '모집',
-#                 'color': '#059669'
-#             },
-#             'meeting': {
-#                 'count': 3,
-#                 'label': '미팅',
-#                 'color': '#7C3AED'
-#             }
-#         },
-#         'progress_data': [
-#             {
-#                 'label': '전체 진행률',
-#                 'value': 65,
-#                 'color': '#2563eb'
-#             },
-#             {
-#                 'label': '가입 현황',
-#                 'value': 80,
-#                 'color': '#059669'
-#             },
-#             {
-#                 'label': '견적 완료율',
-#                 'value': 45,
-#                 'color': '#7C3AED'
-#             }
-#         ],
-#         'financial_data': {
-#             'today_settlement': 456789,
-#             'total_revenue': 123456789,
-#             'monthly_growth': 15.7,
-#             'pending_payments': 3
-#         }
-#     }
-#     return render(request, 'provider/provider_dashboard.html', context)
 
 @login_required
 def dashboard(request):
@@ -386,9 +271,6 @@ def provider_estimate_list(request): # 필요에 따라 필터 적용
 
 def provider_estimate_detail(request):
     return render(request, 'provider/estimates/provider_estimate_detail.html')
-
-# def provider_estimate_detail(request, pk):
-#     return render(request, 'provider/estimates/provider_estimate_detail.html')
 
 def provider_estimate_accept(request, pk):
     # 수락 처리 로직 추가
