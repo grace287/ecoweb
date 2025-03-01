@@ -154,12 +154,16 @@ def provider_signup(request):
             user.save()
 
             # ✅ 회원가입 성공 후 승인 대기 페이지로 이동
-            return JsonResponse({"success": True, "redirect_url": reverse("provider_signup_pending")}, status=201)
+            return redirect('provider_signup_pending')
+            # return JsonResponse({"success": True, "redirect_url": reverse("provider_signup_pending")}, status=201)
 
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "error": "잘못된 JSON 데이터 형식입니다."}, status=400)
 
     return JsonResponse({"success": False, "error": "잘못된 요청 방식입니다."}, status=405)
+
+    
+
 def provider_signup_pending(request):
     return render(request, "accounts/provider_signup_pending.html")
 

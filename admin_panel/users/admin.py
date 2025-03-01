@@ -88,9 +88,9 @@ class CompanyAdmin(admin.ModelAdmin):
         try:
             # Provider 서버에서 pending 상태의 업체 목록 가져오기
             response = requests.get(
-                f"{settings.PROVIDER_API_URL}/api/companies/pending/",
+                f"{settings.PROVIDER_API_URL}/signup/pending/",
                 headers={
-                    'Authorization': f'Token {settings.PROVIDER_API_KEY}',
+                    # 'Authorization': f'Token {settings.PROVIDER_API_KEY}',
                     'Content-Type': 'application/json'
                 },
                 timeout=5
@@ -127,9 +127,9 @@ class CompanyAdmin(admin.ModelAdmin):
                 # Provider 서버 업체 승인
                 try:
                     response = requests.post(
-                        f"{settings.PROVIDER_API_URL}/api/companies/{company.id}/approve/",
+                        f"{settings.PROVIDER_API_URL}/signup/{company.id}/approve/",
                         headers={
-                            'Authorization': f'Token {settings.PROVIDER_API_KEY}',
+                            # 'Authorization': f'Token {settings.PROVIDER_API_KEY}',
                             'Content-Type': 'application/json'
                         }
                     )
@@ -173,9 +173,9 @@ class CompanyAdmin(admin.ModelAdmin):
         """Provider 서버의 업체 정보 동기화"""
         try:
             response = requests.get(
-                f"{settings.PROVIDER_API_URL}/api/companies/pending/",
+                f"{settings.PROVIDER_API_URL}/signup/pending/",
                 headers={
-                    'Authorization': f'Token {settings.PROVIDER_API_KEY}',
+                    # 'Authorization': f'Token {settings.PROVIDER_API_KEY}',
                     'Content-Type': 'application/json'
                 }
             )
