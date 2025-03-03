@@ -4,6 +4,24 @@ from django.utils import timezone
 from django.conf import settings
 import requests
 from users.models import AdminUser, Company, CompanyDocument
+from users.models import DemandUser, ProviderUser
+from django.utils.html import format_html
+
+
+@admin.register(DemandUser)
+class DemandUserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'company_name', 'created_at')
+    search_fields = ('username', 'email', 'company_name')
+    list_filter = ('created_at',)
+    ordering = ('-created_at',)
+
+
+@admin.register(ProviderUser)
+class ProviderUserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'company_name', 'status', 'created_at')
+    search_fields = ('username', 'email', 'company_name')
+    list_filter = ('status', 'created_at')
+    ordering = ('-created_at',)
 
 @admin.register(AdminUser)
 class AdminUserAdmin(UserAdmin):
@@ -24,6 +42,45 @@ class AdminUserAdmin(UserAdmin):
     def has_add_permission(self, request):
         """관리자는 한 명만 존재할 수 있도록 제한"""
         return not AdminUser.objects.exists()
+    
+
+class ProviderUserProxy:
+    """Provider 서버의 User 데이터를 가져오기 위한 임시 모델"""
+    def __init__(self, username, email, company_name, status, created_at):
+        self.username = username
+        self.email = email
+        self.company_name = company_name
+        self.status = status
+        self.created_at = created_at
+
+def fetch_provider_users():
+    """Provider 서버에서 승인 대기 중인 유저 가져오기"""
+    try:
+        url = f"{settings.PROVIDER_API_URL}/signup/pending/"
+        response = requests.get(url, headers={"Content-Type": "application/json"}, timeout=5)
+
+        if response.status_code == 200:
+            users_data = response.json()
+            return [ProviderUserProxy(**user) for user in users_data]
+        else:
+            return []
+    except requests.RequestException as e:
+        print(f"⚠️ Provider 서버 API 요청 실패: {e}")
+        return []
+
+class ProviderUserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'company_name', 'status', 'created_at', 'approve_action')
+
+    def get_queryset(self, request):
+        return fetch_provider_users()
+
+    def approve_action(self, obj):
+        return format_html('<button onclick="approveUser(\'{}\')">승인</button>', obj.username)
+
+    approve_action.allow_tags = True
+    approve_action.short_description = "승인"
+
+admin.site.register(ProviderUserProxy, ProviderUserAdmin)
 
 
 @admin.register(Company)

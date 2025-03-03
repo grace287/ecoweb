@@ -19,6 +19,9 @@ from django.contrib.auth import login as auth_login, get_backends
 
 from users.models import DemandUser
 
+ADMIN_API_URL = settings.ADMIN_API_URL
+COMMON_API_URL = settings.COMMON_API_URL
+
 def get_demand_user(request, user_id):
     """Demand 서버에서 특정 사용자 정보 제공"""
     user = get_object_or_404(DemandUser, id=user_id)
@@ -455,6 +458,93 @@ def estimate_request_form(request):
             
     return render(request, 'demand/estimates/estimate_request_form.html')
 
+@csrf_exempt
+def create_estimate(request):
+    """견적서 생성 API (Demand 서버 → 공통 API 서버)"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            provider_user_id = data.get("provider_user_id")
+            category_code = data.get("service_category")
+
+            # ✅ 같은 서버 내 `services` 앱에서 `ServiceCategory` 직접 조회
+            try:
+                service_category = ServiceCategory.objects.get(category_code=category_code)
+            except ServiceCategory.DoesNotExist:
+                return JsonResponse({"error": "해당 서비스 카테고리를 찾을 수 없습니다."}, status=400)
+
+            # ✅ 견적서 생성
+            estimate = Estimate.objects.create(
+                provider_user_id=provider_user_id,
+                service_category=service_category,  # ✅ `ForeignKey`로 연결
+                total_price=data.get("total_price", 0)
+            )
+
+            return JsonResponse({"success": True, "estimate_id": estimate.id}, status=201)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
+
+@csrf_exempt
+def get_estimate_list(request):
+    """견적 리스트 조회 API"""
+    if request.method == "GET":
+        provider_user_id = request.GET.get("provider_user_id")
+        demand_user_id = request.GET.get("demand_user_id")
+        status = request.GET.get("status")
+
+        estimates = Estimate.objects.filter(
+            provider_user_id=provider_user_id if provider_user_id else None,
+            demand_user_id=demand_user_id if demand_user_id else None,
+            status=status if status else None
+        ).order_by("-created_at")
+
+        result = [
+            {
+                "estimate_number": e.estimate_number,
+                "service_category": e.service_category.name,
+                "status": e.status,
+                "total_amount": e.total_amount,
+                "created_at": e.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            for e in estimates
+        ]
+
+        return JsonResponse({"estimates": result}, status=200)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
+
+@csrf_exempt
+def approve_estimate(request, estimate_id):
+    """견적 승인 & 결제 요청 (Demand 서버)"""
+    if request.method == "POST":
+        try:
+            estimate = Estimate.objects.get(id=estimate_id)
+            estimate.status = "APPROVED"  # 견적 승인 처리
+            estimate.save()
+
+            # 결제 서버에 결제 요청
+            payment_data = {
+                "estimate_id": estimate.id,
+                "amount": estimate.total_amount,
+                "user_id": estimate.demand_user_id,
+            }
+            payment_response = requests.post(f"{settings.PAYMENT_SERVER_URL}/pay/", json=payment_data)
+
+            return JsonResponse({"success": True, "payment_response": payment_response.json()}, status=200)
+
+        except Estimate.DoesNotExist:
+            return JsonResponse({"error": "견적을 찾을 수 없습니다."}, status=404)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
+
+
+
 
 
 @login_required
@@ -476,3 +566,5 @@ def chat_estimate(request):
         # ...
     }
     return render(request, 'demand/estimates/estimate_request_guest.html', context)
+
+

@@ -165,7 +165,18 @@ def provider_signup(request):
     
 
 def provider_signup_pending(request):
+    """회원가입 승인 대기 페이지"""
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({"status": "pending", "message": "회원가입 승인 대기 중"}, status=200)
     return render(request, "accounts/provider_signup_pending.html")
+
+
+def api_provider_pending_list(request):
+    """승인 대기 중인 Provider 목록을 JSON으로 반환"""
+    pending_users = ProviderUser.objects.filter(is_active=False).values(
+        "username", "company_name", "email", "business_registration_number"
+    )
+    return JsonResponse(list(pending_users), safe=False)
 
 @csrf_exempt
 def update_user_status(request):
@@ -284,3 +295,27 @@ def provider_estimate_accept(request, pk):
 
 def provider_estimate_form(request):
     return render(request, 'provider/estimates/provider_estimate_form.html')
+
+
+@csrf_exempt
+def update_estimate(request, estimate_id):
+    """Provider 서버가 견적서 업데이트 (응답)"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            estimate = Estimate.objects.get(id=estimate_id)
+
+            estimate.provider_user_id = data.get("provider_user_id")
+            estimate.base_amount = data.get("base_amount", estimate.base_amount)
+            estimate.discount_amount = data.get("discount_amount", estimate.discount_amount)
+            estimate.status = "RESPONSE"  # 견적 응답 처리
+
+            estimate.save()
+            return JsonResponse({"success": True, "message": "견적이 업데이트되었습니다."}, status=200)
+
+        except Estimate.DoesNotExist:
+            return JsonResponse({"error": "존재하지 않는 견적입니다."}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)

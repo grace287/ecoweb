@@ -57,7 +57,7 @@ def approve_provider_requests(request):
         company.save()
 
         # provider_server에 승인 상태 업데이트
-        api_url = f"{settings.PROVIDER_API_URL}/api/update_user_status/"
+        api_url = f"{settings.PROVIDER_API_URL}/update_user_status/"
         data = {
             "username": company.username,
             "is_approved": True
@@ -139,6 +139,14 @@ def dashboard(request):
 
 @login_required
 def company_list(request):
+    """업체 리스트 페이지"""
+    demand_users = DemandUser.objects.all()  # 모든 DemandUser 조회
+    provider_users = ProviderUser.objects.filter(status="pending")  # 승인 대기 중인 ProviderUser 조회
+
+    context = {
+        "demand_users": demand_users,
+        "provider_users": provider_users,
+    }
     companies = Company.objects.all().order_by('-created_at')
     return render(request, 'dashboard/company_list.html', {'companies': companies})
 
@@ -186,3 +194,23 @@ def profile(request):
 
 def pending_companies(request):
     return JsonResponse({"error": "This is a test response"}, status=200)
+
+
+def fetch_provider_users():
+    """Provider 서버에서 승인 대기 중인 유저 목록 가져오기"""
+    try:
+        url = f"{settings.PROVIDER_API_URL}/signup/pending/"
+        response = requests.get(url, headers={"Content-Type": "application/json"}, timeout=5)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return []
+    except requests.RequestException as e:
+        print(f"⚠️ Provider 서버 API 요청 실패: {e}")
+        return []
+
+def provider_users_view(request):
+    """Django 뷰에서 Provider 서버의 유저 데이터를 JSON으로 반환"""
+    provider_users = fetch_provider_users()
+    return JsonResponse({"provider_users": provider_users})
