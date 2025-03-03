@@ -1,0 +1,225 @@
+
+    .chat-estimate-container {
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .chat-box {
+        background: #2563eb;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        color: white;
+    }
+
+    .chat-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .option-buttons,
+    .signup-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .option-btn, .signup-btn {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .option-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .option-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .submit-btn {
+        padding: 12px 24px;
+        background: white;
+        color: #2563eb;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover {
+        background: #f8f9fa;
+    }
+
+    .signup-guide {
+        background: #2563eb;
+        text-align: center;
+        padding: 24px;
+        border-radius: 12px;
+        display: none; /* 기본 숨김 */
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.5s ease, transform 0.3s ease;
+    }
+
+    .signup-guide.active {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .signup-btn.email {
+        background: white;
+        color: #2563eb;
+    }
+
+    .signup-btn.kakao {
+        background: #FEE500;
+        color: #000000;
+    }
+
+    .signup-btn.naver {
+        background: #03C75A;
+        color: white;
+    }
+
+    .signup-btn.google {
+        background: #ffffff;
+        color: #222222;
+    }
+
+  /* 공통 컨테이너 */
+  .chat-estimate-container {
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+  }
+  /* 헤더 스타일 */
+  .estimate-header {
+      text-align: center;
+      margin-bottom: 40px;
+  }
+  .estimate-header h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 12px;
+  }
+  .estimate-header .highlight {
+      color: #2563eb;
+  }
+  /* 안내 메시지 */
+  .estimate-guide {
+      text-align: center;
+      margin-bottom: 20px;
+  }
+  .guide-message {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 8px;
+  }
+  /* 채팅 박스 */
+  .chat-box {
+      background: #2563eb;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      color: white;
+  }
+  .chat-title {
+      font-size: 16px;
+      margin-bottom: 20px;
+  }
+  /* 버튼 스타일 */
+  .request-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 14px 24px;
+      background: #ffffff;
+      color: #2563eb;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+  }
+  .request-btn:hover {
+      background: #16a34a;
+  }
+  /* 회원가입 안내 섹션 */
+  .signup-guide {
+      display: none; /* 초기에는 숨김 */
+      background: #2563eb;
+      text-align: center;
+      padding: 24px;
+      border-radius: 12px;
+  }
+  .signup-guide .chat-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+  }
+  .signup-guide .sub-title {
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 24px;
+  }
+  .signup-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 400px;
+      margin: 0 auto;
+  }
+  .signup-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+  }
+  .signup-btn:hover {
+      transform: translateY(-2px);
+  }
+  .signup-btn img {
+      width: 20px;
+      height: 20px;
+  }
+  .signup-btn.email {
+      background: white;
+      color: #2563eb;
+      border: none;
+  }
+  .signup-btn.kakao {
+      background: #FEE500;
+      color: #000;
+      border: none;
+  }
+  .signup-btn.naver {
+      background: #03C75A;
+      color: white;
+      border: none;
+  }
+  .signup-btn.google {
+      background: #ffffff;
+      color: #222;
+      border: none;
+  }
+  @media (max-width: 480px) {
+      .signup-btn {
+          font-size: 14px;
+          padding: 12px;
+      }
+  }

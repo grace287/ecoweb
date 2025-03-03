@@ -1,6 +1,7 @@
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,7 +16,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 PORT = config('PORT', default='8003')
 
@@ -35,6 +36,8 @@ INSTALLED_APPS = [
     'authentication',
     'api',
     'estimates',
+
+    'corsheaders',
     
 
     # Third party apps
@@ -49,8 +52,12 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.kakao',
 ]
 
-DEMAND_SERVER_URL = "http://127.0.0.1:8000"  # Demand 서버 주소
-PROVIDER_SERVER_URL = "http://127.0.0.1:8001"  # Provider 서버 주소
+DEMAND_API_URL = config('DEMAND_API_URL', default='http://localhost:8000')
+PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')
+ADMIN_PANEL_URL = config('ADMIN_PANEL_URL', default='http://localhost:8002')
+COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003') 
+PAYMENT_API_URL = config('PAYMENT_API_URL', default='http://localhost:8004')
+
 
 
 SITE_ID = 1  # django.contrib.sites에서 사용할 사이트 ID
@@ -62,6 +69,7 @@ AUTHENTICATION_BACKENDS = [
 AUTH_USER_MODEL = 'authentication.User'
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -70,6 +78,27 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    
+]
+
+# CORS 설정
+CORS_ALLOW_ALL_ORIGINS = True  
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = ["*"]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "Content-Type",
+    "X-CSRFToken"
 ]
 
 ROOT_URLCONF = 'config.urls'

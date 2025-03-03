@@ -208,5 +208,38 @@ th {
 function downloadEstimate() {
     alert('견적서 PDF 다운로드를 시작합니다.');
 }
+
+// 결제 요청
+async function requestPayment(estimateId, method) {
+    try {
+        // 1. 결제 생성
+        const createResponse = await fetch('/api/payments/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                estimate_id: estimateId,
+                payment_method: method
+            })
+        });
+        
+        const payment = await createResponse.json();
+        
+        // 2. PG사 결제창 호출
+        const tossPayments = TossPayments('your-client-key');
+        await tossPayments.requestPayment(method, {
+            amount: payment.total_amount,
+            orderId: payment.id,
+            orderName: `견적서 #${payment.estimate_id} 결제`,
+            successUrl: `${window.location.origin}/payments/success`,
+            failUrl: `${window.location.origin}/payments/fail`,
+        });
+        
+    } catch (error) {
+        console.error('결제 처리 중 오류:', error);
+        alert('결제 처리 중 오류가 발생했습니다.');
+    }
+}
 </script>
 {% endblock %}

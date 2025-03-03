@@ -17,11 +17,12 @@ DEBUG = True
 PORT = config('PORT', default='8002')
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-# Provider Server API 설정
+# Server API 설정
 DEMAND_API_URL = config('DEMAND_API_URL', default='http://localhost:8000')
-PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')  # provider_server URL
+PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')
+ADMIN_PANEL_URL = config('ADMIN_PANEL_URL', default='http://localhost:8002')
 COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003') 
-
+PAYMENT_API_URL = config('PAYMENT_API_URL', default='http://localhost:8004')
 
 # Application definition
 

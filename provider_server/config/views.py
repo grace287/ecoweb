@@ -55,7 +55,7 @@ def provider_login(request):
             if user is not None:
                 if user.is_active:
                     # ✅ admin_panel 서버 API 호출하여 승인 상태 확인
-                    admin_approval_api_url = f"{ADMIN_API_URL}/api/companies/{username}/"  # 예시 API 엔드포인트
+                    admin_approval_api_url = f"{ADMIN_API_URL}/companies/{username}/"  # 예시 API 엔드포인트
 
                     try:
                         response = requests.get(admin_approval_api_url)
@@ -296,6 +296,25 @@ def provider_estimate_accept(request, pk):
 def provider_estimate_form(request):
     return render(request, 'provider/estimates/provider_estimate_form.html')
 
+@csrf_exempt
+def notify_estimate_request(request):
+    """✅ Provider 서버 - 견적 요청 알림 수신"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            estimate_id = data.get("estimate_id")
+
+            if not estimate_id:
+                return JsonResponse({"error": "견적 ID가 필요합니다."}, status=400)
+
+            print(f"📌 새로운 견적 요청: #{estimate_id}")
+            return JsonResponse({"success": True}, status=200)
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
 
 @csrf_exempt
 def update_estimate(request, estimate_id):
@@ -315,6 +334,51 @@ def update_estimate(request, estimate_id):
 
         except Estimate.DoesNotExist:
             return JsonResponse({"error": "존재하지 않는 견적입니다."}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
+@csrf_exempt
+def received_estimates(request):
+    """✅ Provider 서버 - 받은 견적 요청 목록 조회"""
+    if request.method == "GET":
+        provider_user_id = request.GET.get("provider_user_id")
+
+        if not provider_user_id:
+            return JsonResponse({"error": "provider_user_id가 필요합니다."}, status=400)
+
+        # ✅ 공통 API 서버에서 받은 견적 요청 조회
+        api_url = f"{settings.COMMON_API_URL}/estimates/?provider_user_id={provider_user_id}"
+        response = requests.get(api_url)
+
+        if response.status_code == 200:
+            return JsonResponse(response.json(), status=200)
+        return JsonResponse(response.json(), status=response.status_code)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
+
+@csrf_exempt
+def respond_to_estimate(request, estimate_id):
+    """✅ Provider 서버 - 견적 응답"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            provider_user_id = data.get("provider_user_id")
+            response_details = data.get("response_details")
+
+            if not provider_user_id or not response_details:
+                return JsonResponse({"error": "필수 입력값이 누락되었습니다."}, status=400)
+
+            # ✅ 공통 API 서버로 견적 응답 전송
+            api_url = f"{settings.COMMON_API_URL}/estimates/{estimate_id}/respond/"
+            response = requests.post(api_url, json=data)
+
+            if response.status_code == 201:
+                return JsonResponse(response.json(), status=201)
+            return JsonResponse(response.json(), status=response.status_code)
+
         except json.JSONDecodeError:
             return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
 

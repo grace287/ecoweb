@@ -67,7 +67,7 @@ def submit_estimate_request(request):
             "service_type": request.POST.get("service_type"),
             "description": request.POST.get("description"),
         }
-        headers = {"Authorization": f"Token {settings.COMMON_API_KEY}"}
+        # headers = {"Authorization": f"Token {settings.COMMON_API_KEY}"}
         response = requests.post(f"{settings.COMMON_API_URL}/requests/", json=data, headers=headers)
         
         if response.status_code == 201:

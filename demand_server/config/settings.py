@@ -17,14 +17,40 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(','
 
 
 # API URL 설정
+DEMAND_API_URL = config('DEMAND_API_URL', default='http://localhost:8000')
 PROVIDER_API_URL = config('PROVIDER_API_URL', default='http://localhost:8001')
-PROVIDER_API_KEY = config('PROVIDER_API_KEY')
+ADMIN_PANEL_URL = config('ADMIN_PANEL_URL', default='http://localhost:8002')
+COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003') 
+PAYMENT_API_URL = config('PAYMENT_API_URL', default='http://localhost:8004')
 
-if not PROVIDER_API_KEY:
-    raise ValueError('PROVIDER_API_KEY must be set in .env file')
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",  # demand_server
+    "http://localhost:8000",
+]
 
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:8000').split(',')
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True  # credentials: 'include' 허용
+
+# 필요한 경우 추가 CORS 설정
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 
 # Application definition
@@ -46,6 +72,8 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'users',
 
+    'corsheaders',
+
     # social login
     'django.contrib.sites',
     'allauth',
@@ -54,7 +82,6 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.naver',
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.kakao',
-    'corsheaders',
 ]
 
 AUTH_USER_MODEL = "users.DemandUser"
@@ -67,7 +94,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # 반드시 CommonMiddleware 앞에 위치
+    'corsheaders.middleware.CorsMiddleware',  # 반드시 CommonMiddleware보다 앞에 위치
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -77,7 +104,22 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware', 
 ]
+# 모든 도메인 허용 (보안상 위험할 수 있음)
+CORS_ALLOW_ALL_ORIGINS = True  
 
+# CORS 설정
+# CORS_ALLOWED_ORIGINS = [
+#     "http://127.0.0.1:8000",
+#     "http://localhost:8000",
+#     "http://localhost:8001",
+#     "http://localhost:8002",
+#     "http://localhost:8003",
+#     "http://localhost:8004",
+# ]
+
+CORS_ALLOW_CREDENTIALS = True  # 인증 정보 포함 요청 허용
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+CORS_ALLOW_HEADERS = ["*"]
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  # 기본 인증 백엔드
     'allauth.account.auth_backends.AuthenticationBackend',  # 소셜 로그인 백엔드
