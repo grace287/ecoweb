@@ -41,20 +41,3 @@ def get_service_categories(request):
     except Exception as e:
         return JsonResponse({"error": f"카테고리 조회 실패: {str(e)}"}, status=500)
 
-@csrf_exempt
-def get_measurement_locations(request):
-    """✅ 측정 장소 목록 조회 API"""
-    try:
-        locations = MeasurementLocation.objects.all()
-        if not locations.exists():
-            return JsonResponse({"locations": [], "message": "등록된 측정 장소가 없습니다."}, status=200)
-
-        data = [{
-            'id': location.id,
-            'name': location.name
-        } for location in locations]
-
-        return JsonResponse({"locations": data}, json_dumps_params={'ensure_ascii': False})
-
-    except Exception as e:
-        return JsonResponse({"error": f"측정 장소 조회 실패: {str(e)}"}, status=500)

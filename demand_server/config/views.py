@@ -573,7 +573,21 @@ def approve_estimate(request, estimate_id):
 @csrf_exempt
 def request_estimate(request):
     """✅ Demand 사용자가 견적 요청"""
-    if request.method == "POST":
+    if request.method == "GET":
+        """회원가입 폼 및 서비스 카테고리 목록 전달"""
+        try:
+            response = requests.get(f"{COMMON_API_URL}/services/service-categories/", timeout=5)
+            response = requests.get(f"{COMMON_API_URL}/estimates/measurement-locations/", timeout=5)
+            response.raise_for_status()
+            categories = response.json()
+        except requests.RequestException as e:
+            print("📌 서비스 카테고리 API 응답:", categories)  # 디버깅 로그 추가
+            categories = []  # API 오류 시 빈 리스트 반환
+
+        # ✅ JSON 직렬화하여 템플릿에 전달
+        return render(request, "demand/estimates/estimate_request_form.html", {"categories": json.dumps(categories)})
+    
+    elif request.method == "POST":
         try:
             # 🔹 요청 데이터 파싱
             data = json.loads(request.body)
@@ -610,7 +624,7 @@ def request_estimate(request):
             )
 
             # ✅ Provider 서버에 견적 요청 알림 전송
-            provider_api_url = f"{settings.PROVIDER_API_URL}/api/estimates/notify/"
+            provider_api_url = f"{settings.PROVIDER_API_URL}/estimates/notify/"
             requests.post(provider_api_url, json={"estimate_id": estimate.id})
 
             return JsonResponse({"success": True, "estimate_id": estimate.id}, status=201)
