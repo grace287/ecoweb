@@ -2,175 +2,203 @@
 {% load static %}
 {% load account socialaccount %}
 
-
-
 {% block content %}
+
+
 <style>
-    /* 전체 컨테이너 */
-    .chat-estimate-container {
-        max-width: 700px;
-        margin: 40px auto;
-        padding: 0 20px;
+    /* CSS 변수 정의 */
+    :root {
+        /* 색상 팔레트 */
+        --primary-color: #2563eb;
+        --primary-color-light: #ebf5ff;
+        --background-light: #f8fafc;
+        --text-dark: #1f2937;
+        --text-muted: #6b7280;
+        
+        /* 간격 및 크기 */
+        --spacing-xs: 8px;
+        --spacing-sm: 12px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        
+        /* 그림자 */
+        --shadow-subtle: 0 2px 4px rgba(0,0,0,0.05);
+        --shadow-medium: 0 4px 6px rgba(0,0,0,0.1);
     }
 
-    /* 헤더 */
-    .estimate-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-    .estimate-header h1 {
-        font-size: 24px;
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 12px;
-    }
-    .estimate-header .highlight {
-        color: #2563eb;
-    }
-
-    /* 채팅 스타일 */
-    .chat-box {
-        background: #2563eb;
-        border-radius: 12px;
-        padding: 24px;
-        margin-bottom: 20px;
-        color: white;
-        transition: all 0.3s ease-in-out;
-    }
-    .chat-title {
-        font-size: 18px;
-        font-weight: bold;
-        margin-bottom: 12px;
-    }
-    
-    /* 옵션 버튼 */
-    .option-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-    .option-btn {
-        padding: 12px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: white;
-        transition: background 0.3s ease;
-    }
-    .option-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
-    }
-
-    /* 입력 필드 */
-    .chat-input {
-        width: 100%;
-        padding: 10px;
-        border-radius: 6px;
-        border: none;
-        font-size: 14px;
-        color: black;
-    }
-
-    /* 날짜 선택 */
-    .date-option {
-        padding: 10px;
-        border-radius: 6px;
-        background: white;
-        color: #2563eb;
-        font-size: 14px;
-        font-weight: bold;
-        cursor: pointer;
-        border: 1px solid #ddd;
-        transition: all 0.2s ease-in-out;
-    }
-    .date-option:hover, .date-option.selected {
-        background: #2563eb;
-        color: white;
-    }
-
-    /* 요약 섹션 */
-    .summary-cards {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-    .summary-card {
-        flex: 1;
-        text-align: center;
-        background: white;
-        border-radius: 8px;
-        padding: 12px;
-        color: black;
-        font-size: 14px;
-        font-weight: bold;
-    }
-    .summary-card img {
-        width: 40px;
-        height: 40px;
-        margin-bottom: 8px;
-    }
-
-    /* 회원가입 안내 */
-    .signup-guide {
-        display: none; /* 기본적으로 숨김 */
-        background: #2563eb;
-        text-align: center;
-        padding: 24px;
-        border-radius: 12px;
-        opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.5s ease, transform 0.3s ease;
-    }
-    .signup-guide.active {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    /* 회원가입 버튼 */
-    .signup-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 20px;
-    }
-    .signup-btn {
+    /* 공통 컴포넌트 스타일 */
+    .interactive-item {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 8px;
-        font-size: 16px;
-        font-weight: bold;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: 12px;
         cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-subtle);
+        text-align: center;
     }
-    .signup-btn img {
-        width: 24px;
-        height: 24px;
-    }
-    .signup-btn.email { background: white; color: #2563eb; }
-    .signup-btn.kakao { background: #FEE500; color: black; }
-    .signup-btn.naver { background: #03C75A; color: white; }
-    .signup-btn.google { background: white; color: black; }
 
-</style>
-<style>
+    .interactive-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .interactive-item.selected {
+        border-color: var(--primary-color);
+        background-color: var(--primary-color-light);
+    }
+
+    /* 서비스 카테고리 */
+    .service-categories {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: var(--background-light);
+        border-radius: 12px;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .category-item {
+        @extend .interactive-item;
+        min-width: 80px;
+        background: white;
+    }
+
+    .category-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-dark);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 측정 장소 및 날짜 선택 */
+    .measurement-locations,
+    .date-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .location-btn,
+    .date-option {
+        @extend .interactive-item;
+        min-height: 60px;
+        font-size: 0.875rem;
+    }
+
+    /* 요약 카드 */
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
+    }
+
+    .summary-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--background-light);
+        border-radius: 12px;
+        padding: var(--spacing-md);
+        text-align: center;
+        box-shadow: var(--shadow-subtle);
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+        .service-categories {
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm);
+        }
+
+        .category-item {
+            min-width: 70px;
+            padding: var(--spacing-xs) var(--spacing-sm);
+        }
+
+        .category-name {
+            font-size: 0.75rem;
+        }
+
+        .measurement-locations,
+        .date-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: var(--spacing-sm);
+        }
+
+        .location-btn,
+        .date-option {
+            min-height: 50px;
+            font-size: 0.8rem;
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+
+        .summary-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* 모바일 추가 최적화 */
+    @media (max-width: 480px) {
+        .service-categories {
+            padding: var(--spacing-xs);
+        }
+
+        .category-item {
+            min-width: 60px;
+            padding: 6px 10px;
+        }
+
+        .location-btn,
+        .date-option {
+            min-height: 40px;
+            font-size: 0.75rem;
+        }
+    }
+
+    #serviceCategoriesContainer {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.category-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
     .chat-estimate-container {
         margin: 40px auto;
         padding: 0 20px;
     }
-
+    /* 채팅 박스 */
     .chat-box {
+        margin-bottom: 20px;
         background: #2563eb;
+        border: 1px solid #e5e7eb;
         border-radius: 12px;
         padding: 24px;
-        margin-bottom: 20px;
         color: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+
+    .chat-box[data-step="1"] {
+        background: #f8fafc;
     }
 
     .chat-title {
@@ -221,14 +249,14 @@
     }
 
     .signup-guide {
+        display: none; /* 초기에는 숨김 */
         background: #2563eb;
         text-align: center;
         padding: 24px;
         border-radius: 12px;
-        display: none; /* 기본 숨김 */
         opacity: 0;
-        transform: translateY(10px);
-        transition: opacity 0.5s ease, transform 0.3s ease;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .signup-guide.active {
@@ -256,9 +284,7 @@
         background: #ffffff;
         color: #222222;
     }
-</style>
 
-<style>
   /* 공통 컨테이너 */
   .chat-estimate-container {
       max-width: 700px;
@@ -288,14 +314,7 @@
       color: #666;
       margin-bottom: 8px;
   }
-  /* 채팅 박스 */
-  .chat-box {
-      background: #2563eb;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      color: white;
-  }
+  
   .chat-title {
       font-size: 16px;
       margin-bottom: 20px;
@@ -386,220 +405,482 @@
           padding: 12px;
       }
   }
+
+  .chat-box[data-step="1"] .service-categories {
+      margin-bottom: 1.5rem;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+  }
+
+  .chat-content {
+      width: 100%;
+  }
+
+  .category-icon-fallback {
+    width: 64px;
+    height: 64px;
+    background-color: #e5e7eb;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #2563eb;
+  }
+
+  .category-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 선택된 항목 강조 스타일 */
+  .category-item.selected,
+  .location-btn.selected {
+      border-color: #2563eb;
+      background-color: #ebf5ff;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  /* 이미지 로딩 실패 대비 스타일 */
+  .category-icon {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      background-color: #f8fafc;
+      border-radius: 50%;
+      padding: 10px;
+  }
+
+  /* 주소 검색 버튼 스타일 */
+  .address-search-btn {
+      margin-left: 10px;
+      padding: 10px 15px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+  }
+
+  .address-search-btn:hover {
+      background-color: #1e40af;
+  }
+
+  /* 주소 입력 및 검색 스타일 개선 */
+  .input-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .chat-input {
+      flex-grow: 1;
+      border: none;
+      outline: none;
+      font-size: 16px;
+      padding: 10px;
+      background: transparent;
+  }
+
+  .address-search-btn {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      white-space: nowrap;
+  }
+
+  .address-search-btn:hover {
+      background-color: #1e40af;
+  }
+
+  /* Summary 카드 스타일 개선 */
+  .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+  }
+
+  .summary-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .summary-card img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 10px;
+  }
+
+  .summary-card .value {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 5px;
+  }
+
+  .summary-card .label {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+  }
+
+  .address-container {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+  }
+
+  .address-container p:first-child {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 5px;
+  }
+
+  .address-container p:last-child {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1f2937;
+  }
+
+  .request-btn {
+      width: 100%;
+      padding: 15px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+  }
+
+  .request-btn:hover {
+      background-color: #1e40af;
+  }
+
+  /* 반응형 조정 */
+  @media (max-width: 600px) {
+      .summary-cards {
+          grid-template-columns: 1fr;
+      }
+
+      .input-group {
+          flex-direction: column;
+          gap: 10px;
+      }
+
+      .address-search-btn {
+          width: 100%;
+      }
+  }
+
+  /* 측정 장소 버튼 스타일 */
+  .measurement-locations {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+  }
+
+  .location-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      background-color: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #1f2937;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      min-height: 60px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .location-btn:hover {
+      background-color: #f8fafc;
+      border-color: #2563eb;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .location-btn.selected {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+
+  /* 날짜 선택 스타일 */
+  .date-picker-group {
+      margin-bottom: 20px;
+  }
+
+  .date-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+  }
+
+  .date-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 18px;
+      background-color: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1f2937;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      min-height: 70px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .date-option:hover {
+      background-color: #f8fafc;
+      border-color: #2563eb;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .date-option.selected {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+
+  /* 채팅 박스 전체 스타일 개선 */
+  .chat-box {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+  }
+
+  .chat-box:hover {
+      box-shadow: 0 6px 8px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+  }
+
+  .chat-box[data-step="1"] {
+      background: #f8fafc;
+  }
+
+  .chat-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
+
+  .chat-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: #2563eb;
+      border-radius: 50%;
+  }
+
+  /* 반응형 조정 */
+  @media (max-width: 768px) {
+      .measurement-locations,
+      .date-grid {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+          gap: 10px;
+      }
+
+      .location-btn,
+      .date-option {
+          min-height: 50px;
+          font-size: 0.8rem;
+          padding: 10px 14px;
+      }
+
+      .chat-box {
+          padding: 16px;
+      }
+
+      .chat-title {
+          font-size: 1rem;
+      }
+  }
+
+  /* 추가 전역 스타일 개선 */
+  .chat-estimate-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background-color: #f9fafb;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  }
+
+  .estimate-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+
+  .estimate-header h1 {
+      font-size: 2rem;
+      color: #1f2937;
+      margin-bottom: 12px;
+  }
+
+  .estimate-header .highlight {
+      color: #2563eb;
+      font-weight: 700;
+  }
+
+  .estimate-guide {
+      text-align: center;
+      margin-bottom: 30px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+
+  .guide-message {
+      font-size: 1rem;
+      color: #6b7280;
+      margin-bottom: 8px;
+  }
+
+  /* 제출 버튼 스타일 */
+  .submit-btn,
+  .request-btn {
+      width: 100%;
+      padding: 15px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .submit-btn:hover,
+  .request-btn:hover {
+      background-color: #1e40af;
+      box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+  }
+
+
+  /* 회원가입 안내 섹션 */
+  .signup-guide {
+      display: none; /* 초기에는 숨김 */
+      background: #2563eb;
+      text-align: center;
+      padding: 24px;
+      border-radius: 12px;
+  }
+  .signup-guide .chat-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+  }
+  .signup-guide .sub-title {
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 24px;
+  }
+  .signup-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 400px;
+      margin: 0 auto;
+  }
+  .signup-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+  }
+  .signup-btn:hover {
+      transform: translateY(-2px);
+  }
+  .signup-btn img {
+      width: 20px;
+      height: 20px;
+  }
+  .signup-btn.email {
+      background: white;
+      color: #2563eb;
+      border: none;
+  }
+  .signup-btn.kakao {
+      background: #FEE500;
+      color: #000;
+      border: none;
+  }
+  .signup-btn.naver {
+      background: #03C75A;
+      color: white;
+      border: none;
+  }
+  .signup-btn.google {
+      background: #ffffff;
+      color: #222;
+      border: none;
+  }
+  @media (max-width: 480px) {
+      .signup-btn {
+          font-size: 14px;
+          padding: 12px;
+      }
+  }
 </style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const chatFlow = {
-        data: {
-            serviceType: '',
-            location: '',
-            date: '',
-            address: ''
-        },
-
-        init() {
-            this.bindEvents();
-        },
-
-        bindEvents() {
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    this.data.serviceType = e.target.dataset.value;
-                    this.updateSummary();
-                });
-            });
-
-            document.querySelector('.request-btn')?.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.submitRequest();
-            });
-        },
-
-        async submitRequest() {
-            try {
-                const response = await fetch('/api/estimates/create/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify(this.data)
-                });
-
-                if (response.ok) {
-                    document.querySelector('.signup-guide').classList.add('active');
-                    document.querySelector('.request-btn').disabled = true;
-                    document.querySelector('.request-btn').textContent = '견적 요청 완료';
-                } else {
-                    throw new Error('견적 요청 실패');
-                }
-            } catch (error) {
-                alert('견적 요청 중 오류 발생! 다시 시도해주세요.');
-            }
-        }
-    };
-
-    chatFlow.init();
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-});
-</script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const chatFlow = {
-        data: {
-            serviceType: '',
-            location: '',
-            date: '',
-            address: ''
-        },
-
-        init() {
-            this.bindEvents();
-        },
-
-        bindEvents() {
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    this.data.serviceType = e.target.dataset.value;
-                    this.updateSummary();
-                });
-            });
-
-            document.querySelectorAll('.submit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const input = e.target.closest('.chat-content').querySelector('input');
-                    if (input && input.value.trim()) {
-                        if (input.classList.contains('chat-input')) {
-                            this.data.address = input.value;
-                        }
-                        this.updateSummary();
-                    }
-                });
-            });
-
-            document.querySelectorAll('.date-option').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.date-option').forEach(b => b.classList.remove('selected'));
-                    e.target.classList.add('selected');
-                    this.data.date = e.target.textContent;
-                    this.updateSummary();
-                });
-            });
-
-            document.querySelector('.request-btn')?.addEventListener('click', () => {
-                this.submitRequest();
-            });
-        },
-
-        updateSummary() {
-            document.querySelector('[data-type="service"]').textContent = this.data.serviceType;
-            document.querySelector('[data-type="location"]').textContent = this.data.location;
-            document.querySelector('[data-type="date"]').textContent = this.data.date;
-            document.querySelector('[data-type="address"]').textContent = this.data.address;
-        },
-
-        async submitRequest() {
-            try {
-                const response = await fetch('/api/estimates/create/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    },
-                    body: JSON.stringify(this.data)
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('견적 요청 성공:', data);
-
-                    // 회원가입 안내 섹션 표시
-                    document.querySelector('[data-step="5"]').style.display = 'block';
-
-                    // 견적 요청 버튼 비활성화
-                    document.querySelector('.request-btn').disabled = true;
-                    document.querySelector('.request-btn').textContent = '견적 요청 완료';
-                } else {
-                    throw new Error('견적 요청 실패');
-                }
-            } catch (error) {
-                console.error('견적 요청 오류:', error);
-                alert('견적 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
-            }
-        }
-    };
-
-    chatFlow.init();
-
-    // CSRF 토큰 가져오기
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-});
-
-function showSignupGuide() {
-    const signupGuide = document.querySelector('.signup-guide');
-    if (signupGuide) {
-        signupGuide.style.display = 'block';
-
-        // 스크롤을 회원가입 안내 섹션으로 부드럽게 이동
-        signupGuide.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-document.querySelector('.request-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    showSignupGuide();
-});
-
-// document.querySelectorAll('.signup-btn').forEach(btn => {
-//     btn.addEventListener('click', (e) => {
-//         const signupType = e.currentTarget.classList[1]; // email, kakao, naver, payco
-
-//         switch(signupType) {
-//             case 'email':
-//                 window.location.href = '/accounts/signup/';
-//                 break;
-//             case 'kakao':
-//                 window.location.href = '/accounts/kakao/login/';
-//                 break;
-//             case 'naver':
-//                 window.location.href = '/accounts/naver/login/';
-//                 break;
-//             case 'payco':
-//                 window.location.href = '/accounts/payco/login/';
-//                 break;
-//         }
-//     });
-// });
-</script>
 <!-- templates/chat_estimate.html -->
 <div class="chat-estimate-container">
 
@@ -618,27 +899,26 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
 
 
     <div class="chat-flow">
-        <!-- 선택 옵션 박스들 -->
         <div class="chat-box-container">
-            <div class="chat-box" data-step="1">
+            <!-- 서비스 카테고리 선택 -->
+            <div class="chat-defualt-box" data-step="1">
                 <div class="chat-content">
                     <p class="chat-title">측정이 필요한 항목을 선택하세요.</p>
-                    <div class="option-buttons">
-                        <button class="option-btn" data-value="실내 공기질 측정">실내 공기질 측정</button>
-                        <button class="option-btn" data-value="소음 · 진동">소음 · 진동</button>
+                    <div class="service-categories" id="serviceCategoriesContainer">
+                        <!-- 서비스 카테고리가 여기에 동적으로 로드됨 -->
                     </div>
-                    <button class="submit-btn">선택 완료</button>
+                    <!-- <button class="submit-btn">입력 완료</button> -->
                 </div>
             </div>
 
+            <!-- 측정 장소 선택 -->
             <div class="chat-box" data-step="2">
                 <div class="chat-content">
-                    <p class="chat-title">측정 장소를 입력하세요.</p>
-                    <div class="option-buttons">
-                        <button class="option-btn" data-value="air">지하주차장</button>
-                        <button class="option-btn" data-value="noise">사무실</button>
+                    <p class="chat-title">측정 장소를 선택하세요.</p>
+                    <div class="measurement-locations" id="measurementLocationsContainer">
+                        <!-- 측정 장소가 여기에 동적으로 로드됨 -->
                     </div>
-                    <button class="submit-btn">선택 완료</button>
+                    <!-- <button class="submit-btn">입력 완료</button> -->
                 </div>
             </div>
 
@@ -647,7 +927,6 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
                     <p class="chat-title">주소를 입력하세요.</p>
                     <div class="input-group">
                         <input type="text" class="chat-input" placeholder="ex) 대전광역시 유성구 국제과학로 5(신동)">
-                        <button class="submit-btn">입력 완료</button>
                     </div>
                 </div>
             </div>
@@ -662,7 +941,7 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
                             <button class="date-option">1주일 이내로</button>
                             <button class="date-option">한 달 이내로</button>
                         </div>
-                        <button class="submit-btn">선택 완료</button>
+                        <!-- <button class="submit-btn">선택 완료</button> -->
                     </div>
                 </div>
             </div>
@@ -673,59 +952,58 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
                     <div class="summary-cards">
                         <div class="summary-card">
                             <img src="{% static 'img/providers/service-type.png' %}" alt="서비스 종류">
-                            <span>서비스 종류</span>
+                            <span class="value">서비스 종류</span>
                             <span class="label" data-type="service">실내 공기질</span>
                         </div>
                         <div class="summary-card">
                             <img src="{% static 'img/providers/location-type.png' %}" alt="건물 종류">
-                            <span>건물 종류</span>
+                            <span class="value">건물 종류</span>
                             <span class="label" data-type="location">지하주차장</span>
                         </div>
                         <div class="summary-card">
                             <img src="{% static 'img/providers/schedule.png' %}" alt="시기">
-                            <span>시기</span>
-                            <span class="label" data-type="date">3일 이내</span>
+                            <span class="value">시기</span>
+                            <span class="label" data-type="date">3일 이내로</span>
                         </div>
                     </div>
                     <div class="address-container">
                         <p>주소</p>
                         <p data-type="address">대전광역시 유성구 국제과학로 5(신동)</p>
                     </div>
-                    <button class="request-btn">견적 신청</button>
+                    <button class="request-btn" onclick="submitEstimate()">견적 신청</button>
                 </div>
             </div>
 
+                <!-- 견적 요청 완료 후 회원가입 안내 섹션 추가 -->
+                <!-- 회원가입 안내 섹션 -->
+                <div class="chat-box signup-guide">
+                    <div class="chat-content">
+                        <p class="chat-title">요청하신 내용으로 견적을 요청하실 수 있어요.</p>
+                        <p class="sub-title">회원가입 후 무료 견적을 받아보세요!</p>
+
+                        <div class="signup-buttons">
+                            <button class="signup-btn email" onclick="location.href='{% url 'signup' %}'">
+                                <img src="{% static 'img/providers/email-icon.png' %}" alt="이메일">
+                                이메일로 가입
+                            </button>
+                            <button class="signup-btn kakao" onclick="location.href='http://localhost:8003/auth/kakao/'">
+                                <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오">
+                                카카오로 시작하기
+                            </button>
+                            <button class="signup-btn naver" onclick="location.href='http://localhost:8003/auth/naver/'">
+                                <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버">
+                                네이버로 시작하기
+                            </button>
+                            <button class="signup-btn google" onclick="location.href='http://localhost:8003/auth/google/'">
+                                <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글">
+                                구글로 시작하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
         </div>
     </div>
-
-    <!-- 견적 요청 완료 후 회원가입 안내 섹션 추가 -->
-<!-- 회원가입 안내 섹션 -->
-<div class="chat-box signup-guide">
-    <div class="chat-content">
-        <p class="chat-title">요청하신 내용으로 견적을 요청하실 수 있어요.</p>
-        <p class="sub-title">회원가입 후 무료 견적을 받아보세요!</p>
-
-        <div class="signup-buttons">
-            <button class="signup-btn email" onclick="location.href='{% url 'signup' %}'">
-                <img src="{% static 'img/providers/email-icon.png' %}" alt="이메일">
-                이메일로 가입
-            </button>
-            <button class="signup-btn kakao" onclick="location.href='http://localhost:8003/auth/kakao/'">
-                <img src="{% static 'img/components/login/kakao-login-img.png' %}" alt="카카오">
-                카카오로 시작하기
-            </button>
-            <button class="signup-btn naver" onclick="location.href='http://localhost:8003/auth/naver/'">
-                <img src="{% static 'img/components/login/naver-login-img.png' %}" alt="네이버">
-                네이버로 시작하기
-            </button>
-            <button class="signup-btn google" onclick="location.href='http://localhost:8003/auth/google/'">
-                <img src="{% static 'img/components/login/google-login-img.png' %}" alt="구글">
-                구글로 시작하기
-            </button>
-        </div>
-    </div>
-</div>
-</div>
 
 </div>
 
@@ -733,5 +1011,537 @@ document.querySelector('.request-btn').addEventListener('click', (e) => {
     document.querySelector('.request-btn').addEventListener('click', function() {
         document.querySelector('.signup-guide').classList.add('active');
     });
+
+    function showSignupGuide() {
+    const signupGuide = document.querySelector('.signup-guide');
+    if (signupGuide) {
+        signupGuide.style.display = 'block';
+
+        // 스크롤을 회원가입 안내 섹션으로 부드럽게 이동
+        signupGuide.scrollIntoView({ behavior: 'smooth' });
+    }
+}
 </script>
+
+</div>
+<!-- settings.py에서 정의된 API URL을 JavaScript에서 사용 -->
+<script>
+    const COMMON_API_URL = "http://localhost:8003";
+</script>
+<!-- 다음 우편번호 서비스 스크립트 추가 (head 섹션에 추가) -->
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+// 1. 전역 설정
+window.APP_CONFIG = {
+    API: {
+        BASE_URL: COMMON_API_URL,
+        ENDPOINTS: {
+            CATEGORIES: "/services/service-categories/",
+            LOCATIONS: "/estimates/measurement-locations/",
+            ESTIMATE: "/estimates/estimates/create/"
+        }
+    },
+    ICONS: {
+        // 기본 아이콘 경로 추가
+        DEFAULT_ICON: '/static/img/main/category/',
+        'indoor_air': '/static/img/main/category/indoor-air.png',
+        'noise_vibration': '/static/img/main/category/noise-vibration.png',
+        'odor': '/static/img/main/category/odor.png',
+        'water': '/static/img/main/category/water.png',
+        'air': '/static/img/main/category/air.png',
+        'major_disaster': '/static/img/main/category/major-disaster.png',
+        'office': '/static/img/main/category/office.png',
+        'esg': '/static/img/main/category/esg.png'
+    },
+    USER: {
+        IS_AUTHENTICATED: {% if user.is_authenticated %}true{% else %}false{% endif %},
+        ID: {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %}
+    }
+};
+
+// 2. API 서비스 정의
+const ApiService = {
+    async fetch(endpoint, options = {}) {
+        try {
+            console.log('API 요청:', `${APP_CONFIG.API.BASE_URL}${endpoint}`);
+            console.log('요청 옵션:', JSON.stringify(options, null, 2));
+            
+            const response = await fetch(`${APP_CONFIG.API.BASE_URL}${endpoint}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    ...options.headers
+                },
+                credentials: 'include',  // CORS에서 쿠키 허용
+                ...options
+            });
+
+            // 응답 상태 코드 로깅
+            console.log('응답 상태 코드:', response.status);
+
+            if (!response.ok) {
+                console.error('API 응답 에러:', response.status, response.statusText);
+                const text = await response.text();
+                console.error('응답 내용:', text);
+                
+                // 에러 객체에 응답 추가
+                const error = new Error(`API 요청 실패: ${response.status}`);
+                error.response = response;
+                error.responseBody = text;
+                throw error;
+            }
+
+            const data = await response.json();
+            console.log('API 응답:', data);
+            return data;
+        } catch (error) {
+            console.error('API 호출 실패:', error);
+            throw error;
+        }
+    },
+
+    async getCategories() {
+        try {
+            const response = await this.fetch(APP_CONFIG.API.ENDPOINTS.CATEGORIES);
+            console.log('📌 API 응답:', response);
+            
+            return response.categories ?? response; // categories 속성이 없으면 기본 배열 반환
+        } catch (error) {
+            console.error('🚨 카테고리 조회 실패:', error);
+            throw error;
+        }
+    },
+
+    async getLocations() {
+        try {
+            const response = await this.fetch(APP_CONFIG.API.ENDPOINTS.LOCATIONS);
+            return response;
+        } catch (error) {
+            console.error('측정 장소 조회 실패:', error);
+            throw error;
+        }
+    },
+
+    async createEstimate(data) {
+    console.log("📤 견적 요청 데이터:", data);  // 요청 데이터 확인
+        try {
+            const response = await this.fetch(APP_CONFIG.API.ENDPOINTS.ESTIMATE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return response;
+        } catch (error) {
+            console.error('견적 생성 실패:', error);
+            throw error;
+        }
+    }
+};
+
+// 4. EstimateFlow 정의
+const EstimateFlow = {
+    data: {
+        selectedCategory: null,
+        selectedLocation: null,
+        address: '',
+        preferredSchedule: ''
+    },
+
+    async init() {
+        try {
+            await this.loadInitialData();
+            this.bindEvents();
+            this.showAllSteps(); // 모든 단계를 보이게 함
+        } catch (error) {
+            console.error('EstimateFlow 초기화 실패:', error);
+            throw error; // 에러를 상위로 전파하여 더 자세한 에러 추적 가능
+        }
+    },
+
+    async loadInitialData() {
+        try {
+            const [categories, locations] = await Promise.all([
+                ApiService.getCategories(),
+                ApiService.getLocations()
+            ]);
+
+            this.renderServiceCategories(categories);
+            this.renderMeasurementLocations(locations.locations);
+        } catch (error) {
+            console.error('데이터 로딩 실패:', error);
+            throw error;
+        }
+    },
+
+    renderServiceCategories(categories) {
+        const container = document.getElementById('serviceCategoriesContainer');
+        if (!container) {
+            console.error('🚨 카테고리 컨테이너를 찾을 수 없습니다.');
+            return;
+        }
+
+        if (!categories || categories.length === 0) {
+            console.error('🚨 API에서 카테고리 데이터를 받아오지 못했습니다.');
+            return;
+        }
+        console.log("📌 렌더링할 카테고리 데이터:", categories);
+
+        container.innerHTML = categories.map(category => {
+            return `
+                <div class="category-item" 
+                     data-code="${category.category_code}" 
+                     data-name="${category.name}">
+                    <span class="category-name">${category.name}</span>
+                </div>
+            `;
+        }).join('');
+
+        // 카테고리 선택 이벤트 추가
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                // 선택된 카테고리 강조
+                document.querySelectorAll('.category-item').forEach(el => el.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
+                
+                // 정확한 카테고리 코드 선택
+                const categoryCode = e.currentTarget.getAttribute('data-code');
+                console.log('선택된 카테고리 코드:', categoryCode);
+                this.selectCategory(categoryCode);
+            });
+        });
+    },
+
+    renderCategoryDetails(category) {
+        
+        return category.description ? `
+            <div class="category-details">
+                <p class="category-description">${category.description}</p>
+                ${category.measurement_items ? `
+                    <ul class="measurement-items">
+                        ${category.measurement_items.map(item => `<li>${item}</li>`).join('')}
+                    </ul>
+                ` : ''}
+            </div>
+        ` : '';
+
+    },
+
+    renderMeasurementLocations(locations) {
+        const container = document.getElementById('measurementLocationsContainer');
+        if (!container) return;
+
+        container.innerHTML = locations.map(location => `
+            <button class="location-btn" data-id="${location.id}">${location.name}</button>
+        `).join('');
+    },
+
+    bindEvents() {
+        // 서비스 카테고리 선택 (위의 renderServiceCategories에서 처리)
+
+        // 측정 장소 선택 (수정된 부분)
+        document.querySelectorAll('.location-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // 선택된 장소 강조
+                document.querySelectorAll('.location-btn').forEach(el => el.classList.remove('selected'));
+                e.target.classList.add('selected');
+                
+                this.selectLocation(e.target.dataset.id);
+            });
+        });
+
+        // 주소 검색 버튼 추가
+        const addressSearchBtn = document.createElement('button');
+        addressSearchBtn.textContent = '주소 검색';
+        addressSearchBtn.classList.add('address-search-btn');
+        addressSearchBtn.addEventListener('click', () => this.openAddressSearch());
+
+        const addressInputWrapper = document.querySelector('.input-group');
+        if (addressInputWrapper) {
+            addressInputWrapper.appendChild(addressSearchBtn);
+        }
+
+        // 주소 입력 이벤트 수정
+        const addressInput = document.querySelector('.chat-input');
+        const addressSubmitBtn = document.querySelector('.submit-btn');
+        if (addressInput && addressSubmitBtn) {
+            addressSubmitBtn.addEventListener('click', () => {
+                const address = addressInput.value.trim();
+                if (address) {
+                    this.data.address = address;
+                    this.updateSummary();
+                }
+            });
+        }
+
+        // 날짜 선택
+        document.querySelectorAll('.date-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.date-option').forEach(b => b.classList.remove('selected'));
+                e.target.classList.add('selected');
+                this.selectSchedule(e.target.textContent);
+            });
+        });
+
+        // 견적 요청 제출
+        const submitBtn = document.querySelector('.request-btn');
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => this.submitEstimate());
+        }
+    },
+
+    showAllSteps() {
+        // 모든 채팅 박스를 보이게 함
+        document.querySelectorAll('.chat-box').forEach(box => {
+            box.style.display = 'block';
+        });
+    },
+
+    selectCategory(code) {
+        console.log('카테고리 선택됨:', code);
+        this.data.selectedCategory = code;
+        this.updateSummary();
+    },
+
+    selectLocation(id) {
+        this.data.selectedLocation = id;
+        this.updateSummary();
+    },
+
+    selectSchedule(schedule) {
+        this.data.preferredSchedule = schedule;
+        this.updateSummary();
+    },
+
+    updateSummary() {
+        const updateElement = (selector, value) => {
+            const element = document.querySelector(selector);
+            if (element && value) element.textContent = value;
+        };
+
+        // 선택된 카테고리 이름으로 업데이트
+        const selectedCategoryEl = document.querySelector('.category-item.selected');
+        const categoryName = selectedCategoryEl 
+            ? selectedCategoryEl.getAttribute('data-name')
+            : this.data.selectedCategory;
+        updateElement('[data-type="service"]', categoryName);
+
+        // 선택된 장소 이름으로 업데이트
+        const selectedLocationEl = document.querySelector(`.location-btn[data-id="${this.data.selectedLocation}"]`);
+        const locationName = selectedLocationEl 
+            ? selectedLocationEl.textContent 
+            : this.data.selectedLocation;
+        updateElement('[data-type="location"]', locationName);
+
+        // 날짜 업데이트
+        updateElement('[data-type="date"]', this.data.preferredSchedule || '미선택');
+
+        // 주소 업데이트
+        updateElement('[data-type="address"]', this.data.address || '미입력');
+    },
+
+    validateAllFields() {
+        // 모든 필수 필드가 입력되었는지 확인
+        return (
+            this.data.selectedCategory &&
+            this.data.selectedLocation &&
+            this.data.address &&
+            this.data.preferredSchedule
+        );
+    },
+
+    async submitEstimate() {
+        const payload = {
+            service_category_code: this.data.selectedCategory,
+            measurement_location_id: this.data.selectedLocation,
+            address: this.data.address,
+            preferred_schedule: this.data.preferredSchedule
+        };
+
+        // 페이로드 상세 로깅 추가
+        console.log('📦 견적 요청 페이로드:', JSON.stringify(payload, null, 2));
+
+        // 모든 필드 검증
+        if (!payload.service_category_code) {
+            alert('서비스 카테고리를 선택해주세요.');
+            return;
+        }
+        if (!payload.measurement_location_id) {
+            alert('측정 장소를 선택해주세요.');
+            return;
+        }
+        if (!payload.address) {
+            alert('주소를 입력해주세요.');
+            return;
+        }
+        if (!payload.preferred_schedule) {
+            alert('희망 일정을 선택해주세요.');
+            return;
+        }
+
+        try {
+            const result = await ApiService.createEstimate(payload);
+            this.handleEstimateSuccess(result);
+        } catch (error) {
+            // 에러 응답 상세 로깅
+            console.error('🚨 견적 요청 실패:', error);
+            
+            // 서버 응답 본문 확인
+            if (error.responseBody) {
+                console.error('🔍 서버 응답 본문:', error.responseBody);
+                alert(`견적 요청 실패: ${error.responseBody}`);
+            } else {
+                alert('견적 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
+            }
+        }
+    },
+
+    handleEstimateSuccess(result) {
+        console.log('✔ 견적 요청 성공:', result);
+        
+        // 로그인하지 않은 경우에만 회원가입 안내 섹션 표시
+        if (!APP_CONFIG.USER.IS_AUTHENTICATED) {
+            this.showSignupGuide();
+        } else {
+            // 로그인된 경우 견적 상세 페이지로 이동
+            window.location.href = `/estimates/${result.estimate_id}/`;
+        }
+    },
+
+    showSignupGuide() {
+        const signupGuide = document.querySelector('.signup-guide');
+        if (signupGuide) {
+            signupGuide.style.display = 'block';
+            signupGuide.classList.add('active');
+
+            // 스크롤을 회원가입 안내 섹션으로 부드럽게 이동
+            signupGuide.scrollIntoView({ behavior: 'smooth' });
+        }
+    },
+
+    openAddressSearch() {
+        new daum.Postcode({
+            oncomplete: (data) => {
+                // 전체 주소
+                let fullAddress = data.address;
+                
+                // 추가 주소 정보가 있다면 병합
+                if (data.addressType === 'R') {
+                    if (data.bname !== '') {
+                        fullAddress += ' (' + data.bname + ')';
+                    }
+                    if (data.buildingName !== '') {
+                        fullAddress += ' ' + data.buildingName;
+                    }
+                }
+
+                // 주소 입력 필드에 설정
+                const addressInput = document.querySelector('.chat-input');
+                if (addressInput) {
+                    addressInput.value = fullAddress;
+                    
+                    // 포커스를 상세 주소 입력으로 이동
+                    addressInput.focus();
+                }
+
+                // 상세 주소 입력 유도
+                this.data.address = fullAddress;
+                this.updateSummary();
+            }
+        }).open();
+    }
+};
+
+// 5. 초기화 코드
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // navbar 초기화
+        const navbarToggle = document.querySelector('[data-collapse-toggle="navbar-default"]');
+        if (navbarToggle) {
+            navbarToggle.addEventListener('click', function() {
+                const target = document.getElementById('navbar-default');
+                if (target) {
+                    target.classList.toggle('hidden');
+                }
+            });
+        }
+
+        // EstimateFlow 초기화
+        if (document.querySelector('.chat-estimate-container')) {
+            await EstimateFlow.init();
+        }
+    } catch (error) {
+        console.error('초기화 실패:', error);
+        alert('시스템 초기화 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+    }
+});
+</script>
+
+<style>
+/* 서비스 카테고리 스타일 개선 */
+.service-categories {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.category-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    width: auto;
+    min-width: 80px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    text-align: center;
+}
+
+.category-item:hover {
+    background-color: #f0f4f8;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.category-item.selected {
+      border-color: #2563eb;
+    background-color: #ebf5ff;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.category-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 반응형 조정 */
+@media (max-width: 768px) {
+    .service-categories {
+        gap: 8px;
+        padding: 0.75rem;
+    }
+
+    .category-item {
+        min-width: 70px;
+        padding: 6px 10px;
+    }
+
+    .category-name {
+        font-size: 0.75rem;
+    }
+}
+</style>
 {% endblock %}

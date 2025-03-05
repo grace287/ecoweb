@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 urlpatterns = [
     path('estimates/create/', views.create_estimate, name='create-estimate'),
-    path('<int:estimate_id>/', views.get_estimate_detail, name='estimate-detail'),
+    path('<int:estimate_id>/', views.estimate_detail, name='estimate-detail'),
     path('estimates/', views.get_estimate_list, name='estimate-list'),
     path('measurement-locations/', views.get_measurement_locations, name='measurement-locations'),
     # path('request/guest/', views.estimate_request_guest, name='estimate_request_guest'),  # 비회원용
