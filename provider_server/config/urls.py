@@ -12,6 +12,8 @@ urlpatterns = [
     
     path('signup/', provider_signup, name='provider_signup'),
     path('signup/pending/', views.provider_signup_pending, name='provider_signup_pending'),
+    path('signup/all/', views.provider_signup_all, name='provider_signup_all'),
+    path('companies/', views.get_all_companies, name='get_all_companies'),
     # ✅ JSON 데이터를 반환하는 API 엔드포인트 추가
     path('api/signup/pending/', views.api_provider_pending_list, name='api_provider_pending_list'),
     path('update_user-status/', views.update_user_status, name="update_user_status"),

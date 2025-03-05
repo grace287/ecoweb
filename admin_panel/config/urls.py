@@ -14,5 +14,5 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     
     path('approve-requests/', views.approve_provider_requests, name='approve_requests'),
-    
+    path('generate-fake-data/', views.generate_fake_data_view, name='generate_fake_data'),
 ]

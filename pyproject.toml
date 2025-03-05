@@ -17,6 +17,7 @@ django-cors-headers = "^4.7.0"
 drf-yasg = "^1.21.8"
 django-filter = "^25.1"
 humanize = "^4.12.1"
+faker = "^36.1.1"
 
 
 [build-system]

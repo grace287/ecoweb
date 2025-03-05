@@ -5,7 +5,8 @@ import json
 from services.models import ServiceCategory
 from .models import Estimate, MeasurementLocation
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+
 
 def get_demand_user_info(user_id):
     """Demand 서버에서 사용자 정보 가져오기"""
@@ -23,9 +24,6 @@ def get_provider_user_info(provider_id):
 @csrf_exempt
 def create_estimate(request):
     """견적서 생성 API"""
-    if request.method != "POST":
-        return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
-        
     try:
         data = json.loads(request.body)
         
@@ -48,11 +46,16 @@ def create_estimate(request):
             return JsonResponse({"error": "유효하지 않은 측정 장소입니다."}, status=400)
 
         # 견적서 생성
+        # 기본값 또는 임시 값 사용
         estimate = Estimate.objects.create(
             service_category=service_category,
             address=data['address'],
-            preferred_schedule=data['preferred_schedule'],
-            status='REQUEST'
+            preferred_schedule=data.get('preferred_schedule', 'asap'),
+            status='REQUEST',
+            demand_user_id=None,  # NULL 허용
+            contact_name='미지정',
+            contact_phone='',
+            contact_email=''
         )
         estimate.measurement_locations.add(location)
 
@@ -139,3 +142,32 @@ def get_measurement_locations(request):
 
     except Exception as e:
         return JsonResponse({"error": f"측정 장소 조회 실패: {str(e)}"}, status=500)
+
+def estimate_detail(request, estimate_id):
+    """견적서 상세 정보 조회"""
+    try:
+        # 특정 견적서 조회 (존재하지 않으면 404 에러)
+        estimate = get_object_or_404(Estimate, id=estimate_id)
+        
+        # 견적서 상세 정보 컨텍스트 생성
+        context = {
+            'estimate': {
+                'id': estimate.id,
+                'estimate_number': estimate.estimate_number,
+                'service_category': estimate.service_category.name if estimate.service_category else '미지정',
+                'address': estimate.address,
+                'preferred_schedule': estimate.get_preferred_schedule_display(),
+                'status': estimate.get_status_display(),
+                'created_at': estimate.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'measurement_locations': [loc.name for loc in estimate.measurement_locations.all()]
+            }
+        }
+        
+        return render(request, 'estimates/estimate_detail.html', context)
+    
+    except Exception as e:
+        # 예상치 못한 오류 처리
+        return JsonResponse({
+            'error': '견적서 조회 중 오류가 발생했습니다.',
+            'details': str(e)
+        }, status=500)

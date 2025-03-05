@@ -40,45 +40,74 @@ def main(request):
     return render(request, 'main.html') 
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
 def provider_login(request):
     if request.method == "POST":
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            username = request.POST.get('username')
-            password = request.POST.get('password')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
 
-            if not username or not password:
-                return JsonResponse({'success': False, 'error': '아이디와 비밀번호를 입력해주세요.'})
+        user = authenticate(request, username=username, password=password)
 
-            user = authenticate(request, username=username, password=password)
+        if user is not None:
+            # 슈퍼유저는 바로 로그인 가능
+            if user.is_superuser:
+                login(request, user)
+                return JsonResponse({'success': True, 'redirect_url': '/dashboard/'})
 
-            if user is not None:
-                if user.is_active:
-                    # ✅ admin_panel 서버 API 호출하여 승인 상태 확인
-                    admin_approval_api_url = f"{ADMIN_API_URL}/companies/{username}/"  # 예시 API 엔드포인트
+            # 일반 사용자는 승인 상태 확인
+            if user.is_active:
+                login(request, user)
+                return JsonResponse({'success': True, 'redirect_url': '/dashboard/'})
+            else:
+                return JsonResponse({
+                    'success': False, 
+                    'error': '아직 관리자 승인 대기 중입니다. 승인 후 로그인해주세요.'
+                })
+        else:
+            return JsonResponse({
+                'success': False, 
+                'error': '아이디 또는 비밀번호가 올바르지 않습니다.'
+            })
 
-                    try:
-                        response = requests.get(admin_approval_api_url)
-                        response.raise_for_status()  # HTTP 에러 체크
-                        admin_data = response.json()
+    return render(request, 'accounts/provider_login.html')
+# @require_http_methods(["GET", "POST"])
+# def provider_login(request):
+#     if request.method == "POST":
+#         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+#             username = request.POST.get('username')
+#             password = request.POST.get('password')
 
-                        if admin_data.get('is_approved', False):  # API 응답에서 승인 여부 확인 (JSON 구조에 따라 키 변경)
-                            login(request, user)  # ✅ 승인된 경우에만 로그인 허용
-                            return JsonResponse({'success': True, 'redirect_url': '/dashboard/'})
-                        else:
-                            return JsonResponse({'success': False, 'error': '아직 관리자 승인 대기 중입니다. 승인 후 로그인해주세요.'}) # 승인 대기 중
+#             if not username or not password:
+#                 return JsonResponse({'success': False, 'error': '아이디와 비밀번호를 입력해주세요.'})
 
-                    except requests.exceptions.RequestException as e:
-                        print(f"⚠️ admin_panel API 호출 실패: {e}") # 로깅
-                        return JsonResponse({'success': False, 'error': '승인 상태 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'}) # API 오류
+#             user = authenticate(request, username=username, password=password)
 
-                else: # user.is_active == False
-                    return JsonResponse({'success': False, 'error': '계정이 비활성화되어 있습니다.'})
-            else: # authenticate 실패
-                return JsonResponse({'success': False, 'error': '아이디 또는 비밀번호가 올바르지 않습니다.'})
+#             if user is not None:
+#                 if user.is_active:
+#                     # ✅ admin_panel 서버 API 호출하여 승인 상태 확인
+#                     admin_approval_api_url = f"{ADMIN_API_URL}/companies/{username}/"  # 예시 API 엔드포인트
 
-    # GET 요청 또는 일반 POST 요청 처리 (기존 코드 유지)
-    return render(request, 'accounts/provider_login.html', {'csrf_token': get_token(request)})
+#                     try:
+#                         response = requests.get(admin_approval_api_url)
+#                         response.raise_for_status()  # HTTP 에러 체크
+#                         admin_data = response.json()
+
+#                         if admin_data.get('is_approved', False):  # API 응답에서 승인 여부 확인 (JSON 구조에 따라 키 변경)
+#                             login(request, user)  # ✅ 승인된 경우에만 로그인 허용
+#                             return JsonResponse({'success': True, 'redirect_url': '/dashboard/'})
+#                         else:
+#                             return JsonResponse({'success': False, 'error': '아직 관리자 승인 대기 중입니다. 승인 후 로그인해주세요.'}) # 승인 대기 중
+
+#                     except requests.exceptions.RequestException as e:
+#                         print(f"⚠️ admin_panel API 호출 실패: {e}") # 로깅
+#                         return JsonResponse({'success': False, 'error': '승인 상태 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'}) # API 오류
+
+#                 else: # user.is_active == False
+#                     return JsonResponse({'success': False, 'error': '계정이 비활성화되어 있습니다.'})
+#             else: # authenticate 실패
+#                 return JsonResponse({'success': False, 'error': '아이디 또는 비밀번호가 올바르지 않습니다.'})
+
+#     # GET 요청 또는 일반 POST 요청 처리 (기존 코드 유지)
+#     return render(request, 'accounts/provider_login.html', {'csrf_token': get_token(request)})
 
 @login_required
 def provider_logout(request):
@@ -138,24 +167,55 @@ def provider_signup(request):
                 return JsonResponse({"success": False, "error": "이미 등록된 사업자등록번호입니다."}, status=400)
 
             # ✅ 회원 생성
-            user = ProviderUser.objects.create_user(
+            # user = ProviderUser.objects.create_user(
+            #     username=data["username"],
+            #     email=data["email"],
+            #     password=data["password"],
+            #     company_name=data["company_name"],
+            #     business_phone_number=data["business_phone_number"],
+            #     business_registration_number=data["business_registration_number"],
+            #     address=data["address"],
+            #     address_detail=data.get("address_detail", ""),
+            # )
+
+            # 가입 요청 생성 (승인 대기 상태)
+            provider_user = ProviderUser.objects.create_user(
                 username=data["username"],
                 email=data["email"],
                 password=data["password"],
                 company_name=data["company_name"],
-                business_phone_number=data["business_phone_number"],
                 business_registration_number=data["business_registration_number"],
+                business_phone_number=data["business_phone_number"],
                 address=data["address"],
                 address_detail=data.get("address_detail", ""),
+                is_active=False,  # 관리자 승인 전까지 비활성화
+                is_approved=False  # 승인 대기 상태
             )
 
             # ✅ 승인 대기 상태 설정
-            user.is_active = False  # 가입 후 관리자 승인 전까지 로그인 불가
-            user.save()
+            ProviderUser.is_active = False  # 가입 후 관리자 승인 전까지 로그인 불가
+            ProviderUser.save()
+
+            # Admin 서버에 가입 요청 동기화
+            # ✅ Admin 서버에 가입 요청 동기화
+            admin_sync_url = f"{ADMIN_API_URL}/sync-provider-signup/"
+            sync_data = {
+                "username": provider_user.username,
+                "email": provider_user.email,
+                "company_name": provider_user.company_name,
+                "business_registration_number": provider_user.business_registration_number,
+                "business_phone_number": provider_user.business_phone_number,
+            }
+
+            try:
+                response = requests.post(admin_sync_url, json=sync_data)
+                if response.status_code != 200:
+                    print(f"⚠️ Admin 서버 동기화 실패: {response.text}")  # Log error
+            except requests.RequestException as e:
+                print(f"⚠️ Admin 서버 동기화 중 네트워크 오류: {e}")
 
             # ✅ 회원가입 성공 후 승인 대기 페이지로 이동
             return redirect('provider_signup_pending')
-            # return JsonResponse({"success": True, "redirect_url": reverse("provider_signup_pending")}, status=201)
 
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "error": "잘못된 JSON 데이터 형식입니다."}, status=400)
@@ -165,10 +225,15 @@ def provider_signup(request):
     
 
 def provider_signup_pending(request):
+    
     """회원가입 승인 대기 페이지"""
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({"status": "pending", "message": "회원가입 승인 대기 중"}, status=200)
-    return render(request, "accounts/provider_signup_pending.html")
+    if request.method == "GET":
+        pending_users = ProviderUser.objects.filter(is_approved=False).values(
+            "username", "company_name", "email", "business_registration_number"
+        )
+        return JsonResponse({"requests": list(pending_users)}, safe=False)
+
+    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
 
 def api_provider_pending_list(request):
@@ -179,8 +244,12 @@ def api_provider_pending_list(request):
     return JsonResponse(list(pending_users), safe=False)
 
 @csrf_exempt
+@login_required
 def update_user_status(request):
-    """가입 승인 상태를 업데이트하는 API 뷰"""
+    """✅ 가입 승인 상태를 업데이트하는 API 뷰 (관리자 전용)"""
+    if not request.user.is_superuser:
+        return JsonResponse({"success": False, "error": "관리자만 승인할 수 있습니다."}, status=403)
+
     if request.method == "POST":
         try:
             data = json.loads(request.body.decode("utf-8"))
@@ -188,17 +257,20 @@ def update_user_status(request):
             is_approved = data.get("is_approved", False)
 
             provider = ProviderUser.objects.get(username=username)
-            provider.is_active = is_approved  # ✅ 승인된 경우 로그인 가능하도록 변경
-            provider.status = "approved" if is_approved else "pending"
+            provider.is_active = is_approved  # 승인된 경우 로그인 가능
+            provider.is_approved = is_approved
             provider.save()
 
             return JsonResponse({"success": True, "message": "승인 상태가 업데이트되었습니다."}, status=200)
+
         except ProviderUser.DoesNotExist:
             return JsonResponse({"success": False, "error": "해당 사용자를 찾을 수 없습니다."}, status=404)
+
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "error": "잘못된 JSON 형식입니다."}, status=400)
 
     return JsonResponse({"success": False, "error": "잘못된 요청 방식입니다."}, status=405)
+
 
 @csrf_exempt
 def check_id_duplicate(request):
@@ -383,3 +455,53 @@ def respond_to_estimate(request, estimate_id):
             return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
+def provider_pending_list(request):
+    """승인 대기 중인 Provider 목록을 JSON으로 반환"""
+    pending_users = ProviderUser.objects.filter(is_active=False).values(
+        "username", "company_name", "email", "business_registration_number"
+    )
+    return JsonResponse(list(pending_users), safe=False)
+
+def provider_signup_all(request):
+    """모든 회사 정보를 반환하는 API"""
+    companies = ProviderUser.objects.all().values(
+        'username', 
+        'company_name', 
+        'business_registration_number', 
+        'email',
+        'business_phone_number',
+        'is_active',
+        'is_approved',
+        'created_at'
+    )
+    return JsonResponse(list(companies), safe=False)
+    
+
+def get_all_companies(request):
+    """모든 회사 정보를 반환하는 API"""
+    companies = ProviderUser.objects.all().values(
+        'username', 
+        'company_name', 
+        'business_registration_number', 
+        'email', 
+        'business_phone_number', 
+        'is_active',
+        'is_approved',
+        'created_at'
+    )
+    return JsonResponse(list(companies), safe=False)
+
+def fetch_provider_users():
+    """Provider 서버에서 승인 대기 중인 유저 목록 가져오기"""
+    try:
+        url = f"{settings.PROVIDER_API_URL}/signup/pending/"
+        response = requests.get(url, headers={"Content-Type": "application/json"}, timeout=5)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return []
+    except requests.RequestException as e:
+        print(f"⚠️ Provider 서버 API 요청 실패: {e}")
+        return []

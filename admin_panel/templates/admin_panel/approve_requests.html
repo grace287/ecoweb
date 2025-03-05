@@ -1,12 +1,6 @@
 {% extends 'base.html' %}
 
-
-
 {% load static %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/admin/approve_requests.css' %}">
-{% endblock %}
 
 {% block content %}
 <style>
@@ -107,77 +101,132 @@
     <div class="card">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>업체명</th>
-                            <th>구분</th>
-                            <th>사업자번호</th>
-                            <th>연락처</th>
-                            <th>가입신청일</th>
-                            <th class="text-end">관리</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for company in pending_companies %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="company-info">
-                                        <div class="company-name">{{ company.company_name }}</div>
+                <form method="post" action="{% url 'approve_requests' %}" id="approve-form">
+                        {% csrf_token %}
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>업체명</th>
+                                <th>유저 정보</th>
+                                <th>사업자등록번호</th>
+                                <th>연락처</th>
+                                <th>가입신청일</th>
+                                <th class="text-end">관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if pending_requests %}
+                                {% for company in pending_requests %}
+                            <tr>
+                                <td>
+                                    <div class="company-name">
+                                        {{ company.company_name }}
+                                        <span class="badge {% if company.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ company.is_approved|yesno:"승인완료,승인대기" }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-name">{{ company.username }}</div>
                                         <small class="text-muted">{{ company.email }}</small>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge bg-{{ company.user_type|yesno:'primary,secondary' }}">
-                                    {{ company.get_user_type_display }}
-                                </span>
-                            </td>
-                            <td>{{ company.business_registration_number }}</td>
-                            <td>{{ company.business_phone_number }}</td>
-                            <td>{{ company.created_at|date:"Y-m-d H:i" }}</td>
-                            <td class="text-end">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-success" 
-                                            onclick="approveCompany({{ company.id }})">
-                                        <i class="bi bi-check-lg"></i> 승인
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-danger" 
-                                            onclick="rejectCompany({{ company.id }})">
-                                        <i class="bi bi-x-lg"></i> 거부
-                                    </button>
-                                    <a href="{% url 'company_detail' company.id %}" 
-                                       class="btn btn-sm btn-primary">
-                                        <i class="bi bi-search"></i> 상세
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center py-4">
-                                <div class="empty-state">
-                                    <i class="bi bi-inbox text-muted display-4"></i>
-                                    <p class="mt-2 mb-0">승인 대기 중인 업체가 없습니다.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </td>
+                                <td>{{ company.business_registration_number }}</td>
+                                <td>{{ company.business_phone_number|default:"-" }}</td>
+                                <td>{{ company.created_at|default:"-"|date:"Y-m-d H:i" }}</td>  
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        {% if not company.is_approved %}
+                                            <button 
+                                                onclick="approveCompany('{{ company.id }}')" 
+                                                class="btn btn-sm btn-success"
+                                            >
+                                                <i class="bi bi-check-lg"></i> 승인
+                                            </button>
+                                            <button 
+                                                onclick="rejectCompany('{{ company.id }}')" 
+                                                class="btn btn-sm btn-danger"
+                                            >
+                                                <i class="bi bi-x-lg"></i> 거부
+                                            </button>
+                                        {% elif company.provider_user and company.provider_user.id %}
+                                            <a href="{% url 'company_detail' company.provider_user.id %}" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-search"></i> 상세
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">정보 없음</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="empty-state">
+                                            <i class="bi bi-inbox text-muted display-4"></i>
+                                            <p class="mt-2 mb-0">승인 대기 중인 업체가 없습니다.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                    </table>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- JavaScript -->
 <script>
-/* filepath: /b:/OneDrive/Develop/EcoAne/Web/EcoWeb/admin_panel/static/js/admin/approve_requests.js */
+    function submitApprovalForm(userId, actionType) {
+        document.getElementById("user_id").value = userId;
+        document.getElementById("action").value = actionType;
+        document.getElementById("approve-form").submit();
+    }
+    </script>
+
+<script>
+function fetchWithCSRF(url, options = {}) {
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfInput) {
+        console.error("❌ CSRF 토큰을 찾을 수 없습니다. 페이지를 새로고침하세요.");
+        alert("CSRF 토큰이 누락되었습니다. 페이지를 새로고침하세요.");
+        return Promise.reject("CSRF token not found");
+    }
+    
+    const csrfToken = csrfInput.value;
+
+    // 요청 본문 유효성 검사 및 로깅 강화
+    console.log("요청 데이터 (전송 전):", options.body);
+    
+    // 요청 본문이 undefined나 null인 경우 빈 객체로 대체
+    const requestBody = options.body || {};
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'  // AJAX 요청 명시
+        },
+        body: JSON.stringify(requestBody)  // 항상 JSON 문자열로 변환
+    });
+}
+
 function approveCompany(id) {
+    if (!id) {
+        alert("❌ 승인할 업체의 ID가 존재하지 않습니다.");
+        return;
+    }
+
     if (confirm('이 업체를 승인하시겠습니까?')) {
-        fetchWithCSRF(`/api/companies/${id}/approve/`, {
-            method: 'POST'
+        fetchWithCSRF('/approve-requests/', {
+            body: { 
+                user_id: String(id),  // ID를 문자열로 변환
+                action: 'approve'
+            }
         })
         .then(handleResponse)
         .catch(handleError);
@@ -185,11 +234,19 @@ function approveCompany(id) {
 }
 
 function rejectCompany(id) {
+    if (!id) {
+        alert("❌ 거부할 업체의 ID가 존재하지 않습니다.");
+        return;
+    }
+
     const reason = prompt('거부 사유를 입력하세요:');
     if (reason) {
-        fetchWithCSRF(`/api/companies/${id}/reject/`, {
-            method: 'POST',
-            body: JSON.stringify({ reason })
+        fetchWithCSRF('/approve-requests/', {
+            body: { 
+                user_id: String(id),  // ID를 문자열로 변환
+                reason: reason,
+                action: 'reject'
+            }
         })
         .then(handleResponse)
         .catch(handleError);
@@ -197,28 +254,33 @@ function rejectCompany(id) {
 }
 
 function handleResponse(response) {
+    console.log('응답 상태:', response.status);
+    
     if (response.ok) {
-        location.reload();
+        return response.json().then(data => {
+            console.log('응답 데이터:', data);
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                throw new Error(data.error || '처리 중 오류가 발생했습니다.');
+            }
+        }).catch(error => {
+            console.error('JSON 파싱 오류:', error);
+            alert('응답 데이터를 처리하는 중 오류가 발생했습니다.');
+        });
     } else {
-        throw new Error('처리 중 오류가 발생했습니다.');
+        // 오류 응답 본문 로깅
+        return response.text().then(errorText => {
+            console.error('오류 응답:', errorText);
+            alert('서버 요청 중 오류가 발생했습니다.');
+        });
     }
 }
 
 function handleError(error) {
-    console.error(error);
-    alert(error.message);
-}
-
-function fetchWithCSRF(url, options = {}) {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    return fetch(url, {
-        ...options,
-        headers: {
-            ...options.headers,
-            'X-CSRFToken': csrfToken,
-            'Content-Type': 'application/json'
-        }
-    });
+    console.error('요청 오류:', error);
+    alert(error.message || '요청 중 네트워크 오류가 발생했습니다.');
 }
 </script>
 

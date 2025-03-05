@@ -1,7 +1,6 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from services.models import ServiceCategory
-from estimates.models import MeasurementLocation
 
 @csrf_exempt
 def service_category_list(request):

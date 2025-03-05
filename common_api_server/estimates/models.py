@@ -44,7 +44,11 @@ class Estimate(models.Model):
 
         return cls.objects.filter(filters).order_by("-created_at")
 
-    demand_user_id = models.IntegerField(verbose_name="수요업체 사용자 ID")  # Demand 서버 User ID
+    demand_user_id = models.IntegerField(
+        verbose_name="수요업체 사용자 ID", 
+        null=True,  # NULL 허용
+        blank=True  # 관리자 페이지에서 빈 값 허용
+    )  # Demand 서버 User ID
     provider_user_id = models.IntegerField(null=True, blank=True, verbose_name="대행사 사용자 ID")  # Provider 서버 User ID
 
     service_category = models.ForeignKey(
@@ -86,6 +90,14 @@ class Estimate(models.Model):
     valid_until = models.DateTimeField(null=True, blank=True, verbose_name="유효기간")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성일")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="수정일")
+
+    # 주소 필드 추가
+    address = models.CharField(
+        max_length=255, 
+        verbose_name="측정 주소", 
+        null=True,  # 기존 데이터와의 호환성을 위해 null 허용
+        blank=True  # 관리자 페이지에서 빈 값 허용
+    )
 
     class Meta:
         db_table = 'estimates'

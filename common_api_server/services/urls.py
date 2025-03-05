@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import service_category_list, get_measurement_locations
+from .views import service_category_list
 from . import views
 
 urlpatterns = [

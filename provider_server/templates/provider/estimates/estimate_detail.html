@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container estimate-detail">
+    <h1>견적서 상세 정보</h1>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>견적서 #{{ estimate.estimate_number }}</h2>
+        </div>
+        
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>기본 정보</h4>
+                    <table class="table">
+                        <tr>
+                            <th>서비스 카테고리</th>
+                            <td>{{ estimate.service_category }}</td>
+                        </tr>
+                        <tr>
+                            <th>주소</th>
+                            <td>{{ estimate.address }}</td>
+                        </tr>
+                        <tr>
+                            <th>희망 일정</th>
+                            <td>{{ estimate.preferred_schedule }}</td>
+                        </tr>
+                        <tr>
+                            <th>상태</th>
+                            <td>{{ estimate.status }}</td>
+                        </tr>
+                        <tr>
+                            <th>생성일</th>
+                            <td>{{ estimate.created_at }}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="col-md-6">
+                    <h4>측정 장소</h4>
+                    <ul class="list-group">
+                        {% for location in estimate.measurement_locations %}
+                            <li class="list-group-item">{{ location }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

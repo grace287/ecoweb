@@ -6,6 +6,163 @@
 
 
 <style>
+    /* CSS 변수 정의 */
+    :root {
+        /* 색상 팔레트 */
+        --primary-color: #2563eb;
+        --primary-color-light: #ebf5ff;
+        --background-light: #f8fafc;
+        --text-dark: #1f2937;
+        --text-muted: #6b7280;
+        
+        /* 간격 및 크기 */
+        --spacing-xs: 8px;
+        --spacing-sm: 12px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        
+        /* 그림자 */
+        --shadow-subtle: 0 2px 4px rgba(0,0,0,0.05);
+        --shadow-medium: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    /* 공통 컴포넌트 스타일 */
+    .interactive-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-subtle);
+        text-align: center;
+    }
+
+    .interactive-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .interactive-item.selected {
+        border-color: var(--primary-color);
+        background-color: var(--primary-color-light);
+    }
+
+    /* 서비스 카테고리 */
+    .service-categories {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: var(--background-light);
+        border-radius: 12px;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .category-item {
+        @extend .interactive-item;
+        min-width: 80px;
+        background: white;
+    }
+
+    .category-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-dark);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 측정 장소 및 날짜 선택 */
+    .measurement-locations,
+    .date-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .location-btn,
+    .date-option {
+        @extend .interactive-item;
+        min-height: 60px;
+        font-size: 0.875rem;
+    }
+
+    /* 요약 카드 */
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
+    }
+
+    .summary-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--background-light);
+        border-radius: 12px;
+        padding: var(--spacing-md);
+        text-align: center;
+        box-shadow: var(--shadow-subtle);
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+        .service-categories {
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm);
+        }
+
+        .category-item {
+            min-width: 70px;
+            padding: var(--spacing-xs) var(--spacing-sm);
+        }
+
+        .category-name {
+            font-size: 0.75rem;
+        }
+
+        .measurement-locations,
+        .date-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: var(--spacing-sm);
+        }
+
+        .location-btn,
+        .date-option {
+            min-height: 50px;
+            font-size: 0.8rem;
+            padding: var(--spacing-sm) var(--spacing-md);
+        }
+
+        .summary-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* 모바일 추가 최적화 */
+    @media (max-width: 480px) {
+        .service-categories {
+            padding: var(--spacing-xs);
+        }
+
+        .category-item {
+            min-width: 60px;
+            padding: 6px 10px;
+        }
+
+        .location-btn,
+        .date-option {
+            min-height: 40px;
+            font-size: 0.75rem;
+        }
+    }
+
     #serviceCategoriesContainer {
     display: flex !important;
     flex-wrap: wrap;
@@ -28,15 +185,17 @@
         margin: 40px auto;
         padding: 0 20px;
     }
-
+    /* 채팅 박스 */
     .chat-box {
         margin-bottom: 20px;
-        background: white;
+        background: #2563eb;
         border: 1px solid #e5e7eb;
         border-radius: 12px;
         padding: 24px;
+        color: white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+
 
     .chat-box[data-step="1"] {
         background: #f8fafc;
@@ -155,14 +314,7 @@
       color: #666;
       margin-bottom: 8px;
   }
-  /* 채팅 박스 */
-  .chat-box {
-      background: #2563eb;
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      color: white;
-  }
+  
   .chat-title {
       font-size: 16px;
       margin-bottom: 20px;
@@ -318,88 +470,6 @@
       background-color: #1e40af;
   }
 
-  /* 서비스 카테고리 레이아웃 개선 */
-  .service-categories {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      padding: 1rem;
-      background: #f8fafc;
-      border-radius: 12px;
-      overflow-x: auto;
-      white-space: nowrap;
-  }
-
-  .category-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: auto;
-      min-width: 80px;
-      padding: 8px 12px;
-      border-radius: 10px;
-      background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: 2px solid transparent;
-      text-align: center;
-  }
-
-  .category-item:hover {
-      background-color: #f0f4f8;
-      transform: translateY(-2px);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-  }
-
-  .category-item.selected {
-      border-color: #2563eb;
-      background-color: #ebf5ff;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-  }
-
-  .category-name {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #1f2937;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-  }
-
-  /* 스크롤바 스타일링 (선택적) */
-  .service-categories::-webkit-scrollbar {
-      height: 6px;
-  }
-
-  .service-categories::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 10px;
-  }
-
-  .service-categories::-webkit-scrollbar-thumb {
-      background: #2563eb;
-      border-radius: 10px;
-  }
-
-  /* 반응형 조정 */
-  @media (max-width: 768px) {
-      .service-categories {
-          gap: 8px;
-          padding: 0.75rem;
-      }
-
-      .category-item {
-          min-width: 70px;
-          padding: 6px 10px;
-      }
-
-      .category-name {
-          font-size: 0.75rem;
-      }
-  }
-
   /* 주소 입력 및 검색 스타일 개선 */
   .input-group {
       display: flex;
@@ -524,6 +594,220 @@
           width: 100%;
       }
   }
+
+  /* 측정 장소 버튼 스타일 */
+  .measurement-locations {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+  }
+
+  .location-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      background-color: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #1f2937;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      min-height: 60px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .location-btn:hover {
+      background-color: #f8fafc;
+      border-color: #2563eb;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .location-btn.selected {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+
+  /* 날짜 선택 스타일 */
+  .date-picker-group {
+      margin-bottom: 20px;
+  }
+
+  .date-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+  }
+
+  .date-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 18px;
+      background-color: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1f2937;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      min-height: 70px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+
+  .date-option:hover {
+      background-color: #f8fafc;
+      border-color: #2563eb;
+      transform: translateY(-3px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .date-option.selected {
+      background-color: #2563eb;
+      color: white;
+      border-color: #2563eb;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+
+  /* 채팅 박스 전체 스타일 개선 */
+  .chat-box {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+  }
+
+  .chat-box:hover {
+      box-shadow: 0 6px 8px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+  }
+
+  .chat-box[data-step="1"] {
+      background: #f8fafc;
+  }
+
+  .chat-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
+
+  .chat-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: #2563eb;
+      border-radius: 50%;
+  }
+
+  /* 반응형 조정 */
+  @media (max-width: 768px) {
+      .measurement-locations,
+      .date-grid {
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+          gap: 10px;
+      }
+
+      .location-btn,
+      .date-option {
+          min-height: 50px;
+          font-size: 0.8rem;
+          padding: 10px 14px;
+      }
+
+      .chat-box {
+          padding: 16px;
+      }
+
+      .chat-title {
+          font-size: 1rem;
+      }
+  }
+
+  /* 추가 전역 스타일 개선 */
+  .chat-estimate-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background-color: #f9fafb;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  }
+
+  .estimate-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+
+  .estimate-header h1 {
+      font-size: 2rem;
+      color: #1f2937;
+      margin-bottom: 12px;
+  }
+
+  .estimate-header .highlight {
+      color: #2563eb;
+      font-weight: 700;
+  }
+
+  .estimate-guide {
+      text-align: center;
+      margin-bottom: 30px;
+      background-color: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+
+  .guide-message {
+      font-size: 1rem;
+      color: #6b7280;
+      margin-bottom: 8px;
+  }
+
+  /* 제출 버튼 스타일 */
+  .submit-btn,
+  .request-btn {
+      width: 100%;
+      padding: 15px;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+
+  .submit-btn:hover,
+  .request-btn:hover {
+      background-color: #1e40af;
+      box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+  }
 </style>
 <!-- templates/chat_estimate.html -->
 <div class="chat-estimate-container">
@@ -551,7 +835,7 @@
                     <div class="service-categories" id="serviceCategoriesContainer">
                         <!-- 서비스 카테고리가 여기에 동적으로 로드됨 -->
                     </div>
-                    <button class="submit-btn">입력 완료</button>
+                    <!-- <button class="submit-btn">입력 완료</button> -->
                 </div>
             </div>
 
@@ -562,7 +846,7 @@
                     <div class="measurement-locations" id="measurementLocationsContainer">
                         <!-- 측정 장소가 여기에 동적으로 로드됨 -->
                     </div>
-                    <button class="submit-btn">입력 완료</button>
+                    <!-- <button class="submit-btn">입력 완료</button> -->
                 </div>
             </div>
 
@@ -571,7 +855,6 @@
                     <p class="chat-title">주소를 입력하세요.</p>
                     <div class="input-group">
                         <input type="text" class="chat-input" placeholder="ex) 대전광역시 유성구 국제과학로 5(신동)">
-                        <button class="submit-btn">입력 완료</button>
                     </div>
                 </div>
             </div>
@@ -586,7 +869,7 @@
                             <button class="date-option">1주일 이내로</button>
                             <button class="date-option">한 달 이내로</button>
                         </div>
-                        <button class="submit-btn">선택 완료</button>
+                        <!-- <button class="submit-btn">선택 완료</button> -->
                     </div>
                 </div>
             </div>
@@ -665,6 +948,7 @@ const ApiService = {
     async fetch(endpoint, options = {}) {
         try {
             console.log('API 요청:', `${APP_CONFIG.API.BASE_URL}${endpoint}`);
+            console.log('요청 옵션:', JSON.stringify(options, null, 2));
             
             const response = await fetch(`${APP_CONFIG.API.BASE_URL}${endpoint}`, {
                 headers: {
@@ -676,11 +960,19 @@ const ApiService = {
                 ...options
             });
 
+            // 응답 상태 코드 로깅
+            console.log('응답 상태 코드:', response.status);
+
             if (!response.ok) {
                 console.error('API 응답 에러:', response.status, response.statusText);
                 const text = await response.text();
                 console.error('응답 내용:', text);
-                throw new Error(`API 요청 실패: ${response.status}`);
+                
+                // 에러 객체에 응답 추가
+                const error = new Error(`API 요청 실패: ${response.status}`);
+                error.response = response;
+                error.responseBody = text;
+                throw error;
             }
 
             const data = await response.json();
@@ -715,9 +1007,11 @@ const ApiService = {
     },
 
     async createEstimate(data) {
+    console.log("📤 견적 요청 데이터:", data);  // 요청 데이터 확인
         try {
             const response = await this.fetch(APP_CONFIG.API.ENDPOINTS.ESTIMATE, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
             return response;
@@ -778,7 +1072,9 @@ const EstimateFlow = {
 
         container.innerHTML = categories.map(category => {
             return `
-                <div class="category-item" data-code="${category.code}" data-name="${category.name}">
+                <div class="category-item" 
+                     data-code="${category.category_code}" 
+                     data-name="${category.name}">
                     <span class="category-name">${category.name}</span>
                 </div>
             `;
@@ -791,7 +1087,10 @@ const EstimateFlow = {
                 document.querySelectorAll('.category-item').forEach(el => el.classList.remove('selected'));
                 e.currentTarget.classList.add('selected');
                 
-                this.selectCategory(e.currentTarget.dataset.code);
+                // 정확한 카테고리 코드 선택
+                const categoryCode = e.currentTarget.getAttribute('data-code');
+                console.log('선택된 카테고리 코드:', categoryCode);
+                this.selectCategory(categoryCode);
             });
         });
     },
@@ -882,6 +1181,7 @@ const EstimateFlow = {
     },
 
     selectCategory(code) {
+        console.log('카테고리 선택됨:', code);
         this.data.selectedCategory = code;
         this.updateSummary();
     },
@@ -931,31 +1231,42 @@ const EstimateFlow = {
             preferred_schedule: this.data.preferredSchedule
         };
 
-        if (!this.validateEstimateData(payload)) return;
+        // 페이로드 상세 로깅 추가
+        console.log('📦 견적 요청 페이로드:', JSON.stringify(payload, null, 2));
+
+        // 모든 필드 검증
+        if (!payload.service_category_code) {
+            alert('서비스 카테고리를 선택해주세요.');
+            return;
+        }
+        if (!payload.measurement_location_id) {
+            alert('측정 장소를 선택해주세요.');
+            return;
+        }
+        if (!payload.address) {
+            alert('주소를 입력해주세요.');
+            return;
+        }
+        if (!payload.preferred_schedule) {
+            alert('희망 일정을 선택해주세요.');
+            return;
+        }
 
         try {
             const result = await ApiService.createEstimate(payload);
             this.handleEstimateSuccess(result);
         } catch (error) {
-            this.handleEstimateError(error);
-        }
-    },
-
-    validateEstimateData(data) {
-        const requiredFields = {
-            service_category_code: '서비스 카테고리',
-            measurement_location_id: '측정 장소',
-            address: '주소',
-            preferred_schedule: '희망 일정'
-        };
-
-        return Object.entries(requiredFields).every(([field, label]) => {
-            if (!data[field]) {
-                alert(`${label}를 선택해주세요.`);
-                return false;
+            // 에러 응답 상세 로깅
+            console.error('🚨 견적 요청 실패:', error);
+            
+            // 서버 응답 본문 확인
+            if (error.responseBody) {
+                console.error('🔍 서버 응답 본문:', error.responseBody);
+                alert(`견적 요청 실패: ${error.responseBody}`);
+            } else {
+                alert('견적 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
             }
-            return true;
-        });
+        }
     },
 
     handleEstimateSuccess(result) {
@@ -1047,9 +1358,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 }
 
 .category-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     width: auto;
     min-width: 80px;
     padding: 8px 12px;
@@ -1069,7 +1380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 }
 
 .category-item.selected {
-    border-color: #2563eb;
+      border-color: #2563eb;
     background-color: #ebf5ff;
     box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }

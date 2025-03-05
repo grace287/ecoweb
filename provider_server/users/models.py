@@ -8,19 +8,14 @@ class ProviderUser(AbstractUser):
     """대행사 사용자 모델 (Provider 서버)"""
     objects = ProviderUserManager()  # ✅ UserManager 추가
 
-    groups = models.ManyToManyField(
-        Group,
-        related_name="demanduser_groups",
-        blank=True
-    )
-    user_permissions = models.ManyToManyField(
-        Permission,
-        related_name="demanduser_permissions",
-        blank=True
-    )
-
     company_name = models.CharField(max_length=255, verbose_name="업체명")
-    business_registration_number = models.CharField(max_length=20, unique=True, verbose_name="사업자등록번호")
+    business_registration_number = models.CharField(
+        max_length=20, 
+        unique=True, 
+        verbose_name="사업자등록번호", 
+        null=True,  # null 허용
+        blank=True  # 빈 값 허용
+    )
     business_phone_number = models.CharField(max_length=20, verbose_name="대표번호")
     consultation_phone_number = models.CharField(max_length=20, null=True, blank=True, verbose_name="상담번호")
     address = models.CharField(max_length=255, verbose_name="주소")

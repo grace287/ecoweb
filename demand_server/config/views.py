@@ -156,7 +156,9 @@ def signup(request):
                 business_phone_number=business_phone_number,
                 address=address,
                 address_detail=address_detail,
-                recommend_id=recommend_id
+                recommend_id=recommend_id,
+                is_active=True,  # 자동 활성화
+                is_approved=True  # 자동 승인
             )
             user.set_password(password)
             user.save()
