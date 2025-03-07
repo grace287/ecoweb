@@ -30,6 +30,14 @@ class Estimate(models.Model):
         ('CANCELLED', '취소')
     ]
 
+    SCHEDULE_CHOICES = [
+        ('asap', '최대한 빨리'),
+        ('3days', '3일 이내'),
+        ('1week', '1주일 이내'),
+        ('1month', '한 달 이내')
+    ]
+
+
     @classmethod
     def get_estimates(cls, provider_user_id=None, demand_user_id=None, status=None):
         """필터링된 견적 목록 조회"""
@@ -43,25 +51,33 @@ class Estimate(models.Model):
             filters &= Q(status=status)
 
         return cls.objects.filter(filters).order_by("-created_at")
-
-    demand_user_id = models.IntegerField(
-        verbose_name="수요업체 사용자 ID", 
-        null=True,  # NULL 허용
-        blank=True  # 관리자 페이지에서 빈 값 허용
-    )  # Demand 서버 User ID
-    provider_user_id = models.IntegerField(null=True, blank=True, verbose_name="대행사 사용자 ID")  # Provider 서버 User ID
-
-    service_category = models.ForeignKey(
-        ServiceCategory,  # ✅ ForeignKey로 연결
-        on_delete=models.CASCADE,
-        verbose_name="서비스 카테고리",
-        null=True,  # ✅ 기존 데이터 문제 방지
-        blank=True,  # ✅ 관리 페이지에서 빈 값 허용
-        default=get_default_service_category  # ✅ 기본값을 `None`으로 설정하여 강제 입력 방지
-    )
+    
     estimate_number = models.CharField(max_length=20, unique=True, verbose_name="견적번호")
     
-    measurement_locations = models.ManyToManyField(MeasurementLocation, related_name="estimates", verbose_name="측정 장소")
+
+    demand_user_id = models.IntegerField(null=True, blank=True)
+    contact_name = models.CharField(max_length=100, null=True, blank=True)
+    contact_phone = models.CharField(max_length=20, null=True, blank=True)
+    contact_email = models.EmailField(null=True, blank=True)
+    provider_user_id = models.IntegerField(null=True, blank=True, verbose_name="대행사 사용자 ID")  # Provider 서버 User ID
+
+    # 기본 카테고리 필드 유지
+    service_category = models.ForeignKey(
+        ServiceCategory, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='primary_estimates'
+    )
+    
+    # 다대다 관계로 여러 카테고리 지원
+    service_categories = models.ManyToManyField(
+        ServiceCategory, 
+        related_name='estimates'
+    )
+    
+    measurement_locations = models.ManyToManyField(
+        MeasurementLocation, related_name="estimates", verbose_name="측정 장소"
+        )
     preferred_schedule = models.CharField(
         max_length=20,
         choices=[

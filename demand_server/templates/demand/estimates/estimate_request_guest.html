@@ -1141,7 +1141,7 @@ const ApiService = {
 // 4. EstimateFlow 정의
 const EstimateFlow = {
     data: {
-        selectedCategory: null,
+        selectedCategories: [],
         selectedLocation: null,
         address: '',
         preferredSchedule: ''
@@ -1196,17 +1196,19 @@ const EstimateFlow = {
             `;
         }).join('');
 
-        // 카테고리 선택 이벤트 추가
+        // 카테고리 선택 이벤트 수정
         document.querySelectorAll('.category-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                // 선택된 카테고리 강조
-                document.querySelectorAll('.category-item').forEach(el => el.classList.remove('selected'));
-                e.currentTarget.classList.add('selected');
+                // 다중 선택 토글
+                e.currentTarget.classList.toggle('selected');
                 
-                // 정확한 카테고리 코드 선택
-                const categoryCode = e.currentTarget.getAttribute('data-code');
-                console.log('선택된 카테고리 코드:', categoryCode);
-                this.selectCategory(categoryCode);
+                // 선택된 카테고리 코드들 수집
+                const selectedCategories = Array.from(
+                    document.querySelectorAll('.category-item.selected')
+                ).map(el => el.getAttribute('data-code'));
+                
+                console.log('선택된 카테고리 코드들:', selectedCategories);
+                this.selectCategories(selectedCategories);
             });
         });
     },
@@ -1296,9 +1298,9 @@ const EstimateFlow = {
         });
     },
 
-    selectCategory(code) {
-        console.log('카테고리 선택됨:', code);
-        this.data.selectedCategory = code;
+    selectCategories(categoryCodes) {
+        console.log('카테고리들 선택됨:', categoryCodes);
+        this.data.selectedCategories = categoryCodes;
         this.updateSummary();
     },
 
@@ -1318,31 +1320,29 @@ const EstimateFlow = {
             if (element && value) element.textContent = value;
         };
 
-        // 선택된 카테고리 이름으로 업데이트
-        const selectedCategoryEl = document.querySelector('.category-item.selected');
-        const categoryName = selectedCategoryEl 
-            ? selectedCategoryEl.getAttribute('data-name')
-            : this.data.selectedCategory;
-        updateElement('[data-type="service"]', categoryName);
+        // 선택된 카테고리 이름들로 업데이트
+        const selectedCategoryNames = this.data.selectedCategories.map(code => {
+            const categoryEl = document.querySelector(`.category-item[data-code="${code}"]`);
+            return categoryEl ? categoryEl.getAttribute('data-name') : code;
+        }).join(', ');
+        
+        updateElement('[data-type="service"]', selectedCategoryNames || '미선택');
 
-        // 선택된 장소 이름으로 업데이트
+        // 나머지 코드는 동일하게 유지
         const selectedLocationEl = document.querySelector(`.location-btn[data-id="${this.data.selectedLocation}"]`);
         const locationName = selectedLocationEl 
             ? selectedLocationEl.textContent 
             : this.data.selectedLocation;
         updateElement('[data-type="location"]', locationName);
 
-        // 날짜 업데이트
         updateElement('[data-type="date"]', this.data.preferredSchedule || '미선택');
-
-        // 주소 업데이트
         updateElement('[data-type="address"]', this.data.address || '미입력');
     },
 
     validateAllFields() {
         // 모든 필수 필드가 입력되었는지 확인
         return (
-            this.data.selectedCategory &&
+            this.data.selectedCategories.length > 0 &&
             this.data.selectedLocation &&
             this.data.address &&
             this.data.preferredSchedule
@@ -1351,7 +1351,7 @@ const EstimateFlow = {
 
     async submitEstimate() {
         const payload = {
-            service_category_code: this.data.selectedCategory,
+            service_category_codes: this.data.selectedCategories,
             measurement_location_id: this.data.selectedLocation,
             address: this.data.address,
             preferred_schedule: this.data.preferredSchedule
@@ -1360,9 +1360,9 @@ const EstimateFlow = {
         // 페이로드 상세 로깅 추가
         console.log('📦 견적 요청 페이로드:', JSON.stringify(payload, null, 2));
 
-        // 모든 필드 검증
-        if (!payload.service_category_code) {
-            alert('서비스 카테고리를 선택해주세요.');
+        // 검증 로직 수정
+        if (!payload.service_category_codes || payload.service_category_codes.length === 0) {
+            alert('최소 한 개의 서비스 카테고리를 선택해주세요.');
             return;
         }
         if (!payload.measurement_location_id) {

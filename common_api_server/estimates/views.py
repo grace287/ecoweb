@@ -28,14 +28,16 @@ def create_estimate(request):
         data = json.loads(request.body)
         
         # 필수 필드 검증
-        required_fields = ['service_category_code', 'measurement_location_id', 'address', 'preferred_schedule']
+        required_fields = ['service_category_codes', 'measurement_location_id', 'address', 'preferred_schedule']
         for field in required_fields:
             if not data.get(field):
                 return JsonResponse({"error": f"{field}는 필수 항목입니다."}, status=400)
 
-        # 서비스 카테고리 검증
+        # 서비스 카테고리 검증 (다중 카테고리)
         try:
-            service_category = ServiceCategory.objects.get(category_code=data['service_category_code'])
+            categories = ServiceCategory.objects.filter(category_code__in=data['service_category_codes'])
+            if len(categories) != len(data['service_category_codes']):
+                return JsonResponse({"error": "유효하지 않은 서비스 카테고리가 포함되어 있습니다."}, status=400)
         except ServiceCategory.DoesNotExist:
             return JsonResponse({"error": "유효하지 않은 서비스 카테고리입니다."}, status=400)
 
@@ -45,24 +47,59 @@ def create_estimate(request):
         except MeasurementLocation.DoesNotExist:
             return JsonResponse({"error": "유효하지 않은 측정 장소입니다."}, status=400)
 
+        # 담당자 정보 처리
+        contact_info = {
+            'contact_name': '미지정',
+            'contact_phone': '',
+            'contact_email': '',
+            'demand_user_id': None
+        }
+
+        # 로그인된 사용자의 경우 기본 정보 추가
+        if request.user.is_authenticated:
+            contact_info.update({
+                'demand_user_id': request.user.id,
+                'contact_name': request.user.name if hasattr(request.user, 'name') else request.user.username,
+                'contact_email': request.user.email
+            })
+
+        # 사용자가 직접 입력한 담당자 정보가 있다면 우선 적용
+        if data.get('contact_info'):
+            contact_info.update({
+                'contact_name': data['contact_info'].get('name', contact_info['contact_name']),
+                'contact_phone': data['contact_info'].get('phone', contact_info['contact_phone']),
+                'contact_email': data['contact_info'].get('email', contact_info['contact_email'])
+            })
+
         # 견적서 생성
-        # 기본값 또는 임시 값 사용
+        # 첫 번째 카테고리를 기본 카테고리로 설정
+        primary_category = categories.first()
+        
         estimate = Estimate.objects.create(
-            service_category=service_category,
+            service_category=primary_category,  # 첫 번째 카테고리를 기본으로 설정
             address=data['address'],
             preferred_schedule=data.get('preferred_schedule', 'asap'),
             status='REQUEST',
-            demand_user_id=None,  # NULL 허용
-            contact_name='미지정',
-            contact_phone='',
-            contact_email=''
+            demand_user_id=contact_info['demand_user_id'],
+            contact_name=contact_info['contact_name'],
+            contact_phone=contact_info['contact_phone'],
+            contact_email=contact_info['contact_email']
         )
+        
+        # 다중 카테고리 연결
+        estimate.service_categories.set(categories)
         estimate.measurement_locations.add(location)
 
         return JsonResponse({
             "success": True,
             "estimate_id": estimate.id,
-            "message": "견적 요청이 성공적으로 생성되었습니다."
+            "estimate_number": estimate.estimate_number,
+            "message": "견적 요청이 성공적으로 생성되었습니다.",
+            "contact_info": {
+                "name": contact_info['contact_name'],
+                "phone": contact_info['contact_phone'],
+                "email": contact_info['contact_email']
+            }
         }, status=201)
 
     except json.JSONDecodeError:

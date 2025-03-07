@@ -808,6 +808,12 @@
       box-shadow: 0 6px 8px rgba(0,0,0,0.15);
       transform: translateY(-2px);
   }
+
+
+  /* 연락처 */
+  .contact-info {
+    color: #1f2937;
+  }
 </style>
 <!-- templates/chat_estimate.html -->
 <div class="chat-estimate-container">
@@ -874,7 +880,27 @@
                 </div>
             </div>
 
-            <div class="chat-box summary" data-step="5">
+            <div class="chat-box contact-info" data-step="5">
+                <div class="chat-content">
+                    <p class="chat-title">연락처 정보 (선택)</p>
+                    <div class="contact-input-group">
+                        <div class="input-group">
+                            <label for="contact-name">이름</label>
+                            <input type="text" id="contact-name" class="chat-input" placeholder="담당자 이름 (선택)">
+                        </div>
+                        <div class="input-group">
+                            <label for="contact-phone">연락처</label>
+                            <input type="tel" id="contact-phone" class="chat-input" placeholder="연락처 (선택)">
+                        </div>
+                        <div class="input-group">
+                            <label for="contact-email">이메일</label>
+                            <input type="email" id="contact-email" class="chat-input" placeholder="이메일 (선택)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-box summary" data-step="6">
                 <div class="chat-content">
                     <p class="chat-title">입력하신 내용을 확인해주세요.</p>
                     <div class="summary-cards">
@@ -898,9 +924,11 @@
                         <p>주소</p>
                         <p data-type="address">대전광역시 유성구 국제과학로 5(신동)</p>
                     </div>
-                    <button class="request-btn" onclick="submitEstimate()">견적 신청</button>
+                    <button class="request-btn" onclick="EstimateFlow.submitEstimate()">견적 신청</button>
                 </div>
             </div>
+
+            
 
         </div>
     </div>
@@ -1025,7 +1053,7 @@ const ApiService = {
 // 4. EstimateFlow 정의
 const EstimateFlow = {
     data: {
-        selectedCategory: null,
+        selectedCategories: [],
         selectedLocation: null,
         address: '',
         preferredSchedule: ''
@@ -1080,34 +1108,56 @@ const EstimateFlow = {
             `;
         }).join('');
 
-        // 카테고리 선택 이벤트 추가
+        // 카테고리 선택 이벤트 수정
         document.querySelectorAll('.category-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                // 선택된 카테고리 강조
-                document.querySelectorAll('.category-item').forEach(el => el.classList.remove('selected'));
-                e.currentTarget.classList.add('selected');
+                // 현재 클릭된 항목의 선택 상태 토글
+                e.currentTarget.classList.toggle('selected');
                 
-                // 정확한 카테고리 코드 선택
-                const categoryCode = e.currentTarget.getAttribute('data-code');
-                console.log('선택된 카테고리 코드:', categoryCode);
-                this.selectCategory(categoryCode);
+                // 선택된 카테고리 코드들 수집
+                const selectedCategories = Array.from(
+                    document.querySelectorAll('.category-item.selected')
+                ).map(el => el.getAttribute('data-code'));
+                
+                console.log('선택된 카테고리 코드들:', selectedCategories);
+                this.selectCategories(selectedCategories);
             });
         });
     },
 
-    renderCategoryDetails(category) {
-        
-        return category.description ? `
-            <div class="category-details">
-                <p class="category-description">${category.description}</p>
-                ${category.measurement_items ? `
-                    <ul class="measurement-items">
-                        ${category.measurement_items.map(item => `<li>${item}</li>`).join('')}
-                    </ul>
-                ` : ''}
-            </div>
-        ` : '';
+    selectCategories(categoryCodes) {
+        console.log('카테고리들 선택됨:', categoryCodes);
+        this.data.selectedCategories = categoryCodes;
+        this.updateSummary();
+    },
 
+    updateSummary() {
+        const updateElement = (selector, value) => {
+            const element = document.querySelector(selector);
+            if (element && value) element.textContent = value;
+        };
+
+        // 선택된 카테고리 이름들로 업데이트
+        const selectedCategoryNames = this.data.selectedCategories.map(code => {
+            const categoryEl = document.querySelector(`.category-item[data-code="${code}"]`);
+            return categoryEl ? categoryEl.getAttribute('data-name') : code;
+        });
+        
+        updateElement('[data-type="service"]', 
+            selectedCategoryNames.length > 0 
+                ? selectedCategoryNames.join(', ') 
+                : '미선택'
+        );
+
+        // 나머지 코드는 동일하게 유지
+        const selectedLocationEl = document.querySelector(`.location-btn[data-id="${this.data.selectedLocation}"]`);
+        const locationName = selectedLocationEl 
+            ? selectedLocationEl.textContent 
+            : this.data.selectedLocation;
+        updateElement('[data-type="location"]', locationName);
+
+        updateElement('[data-type="date"]', this.data.preferredSchedule || '미선택');
+        updateElement('[data-type="address"]', this.data.address || '미입력');
     },
 
     renderMeasurementLocations(locations) {
@@ -1145,10 +1195,9 @@ const EstimateFlow = {
         }
 
         // 주소 입력 이벤트 수정
-        const addressInput = document.querySelector('.chat-input');
-        const addressSubmitBtn = document.querySelector('.submit-btn');
-        if (addressInput && addressSubmitBtn) {
-            addressSubmitBtn.addEventListener('click', () => {
+        const addressInput = document.querySelector('.chat-box[data-step="3"] .chat-input');
+        if (addressInput) {
+            addressInput.addEventListener('change', () => {
                 const address = addressInput.value.trim();
                 if (address) {
                     this.data.address = address;
@@ -1180,12 +1229,6 @@ const EstimateFlow = {
         });
     },
 
-    selectCategory(code) {
-        console.log('카테고리 선택됨:', code);
-        this.data.selectedCategory = code;
-        this.updateSummary();
-    },
-
     selectLocation(id) {
         this.data.selectedLocation = id;
         this.updateSummary();
@@ -1196,47 +1239,25 @@ const EstimateFlow = {
         this.updateSummary();
     },
 
-    updateSummary() {
-        const updateElement = (selector, value) => {
-            const element = document.querySelector(selector);
-            if (element && value) element.textContent = value;
-        };
-
-        // 선택된 카테고리 이름으로 업데이트
-        const selectedCategoryEl = document.querySelector('.category-item.selected');
-        const categoryName = selectedCategoryEl 
-            ? selectedCategoryEl.getAttribute('data-name')
-            : this.data.selectedCategory;
-        updateElement('[data-type="service"]', categoryName);
-
-        // 선택된 장소 이름으로 업데이트
-        const selectedLocationEl = document.querySelector(`.location-btn[data-id="${this.data.selectedLocation}"]`);
-        const locationName = selectedLocationEl 
-            ? selectedLocationEl.textContent 
-            : this.data.selectedLocation;
-        updateElement('[data-type="location"]', locationName);
-
-        // 날짜 업데이트
-        updateElement('[data-type="date"]', this.data.preferredSchedule || '미선택');
-
-        // 주소 업데이트
-        updateElement('[data-type="address"]', this.data.address || '미입력');
-    },
-
     async submitEstimate() {
+        // 주소 입력 확인 (더 명확한 선택자 사용)
+        const addressInput = document.querySelector('.chat-box[data-step="3"] .chat-input');
+        this.data.address = addressInput ? addressInput.value.trim() : '';
+
         const payload = {
-            service_category_code: this.data.selectedCategory,
+            service_category_codes: this.data.selectedCategories,
             measurement_location_id: this.data.selectedLocation,
             address: this.data.address,
-            preferred_schedule: this.data.preferredSchedule
+            preferred_schedule: this.data.preferredSchedule,
+            contact_info: this.collectContactInfo()
         };
 
         // 페이로드 상세 로깅 추가
         console.log('📦 견적 요청 페이로드:', JSON.stringify(payload, null, 2));
 
-        // 모든 필드 검증
-        if (!payload.service_category_code) {
-            alert('서비스 카테고리를 선택해주세요.');
+        // 모든 필드 검증 (수정된 부분)
+        if (!payload.service_category_codes || payload.service_category_codes.length === 0) {
+            alert('최소 한 개의 서비스 카테고리를 선택해주세요.');
             return;
         }
         if (!payload.measurement_location_id) {
@@ -1244,8 +1265,17 @@ const EstimateFlow = {
             return;
         }
         if (!payload.address) {
-            alert('주소를 입력해주세요.');
-            return;
+            // 주소 입력 필드에 포커스 주기
+            if (addressInput) {
+                // 해당 채팅 박스로 스크롤
+                const addressBox = document.querySelector('.chat-box[data-step="3"]');
+                if (addressBox) {
+                    addressBox.scrollIntoView({ behavior: 'smooth' });
+                }
+                addressInput.focus();
+                alert('주소를 입력해주세요.');
+                return;
+            }
         }
         if (!payload.preferred_schedule) {
             alert('희망 일정을 선택해주세요.');
@@ -1269,20 +1299,61 @@ const EstimateFlow = {
         }
     },
 
+    collectContactInfo() {
+        // 사용자가 직접 입력한 연락처 정보 수집
+        const contactNameInput = document.querySelector('#contact-name');
+        const contactPhoneInput = document.querySelector('#contact-phone');
+        const contactEmailInput = document.querySelector('#contact-email');
+
+        // 입력된 정보가 있는 경우에만 객체 반환
+        const contactInfo = {};
+        if (contactNameInput && contactNameInput.value.trim()) {
+            contactInfo.name = contactNameInput.value.trim();
+        }
+        if (contactPhoneInput && contactPhoneInput.value.trim()) {
+            contactInfo.phone = contactPhoneInput.value.trim();
+        }
+        if (contactEmailInput && contactEmailInput.value.trim()) {
+            contactInfo.email = contactEmailInput.value.trim();
+        }
+
+        return Object.keys(contactInfo).length > 0 ? contactInfo : null;
+    },
+
     handleEstimateSuccess(result) {
         console.log('✔ 견적 요청 성공:', result);
         
+        // 견적 번호 추가
+        const estimateNumberDisplay = document.createElement('div');
+        estimateNumberDisplay.innerHTML = `
+            <p>견적 요청 번호: <strong>${result.estimate_number}</strong></p>
+            <p>나중에 이 번호로 견적 상태를 조회할 수 있습니다.</p>
+        `;
+        
         if (!APP_CONFIG.USER.IS_AUTHENTICATED) {
-            utils.showSignupGuide();
-            return;
+            // 비로그인 시 회원가입 유도
+            this.showSignupGuide(estimateNumberDisplay);
+        } else {
+            // 로그인 시 견적 상세 페이지로 이동
+            window.location.href = `/estimates/${result.estimate_id}/`;
         }
-
-        window.location.href = `/estimates/${result.estimate_id}/`;
     },
 
-    handleEstimateError(error) {
-        console.error('🚨 견적 요청 실패:', error);
-        alert('견적 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
+    showSignupGuide(additionalContent = null) {
+        const signupGuide = document.querySelector('.signup-guide');
+        if (signupGuide) {
+            // 추가 콘텐츠가 있다면 삽입
+            if (additionalContent) {
+                const contentContainer = signupGuide.querySelector('.signup-content');
+                if (contentContainer) {
+                    contentContainer.prepend(additionalContent);
+                }
+            }
+            
+            signupGuide.style.display = 'block';
+            signupGuide.classList.add('active');
+            signupGuide.scrollIntoView({ behavior: 'smooth' });
+        }
     },
 
     openAddressSearch() {
@@ -1302,7 +1373,7 @@ const EstimateFlow = {
                 }
 
                 // 주소 입력 필드에 설정
-                const addressInput = document.querySelector('.chat-input');
+                const addressInput = document.querySelector('.chat-box[data-step="3"] .chat-input');
                 if (addressInput) {
                     addressInput.value = fullAddress;
                     
