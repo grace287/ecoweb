@@ -321,7 +321,6 @@ def estimate_list(request):
         response = requests.get(
             f"{settings.COMMON_API_URL}/api/estimates/",
             params={'demand_user_id': request.user.id},
-            headers={'Authorization': f'Token {settings.COMMON_API_TOKEN}'}
         )
         estimates = response.json() if response.status_code == 200 else []
     except Exception as e:
@@ -335,24 +334,51 @@ def estimate_list(request):
 
 @login_required
 # def estimate_detail(request, estimate_id):
-#     """견적 상세 조회"""
 #     try:
-#         # Common API 서버에서 견적 상세 조회
-#         response = requests.get(
-#             f"{settings.COMMON_API_URL}/api/estimates/{estimate_id}/",
-#             headers={'Authorization': f'Token {settings.COMMON_API_TOKEN}'}
-#         )
-#         if response.status_code == 200:
-#             estimate = response.json()
-#         else:
-#             return redirect('estimate_list')
-#     except Exception as e:
-#         print(f"Error: {e}")
-#         return redirect('estimate_list')
+#         # 공통 API 서버에서 견적서 상세 정보 조회
+#         api_url = f"{settings.COMMON_API_URL}/estimates/{estimate_id}/"
         
-#     return render(request, 'demand/estimates/demand_estimate_detail.html', {
-#         'estimate': estimate
-#     })
+#         # 디버깅을 위한 로깅 추가
+#         print(f"📝 견적 상세 조회 API URL: {api_url}")
+
+#         response = requests.get(
+#             api_url, 
+#             timeout=10,
+#             headers={
+#                 'Accept': 'application/json',
+#                 'Content-Type': 'application/json'
+#             }
+#         )
+
+#         # 응답 상태 코드 및 내용 로깅
+#         print(f"📝 응답 상태 코드: {response.status_code}")
+#         print(f"📝 응답 내용: {response.text}")
+
+#         # 응답 상태 코드 확인
+#         if response.status_code != 200:
+#             return render(request, 'demand/estimates/estimate_detail.html', {
+#                 'error': '견적서 조회 중 오류가 발생했습니다.',
+#                 'details': response.text
+#             }, status=response.status_code)
+        
+#         # JSON 파싱
+#         estimate_data = response.json()
+        
+#         # 컨텍스트 생성
+#         context = {
+#             'estimate': estimate_data,
+#             'estimate_id': estimate_id
+#         }
+        
+#         return render(request, 'demand/estimates/estimate_detail.html', context)
+    
+#     except requests.RequestException as e:
+#         # 네트워크 오류 처리
+#         print(f"🚨 견적서 조회 중 네트워크 오류: {e}")
+#         return render(request, 'demand/estimates/estimate_detail.html', {
+#             'error': '견적서 조회 중 네트워크 오류가 발생했습니다.',
+#             'details': str(e)
+#         }, status=500)
 
 
 def estimate_detail(request):

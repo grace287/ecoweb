@@ -13,7 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+# DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = True
 
 PORT = config('PORT', default='8001')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
@@ -26,6 +27,37 @@ COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003')
 PAYMENT_API_URL = config('PAYMENT_API_URL', default='http://localhost:8004')
 
 
+CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:8000",  # Demand Server
+#     "http://localhost:8001",  # Provider Server
+#     "http://localhost:8002",  # Admin Panel
+#     "http://localhost:8003",  # Common API Server
+# ]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# 필요한 경우 추가 CORS 설정
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS'
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # Application definition
 
@@ -41,6 +73,8 @@ INSTALLED_APPS = [
     'users',
     'api',
 
+    'django_extensions',
+
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
@@ -49,6 +83,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,6 +94,24 @@ MIDDLEWARE = [
 ]
 
 AUTH_USER_MODEL = "users.ProviderUser"
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [  # ✅ JSON 응답이 올바르게 렌더링되도록 추가
+        'rest_framework.renderers.JSONRenderer',
+    ],
+}
+
 
 
 ROOT_URLCONF = 'config.urls'
@@ -92,6 +145,9 @@ DATABASES = {
     }
 }
 
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -110,15 +166,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-# CORS 설정
-CORS_ALLOWED_ORIGINS = [
-    # "http://localhost:8000",  # Demand Server
-    "http://localhost:8001",  # Provider Server
-    # "http://localhost:8002",  # Admin Panel
-]
-
-CORS_ALLOW_CREDENTIALS = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -149,24 +196,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-
-# Admin Panel API 설정
-ADMIN_API_URL = 'http://localhost:8001'  # Admin Panel 서버 주소
-ADMIN_API_KEY = 'your-secret-api-key'    # API 인증 키
-
-# Demand Server API 설정
-DEMAND_API_URL = config('DEMAND_API_URL', default='http://localhost:8000')
-ADMIN_PANEL_URL = config('ADMIN_PANEL_URL', default='http://localhost:8002')
-DEMAND_API_KEY = config('DEMAND_API_KEY', default=None)
-
-# Provider API 토큰 설정
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-}

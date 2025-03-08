@@ -7,6 +7,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('estimates/', include("estimates.urls")),
     path('services/', include("services.urls")),
-    # path('api/', include('api.urls')),
+    path('api/', include('api.urls')),
     # path('auth/', include('authentication.urls')),  # authentications -> authentication
 ]

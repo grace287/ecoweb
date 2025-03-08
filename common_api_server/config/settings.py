@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'estimates',
 
     'corsheaders',
+
+    'django_extensions',
     
 
     # Third party apps
@@ -58,8 +60,6 @@ ADMIN_PANEL_URL = config('ADMIN_PANEL_URL', default='http://localhost:8002')
 COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003') 
 PAYMENT_API_URL = config('PAYMENT_API_URL', default='http://localhost:8004')
 
-
-
 SITE_ID = 1  # django.contrib.sites에서 사용할 사이트 ID
 
 AUTHENTICATION_BACKENDS = [
@@ -67,6 +67,24 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',  # allauth 백엔드
 ]
 AUTH_USER_MODEL = 'authentication.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [  # ✅ JSON 응답이 올바르게 렌더링되도록 추가
+        'rest_framework.renderers.JSONRenderer',
+    ],
+}
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -82,9 +100,16 @@ MIDDLEWARE = [
 ]
 
 # CORS 설정
-CORS_ALLOW_ALL_ORIGINS = True  
-
+CORS_ALLOW_ALL_ORIGINS = True  # 모든 출처 허용 해제
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:8000",
+#     "http://localhost:8001",
+#     "http://localhost:8002",
+#     "http://localhost:8003",
+#     "http://localhost:8004",
+# ]
 CORS_ALLOW_CREDENTIALS = True
+
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -95,18 +120,25 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-CORS_ALLOW_HEADERS = ["*"]
-CORS_ALLOW_HEADERS = list(default_headers) + [
-    "Content-Type",
-    "X-CSRFToken"
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8003", "http://localhost:8003"]
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -122,7 +154,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-COMMON_API_URL = config('COMMON_API_URL', default='http://localhost:8003')
 
 
 # Database

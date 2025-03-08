@@ -24,11 +24,18 @@ urlpatterns = [
     path('logout/', views.provider_logout, name='provider_logout'),
     path('profile/', views.provider_profile, name='provider_profile'),
 
-    path('estimate_list/', views.provider_estimate_list, name='provider_estimate_list'),
-    path('provider_estimate_detail/', views.provider_estimate_detail, name='provider_estimate_detail'),    
+    # path('estimate_list/', views.provider_estimate_list, name='provider_estimate_list'),
+    path('received_estimates/', views.received_estimates, name='received_estimates'),
+    path('estimates/received/', views.received_estimates, name='received_estimates'),
+    # path('estimate_list/', views.get_estimate_list, name='estimate_list'),
+    path('estimates/', views.get_estimate_list, name='estimate-list'),
+    path('estimates/<int:estimate_id>/', views.estimate_detail, name='estimate_detail'),
+    
+    # path('provider_estimate_detail/', views.provider_estimate_detail, name='provider_estimate_detail'),    
     # path('estimate_detail/<int:pk>', views.provider_estimate_detail, name='provider_estimate_detail'),
     path('estimate_accept/<int:pk>', views.provider_estimate_accept, name='provider_estimate_accept'),
     # path('estimate_reject/<int:pk>', views.provider_estimate_reject, name='provider_estimate_reject'),
 
     path('provider_estimate_form/', views.provider_estimate_form, name='provider_estimate_form'),
+    
 ]

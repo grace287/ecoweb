@@ -40,17 +40,21 @@ class Estimate(models.Model):
 
     @classmethod
     def get_estimates(cls, provider_user_id=None, demand_user_id=None, status=None):
-        """필터링된 견적 목록 조회"""
-        filters = Q()
+        """견적 요청 목록 조회 메서드"""
+        queryset = cls.objects.all()
 
+        # provider_user_id 또는 demand_user_id로 필터링
         if provider_user_id:
-            filters &= Q(provider_user_id=provider_user_id)
+            queryset = queryset.filter(provider_user_id=provider_user_id)
+        
         if demand_user_id:
-            filters &= Q(demand_user_id=demand_user_id)
+            queryset = queryset.filter(demand_user_id=demand_user_id)
+        
+        # 상태로 필터링
         if status:
-            filters &= Q(status=status)
-
-        return cls.objects.filter(filters).order_by("-created_at")
+            queryset = queryset.filter(status=status)
+        
+        return queryset
     
     estimate_number = models.CharField(max_length=20, unique=True, verbose_name="견적번호")
     

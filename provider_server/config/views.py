@@ -9,10 +9,9 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 import requests
 from django.views.decorators.http import require_http_methods
-from django.middleware.csrf import get_token
 from users.models import ProviderUser
 
-ADMIN_API_URL = settings.ADMIN_API_URL
+ADMIN_PANEL_URL = settings.ADMIN_PANEL_URL
 COMMON_API_URL = settings.COMMON_API_URL
 
 def get_provider_user(request, provider_id):
@@ -35,9 +34,6 @@ def get_provider_user(request, provider_id):
         "service_category": list(provider.service_category.values_list("name", flat=True))
     }
     return JsonResponse(data)
-
-def main(request):
-    return render(request, 'main.html') 
 
 @csrf_exempt
 def provider_login(request):
@@ -69,45 +65,7 @@ def provider_login(request):
             })
 
     return render(request, 'accounts/provider_login.html')
-# @require_http_methods(["GET", "POST"])
-# def provider_login(request):
-#     if request.method == "POST":
-#         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-#             username = request.POST.get('username')
-#             password = request.POST.get('password')
 
-#             if not username or not password:
-#                 return JsonResponse({'success': False, 'error': '아이디와 비밀번호를 입력해주세요.'})
-
-#             user = authenticate(request, username=username, password=password)
-
-#             if user is not None:
-#                 if user.is_active:
-#                     # ✅ admin_panel 서버 API 호출하여 승인 상태 확인
-#                     admin_approval_api_url = f"{ADMIN_API_URL}/companies/{username}/"  # 예시 API 엔드포인트
-
-#                     try:
-#                         response = requests.get(admin_approval_api_url)
-#                         response.raise_for_status()  # HTTP 에러 체크
-#                         admin_data = response.json()
-
-#                         if admin_data.get('is_approved', False):  # API 응답에서 승인 여부 확인 (JSON 구조에 따라 키 변경)
-#                             login(request, user)  # ✅ 승인된 경우에만 로그인 허용
-#                             return JsonResponse({'success': True, 'redirect_url': '/dashboard/'})
-#                         else:
-#                             return JsonResponse({'success': False, 'error': '아직 관리자 승인 대기 중입니다. 승인 후 로그인해주세요.'}) # 승인 대기 중
-
-#                     except requests.exceptions.RequestException as e:
-#                         print(f"⚠️ admin_panel API 호출 실패: {e}") # 로깅
-#                         return JsonResponse({'success': False, 'error': '승인 상태 확인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.'}) # API 오류
-
-#                 else: # user.is_active == False
-#                     return JsonResponse({'success': False, 'error': '계정이 비활성화되어 있습니다.'})
-#             else: # authenticate 실패
-#                 return JsonResponse({'success': False, 'error': '아이디 또는 비밀번호가 올바르지 않습니다.'})
-
-#     # GET 요청 또는 일반 POST 요청 처리 (기존 코드 유지)
-#     return render(request, 'accounts/provider_login.html', {'csrf_token': get_token(request)})
 
 @login_required
 def provider_logout(request):
@@ -358,6 +316,104 @@ def provider_estimate_list(request): # 필요에 따라 필터 적용
 def provider_estimate_detail(request):
     return render(request, 'provider/estimates/provider_estimate_detail.html')
 
+@login_required
+def get_estimate_list(request):
+    """견적 리스트 조회 API"""
+    try:
+        # 현재 로그인한 Provider의 ID 가져오기
+        provider_user_id = request.user.id
+
+        # URL 쿼리 파라미터 구성
+        params = {
+            "provider_user_id": provider_user_id,
+            "status": request.GET.get("status", ""),
+            "search": request.GET.get("search", "")
+        }
+
+        # 공통 API 서버에서 받은 견적 요청 조회
+        common_api_url = f"{settings.COMMON_API_URL}/estimates/received/"
+        
+        # requests 라이브러리 사용
+        response = requests.get(
+            common_api_url, 
+            params=params, 
+            timeout=10,
+            headers={
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        )
+
+        # 응답 상태 코드 확인
+        if response.status_code != 200:
+            return JsonResponse({
+                'estimates': [],
+                'error': f'API 요청 실패: {response.status_code} - {response.text}'
+            }, status=response.status_code)
+
+        # JSON 파싱
+        estimates_data = response.json()
+
+        # JSON 응답
+        return JsonResponse({
+            'estimates': estimates_data.get('estimates', [])
+        }, status=200)
+    
+    except requests.RequestException as e:
+        return JsonResponse({
+            'estimates': [],
+            'error': f'네트워크 오류: {str(e)}'
+        }, status=500)
+
+
+@login_required
+def estimate_detail(request, estimate_id):
+    try:
+        # 공통 API 서버에서 견적서 상세 정보 조회
+        api_url = f"{settings.COMMON_API_URL}/estimates/{estimate_id}/"
+        
+        # 디버깅을 위한 로깅 추가
+        print(f"📝 견적 상세 조회 API URL: {api_url}")
+
+        response = requests.get(
+            api_url, 
+            timeout=10,
+            headers={
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        )
+
+        # 응답 상태 코드 및 내용 로깅
+        print(f"📝 응답 상태 코드: {response.status_code}")
+        print(f"📝 응답 내용: {response.text}")
+
+        # 응답 상태 코드 확인
+        if response.status_code != 200:
+            return JsonResponse({
+                'error': '견적서 조회 중 오류가 발생했습니다.',
+                'details': response.text
+            }, status=response.status_code)
+        
+        # JSON 파싱
+        estimate_data = response.json()
+        
+        # 컨텍스트 생성
+        context = {
+            'estimate': estimate_data,
+            'estimate_id': estimate_id
+        }
+        
+        return render(request, 'provider/estimates/estimate_detail.html', context)
+    
+    except requests.RequestException as e:
+        # 네트워크 오류 처리
+        print(f"🚨 견적서 조회 중 네트워크 오류: {e}")
+        return JsonResponse({
+            'error': '견적서 조회 중 네트워크 오류가 발생했습니다.',
+            'details': str(e)
+        }, status=500)
+
 def provider_estimate_accept(request, pk):
     # 수락 처리 로직 추가
     # 예: estimate.status = 'accepted'
@@ -388,47 +444,78 @@ def notify_estimate_request(request):
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
 
-@csrf_exempt
-def update_estimate(request, estimate_id):
-    """Provider 서버가 견적서 업데이트 (응답)"""
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            estimate = Estimate.objects.get(id=estimate_id)
 
-            estimate.provider_user_id = data.get("provider_user_id")
-            estimate.base_amount = data.get("base_amount", estimate.base_amount)
-            estimate.discount_amount = data.get("discount_amount", estimate.discount_amount)
-            estimate.status = "RESPONSE"  # 견적 응답 처리
-
-            estimate.save()
-            return JsonResponse({"success": True, "message": "견적이 업데이트되었습니다."}, status=200)
-
-        except Estimate.DoesNotExist:
-            return JsonResponse({"error": "존재하지 않는 견적입니다."}, status=404)
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
-
-    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
 @csrf_exempt
 def received_estimates(request):
-    """✅ Provider 서버 - 받은 견적 요청 목록 조회"""
-    if request.method == "GET":
-        provider_user_id = request.GET.get("provider_user_id")
+    try:
+        # 현재 로그인한 Provider의 ID 가져오기
+        provider_user_id = request.user.id
 
-        if not provider_user_id:
-            return JsonResponse({"error": "provider_user_id가 필요합니다."}, status=400)
+        # URL 쿼리 파라미터 구성
+        params = {
+            "provider_user_id": provider_user_id,
+            "status": request.GET.get("status", ""),
+            "search": request.GET.get("search", "")
+        }
 
-        # ✅ 공통 API 서버에서 받은 견적 요청 조회
-        api_url = f"{settings.COMMON_API_URL}/estimates/?provider_user_id={provider_user_id}"
-        response = requests.get(api_url)
+        context = {
+        "common_api_url": settings.COMMON_API_URL,  # 템플릿에 API URL 전달
+    }
 
-        if response.status_code == 200:
-            return JsonResponse(response.json(), status=200)
-        return JsonResponse(response.json(), status=response.status_code)
+        # 공통 API 서버에서 받은 견적 요청 조회
+        common_api_url = f"{settings.COMMON_API_URL}/estimates/received/"
+        
+        # 디버깅을 위한 상세 로깅 추가
+        print(f"📝 전체 API URL: {common_api_url}")
+        print(f"📝 COMMON_API_URL: {settings.COMMON_API_URL}")
+        print(f"📝 요청 파라미터: {params}")
 
-    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+        # requests 라이브러리 사용 시 추가 디버깅
+        response = requests.get(
+            common_api_url, 
+            params=params, 
+            timeout=10,
+            headers={
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        )
+
+        # 전체 응답 내용 출력
+        print(f"📝 응답 상태 코드: {response.status_code}")
+        print(f"📝 응답 헤더: {response.headers}")
+        print(f"📝 응답 내용: {response.text}")
+
+        # 응답 상태 코드 및 내용 확인
+        if response.status_code != 200:
+            return render(request, 'provider/estimates/provider_estimate_list.html', {
+                'estimates': [],
+                'error': f'API 요청 실패: {response.status_code} - {response.text}'
+            })
+
+        try:
+            estimates_data = response.json()
+        except json.JSONDecodeError as e:
+            return render(request, 'provider/estimates/provider_estimate_list.html', {
+                'estimates': [],
+                'error': f'JSON 파싱 오류: {str(e)} - 응답 내용: {response.text}'
+            })
+
+        # 템플릿 렌더링
+        context = {
+            'estimates': estimates_data.get('estimates', []),
+            'list_type': 'received'
+        }
+        
+        return render(request, 'provider/estimates/provider_estimate_list.html', context)
+    
+    except requests.RequestException as e:
+        return render(request, 'provider/estimates/provider_estimate_list.html', {
+            'estimates': [],
+            'error': f'네트워크 오류: {str(e)}'
+        })
+
 
 
 @csrf_exempt
