@@ -205,3 +205,31 @@ class EstimateAttachment(models.Model):
 
     def __str__(self):
         return f"{self.estimate.estimate_number} - {self.file_type}"
+
+class ReceivedEstimate(models.Model):
+    """Provider가 받은 견적 모델 (Estimate 모델 기반)"""
+    
+    # 기존 Estimate 모델의 모든 필드를 상속
+    estimate = models.OneToOneField(
+        Estimate, 
+        on_delete=models.CASCADE, 
+        primary_key=True, 
+        related_name='received_estimate'
+    )
+
+    # 추가적인 필드가 필요하다면 여기에 정의
+    received_at = models.DateTimeField(auto_now_add=True, verbose_name="수신 일시")
+    
+    # 선택적으로 추가 메서드나 속성 정의 가능
+    def __str__(self):
+        return f"Received Estimate #{self.estimate.estimate_number}"
+
+    class Meta:
+        verbose_name = "받은 견적"
+        verbose_name_plural = "받은 견적 목록"
+        ordering = ['-received_at']
+
+    # 기존 Estimate의 속성들을 위임 메서드
+    def __getattr__(self, name):
+        """Estimate 모델의 속성에 직접 접근 가능하도록 위임"""
+        return getattr(self.estimate, name)

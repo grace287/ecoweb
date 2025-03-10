@@ -1,31 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 즐겨찾기 토글 기능
-    const starIcons = document.querySelectorAll('.star-icon');
-    starIcons.forEach(star => {
-        star.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const estimateId = this.dataset.estimateId;
-            this.classList.toggle('active');
-            
-            // 서버에 즐겨찾기 상태 업데이트 요청 (POST)
-            fetch(`/estimates/${estimateId}/toggle-star/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                }
-            });
-        });
-    });
-});
-</script>
-{% endblock %}
 
 {% block content %}
+<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
 <style>
     /* 리스트 컨테이너 */
 .estimate-list-container {
@@ -227,6 +205,28 @@ document.addEventListener('DOMContentLoaded', function() {
     100% { transform: rotate(360deg); }
 }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 즐겨찾기 토글 기능
+        const starIcons = document.querySelectorAll('.star-icon');
+        starIcons.forEach(star => {
+            star.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const estimateId = this.dataset.estimateId;
+                this.classList.toggle('active');
+                
+                // 서버에 즐겨찾기 상태 업데이트 요청 (POST)
+                fetch(`/estimates/${estimateId}/toggle-star/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+            });
+        });
+    });
+    </script>
 <div class="estimate-list-container">
     <div class="estimate-header">
         <h1>받은 견적 요청</h1>
@@ -257,51 +257,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('statusFilter');
     const searchInput = document.getElementById('searchInput');
     
-    // 현재 로그인한 Provider의 ID 가져오기
-    const providerUserId = "{{ request.user.id }}";
-    
     async function fetchEstimates(status = '', searchTerm = '') {
         try {
-            // 로딩 스피너 표시
-            estimateListContainer.innerHTML = `
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <p>견적 요청 목록을 불러오는 중...</p>
-                </div>
-            `;
-
-            // URL 쿼리 파라미터 구성
             const params = new URLSearchParams({
-                provider_user_id: "{{ request.user.id }}",
                 status: status,
                 search: searchTerm
             });
 
-            // fetch 요청 시 인증 및 보안 헤더 추가
-            const response = await fetch(`/estimates/received/?${params}`, {
-            method: 'GET',
-            credentials: 'include', // ✅ 세션 유지
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Accept': 'application/json'
-            }
-        });
+            console.log(`📡 API 요청 URL: /api/estimates/received/?${params}`);
 
-            // 응답 상태 확인
+            const response = await fetch(`/api/estimates/received/?${params}`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log(`📥 응답 상태 코드: ${response.status}`);
+
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('서버 응답 오류:', errorText);
+                console.error('🚨 서버 응답 오류:', errorText);
                 
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+                estimateListContainer.innerHTML = `
+                    <div class="no-estimates">
+                        ❌ 서버에서 오류 응답을 받았습니다.<br>
+                        상태 코드: ${response.status}<br>
+                        오류 메시지: ${errorText}
+                    </div>
+                `;
+                return;
             }
 
-            // JSON 파싱
             const data = await response.json();
+            console.log(`📥 응답 데이터:`, data);
             
             estimateListContainer.innerHTML = ''; // 기존 목록 초기화
             
-            if (data.estimates && data.estimates.length > 0) {
-                data.estimates.forEach(estimate => {
+            const estimates = data.estimates || [];
+            const totalCount = data.total_count || 0
+            
+            if (estimates.length > 0) {
+                estimates.forEach(estimate => {
                     const estimateCard = document.createElement('div');
                     estimateCard.classList.add('estimate-item');
                     
@@ -316,21 +315,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     estimateCard.innerHTML = `
                         <div class="company-initial">A</div>
                         <div class="estimate-info">
-                            <div class="company-name">#${estimate.estimate_number}</div>
+                            <div class="company-name">#${estimate.estimate_number || estimate.id}</div>
                             <div class="service-type ${statusColorMap[estimate.status] || ''}">${estimate.service_category}</div>
                             <div class="created-at">${estimate.created_at}</div>
                         </div>
                         <div class="estimate-stats">
                             <div class="action-icon" onclick="viewEstimateDetail(${estimate.id})">
-                                <img src="{% static 'img/icons/view.png' %}" alt="상세보기">
+                                <img src="/static/img/icons/view.png" alt="상세보기">
                             </div>
                             <div class="action-icon" onclick="respondToEstimate(${estimate.id})">
-                                <img src="{% static 'img/icons/respond.png' %}" alt="견적응답">
+                                <img src="/static/img/icons/respond.png" alt="견적응답">
                             </div>
                         </div>
                     `;
                     estimateListContainer.appendChild(estimateCard);
                 });
+
+                // 총 견적 수 표시 (선택적)
+                const headerElement = document.querySelector('.estimate-header h1');
+                if (headerElement) {
+                    headerElement.textContent = `받은 견적 요청 (총 ${totalCount}건)`;
+                }
             } else {
                 estimateListContainer.innerHTML = `
                     <div class="no-estimates">
@@ -387,4 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
         color: #dc3545;
     }
 </style>
+
+<!-- 현재 로그인한 사용자의 ID를 hidden input으로 추가 -->
+<input type="hidden" id="providerUserId" value="{{ request.user.id }}">
 {% endblock %}
