@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator
 from django.db.models import Q, F
 from services.models import ServiceCategory
+from django.contrib.auth import get_user_model
 
 # 측정 장소 모델
 class MeasurementLocation(models.Model):
@@ -119,6 +120,9 @@ class Estimate(models.Model):
         blank=True  # 관리자 페이지에서 빈 값 허용
     )
 
+    is_favorited = models.BooleanField(default=False)
+    favorited_by = models.ManyToManyField(get_user_model(), related_name='favorite_estimates', blank=True)
+
     class Meta:
         db_table = 'estimates'
         ordering = ['-created_at']
@@ -159,6 +163,17 @@ class Estimate(models.Model):
             new_number = '0001'
 
         return f"{prefix}{new_number}"
+
+    def toggle_favorite(self, user):
+        """즐겨찾기 토글 메서드"""
+        if user in self.favorited_by.all():
+            self.favorited_by.remove(user)
+            self.is_favorited = False
+        else:
+            self.favorited_by.add(user)
+            self.is_favorited = True
+        self.save()
+        return self.is_favorited
 
 
 # 측정 항목 모델

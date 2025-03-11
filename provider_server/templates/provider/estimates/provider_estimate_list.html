@@ -72,11 +72,12 @@
     display: flex;
     align-items: center;
     padding: 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #e9ecef;
     transition: background-color 0.2s ease;
+    position: relative;
 }
 .estimate-item:hover {
-    background-color: #f4f4f4;
+    background-color: #f8f9fa;
 }
 
 /* 업체 이니셜 */
@@ -96,7 +97,9 @@
 
 /* 정보 영역 */
 .estimate-info {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 .company-name {
     font-size: 18px;
@@ -104,51 +107,63 @@
     color: #212529;
     margin-bottom: 4px;
 }
-.service-type {
-    font-size: 14px;
-    color: #6c757d;
-    margin-bottom: 4px;
-}
+.service-type, 
+.measurement-location, 
 .created-at {
-    font-size: 12px;
-    color: #adb5bd;
+    font-size: 13px;
+    color: #6c757d;
+}
+.measurement-location {
+    opacity: 0.8;
 }
 
 /* 액션 버튼 영역 */
 .estimate-stats {
     display: flex;
     align-items: center;
-    gap: 16px;
-}
-.stat-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: #868e96;
+    gap: 15px;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 .action-icon {
     cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f0f4f8;
+    transition: all 0.3s ease;
 }
 .action-icon:hover {
-    opacity: 1;
+    background-color: #e6eaf0;
+    transform: scale(1.1);
 }
 .action-icon img {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
+    opacity: 0.7;
+}
+.action-icon:hover img {
+    opacity: 1;
 }
 
 /* 즐겨찾기 버튼 */
 .star-icon {
     cursor: pointer;
-    font-size: 20px;
-    transition: color 0.2s ease;
-    color: #ccc;
+    font-size: 24px;
+    color: #e0e0e0;
+    transition: all 0.3s ease;
+}
+.star-icon:hover {
+    transform: scale(1.2);
 }
 .star-icon.active {
-    color: #ffd43b;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
 }
 
 /* 리스트 우측 화살표 */
@@ -204,41 +219,408 @@
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+/* 탭 스타일 */
+.status-tabs {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.status-tab {
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #6c757d;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-tab:hover {
+    color: #2563eb;
+}
+
+.status-tab.active {
+    color: #2563eb;
+    border-bottom-color: #2563eb;
+    font-weight: 600;
+}
+
+.status-tab .tab-count {
+    background-color: #f1f3f5;
+    color: #495057;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.status-tab.active .tab-count {
+    background-color: #2563eb;
+    color: white;
+}
+
+/* 검색 입력 스타일 */
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-input {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-icon {
+    width: 24px;
+    height: 24px;
+    color: #6c757d;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.search-icon:hover {
+    color: #2563eb;
+}
+
+/* 상태별 색상 스타일 추가 */
+.status-request {
+    color: #6c757d;
+}
+.status-response {
+    color: #17a2b8;
+}
+.status-approved {
+    color: #28a745;
+}
+.status-rejected {
+    color: #dc3545;
+}
+
+.estimate-number {
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+.company-name {
+    display: flex;
+    align-items: center;
+}
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 즐겨찾기 토글 기능
-        const starIcons = document.querySelectorAll('.star-icon');
-        starIcons.forEach(star => {
-            star.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const estimateId = this.dataset.estimateId;
-                this.classList.toggle('active');
+    // 안전한 DOM 로딩 방식으로 변경
+    (function() {
+        // 요소 존재 여부를 확인하는 함수
+        function safeAddEventListener(selector, event, handler) {
+            const element = document.querySelector(selector);
+            if (element) {
+                element.addEventListener(event, handler);
+            } else {
+                console.warn(`Element not found: ${selector}`);
+            }
+        }
+
+        // CSRF 토큰을 안전하게 가져오는 함수
+        function getCsrfToken() {
+            const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+            return csrfTokenElement ? csrfTokenElement.value : '';
+        }
+
+        // 즐겨찾기 함수 수정
+        function toggleFavorite(starIcon) {
+            const estimateId = starIcon.dataset.estimateId;
+            
+            if (!estimateId) {
+                console.error('견적 ID가 없습니다.');
+                return;
+            }
+
+            starIcon.classList.toggle('active');
+            
+            fetch('/api/estimates/toggle-star/', {  // URL 수정
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    estimate_id: estimateId,
+                    is_favorited: starIcon.classList.contains('active')
+                })
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('즐겨찾기 토글 실패');
+                }
+                return response.json();
+            }).then(data => {
+                console.log('즐겨찾기 토글 성공:', data);
+            }).catch(error => {
+                console.error('즐겨찾기 토글 중 오류:', error);
+                starIcon.classList.toggle('active');
+            });
+        }
+
+        // 탭 카운트 업데이트 함수 추가
+        function updateTabCounts(totalCount, statusCounts) {
+            const statusTabs = document.querySelectorAll('.status-tab');
+            
+            statusTabs.forEach(tab => {
+                const countSpan = tab.querySelector('.tab-count');
+                const status = tab.dataset.status;
                 
-                // 서버에 즐겨찾기 상태 업데이트 요청 (POST)
-                fetch(`/estimates/${estimateId}/toggle-star/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
+                // 전체 탭의 경우 총 개수 표시
+                if (status === '') {
+                    countSpan.textContent = totalCount;
+                } else {
+                    // 각 상태별 탭의 개수 표시
+                    const count = statusCounts[status] || 0;
+                    countSpan.textContent = count;
+                }
+            });
+        }
+
+        // DOM 로딩 완료 후 실행
+        function initializeEstimateList() {
+            const estimateListContainer = document.getElementById('estimateList');
+            const statusTabs = document.querySelectorAll('.status-tab');
+            const searchInput = document.getElementById('searchInput');
+            const searchIcon = document.getElementById('searchIcon');
+
+            if (!estimateListContainer || !searchInput || !searchIcon) {
+                console.warn('일부 요소를 찾을 수 없습니다.');
+                return;
+            }
+
+            let currentStatus = '';
+
+            async function fetchEstimates(status = '', searchTerm = '') {
+                try {
+                    const params = new URLSearchParams({
+                        status: status,
+                        search: searchTerm,
+                        include_customer_info: true
+                    });
+
+                    console.log(`📡 API 요청 URL: /estimate_list/estimates/received/?${params}`);
+
+                    const response = await fetch(`/estimate_list/estimates/received/?${params}`, {
+                        method: 'GET',
+                        credentials: 'include',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('🚨 서버 응답 오류:', errorText);
+                        
+                        estimateListContainer.innerHTML = `
+                            <div class="no-estimates">
+                                ❌ 서버에서 오류 응답을 받았습니다.<br>
+                                상태 코드: ${response.status}<br>
+                                오류 메시지: ${errorText}
+                            </div>
+                        `;
+                        return;
                     }
+
+                    const data = await response.json();
+                    console.log(`📥 응답 데이터:`, data);
+                    
+                    estimateListContainer.innerHTML = ''; // 기존 목록 초기화
+                    
+                    const estimates = data.estimates || [];
+                    const totalCount = data.total_count || 0;
+                    const statusCounts = data.status_counts || {};
+                    
+                    if (estimates.length > 0) {
+                        estimates.forEach(estimate => {
+                            const estimateCard = document.createElement('div');
+                            estimateCard.classList.add('estimate-item');
+                            
+                            // 측정 장소 처리
+                            const measurementLocations = estimate.measurement_locations 
+                                ? estimate.measurement_locations.map(loc => loc.name).join(', ') 
+                                : '측정 장소 미지정';
+
+                            // 서비스 카테고리 처리
+                            const serviceCategories = estimate.service_categories 
+                                ? estimate.service_categories.map(cat => cat.name).join(', ') 
+                                : estimate.service_category || '서비스 미지정';
+
+                            // 고객명 처리 (demand_user_id 기반)
+                            const customerName = estimate.demand_user_id 
+                                ? `고객 ${estimate.demand_user_id}` 
+                                : '익명의 고객';
+
+                            // 고객 정보 가져오기 (서버에서 추가 정보 제공 필요)
+                            const customerInfo = estimate.customer_info || {};
+                            const displayName = customerInfo.name || customerName;
+
+                            estimateCard.innerHTML = `
+                                <div class="company-initial">${displayName[0]}</div>
+                                <div class="estimate-info">
+                                    <div class="company-name">
+                                        <span class="estimate-number">#${estimate.estimate_number || estimate.id}</span>
+                                        ${displayName}
+                                    </div>
+                                    <div class="service-type">
+                                        <span class="category-label">서비스</span>
+                                        ${serviceCategories}
+                                    </div>
+                                    <div class="measurement-location">
+                                        <span class="location-label">측정 장소</span>
+                                        ${measurementLocations}
+                                    </div>
+                                    <div class="created-at">
+                                        ${estimate.created_at || '신청일 미지정'}
+                                    </div>
+                                </div>
+                                <div class="estimate-stats">
+                                    <div class="action-icon" onclick="viewEstimateDetail(${estimate.id})" title="상세보기">
+                                        <img src="/static/img/estimate/view.png" alt="상세보기">
+                                    </div>
+                                    <div class="action-icon" onclick="startChat(${estimate.id})" title="채팅">
+                                        <img src="/static/img/estimate/chat.png" alt="채팅">
+                                    </div>
+                                    <div class="action-icon" onclick="respondToEstimate(${estimate.id})" title="견적 작성">
+                                        <img src="/static/img/estimate/estimate.png" alt="견적응답">
+                                    </div>
+                                    <div class="star-icon ${estimate.is_favorited ? 'active' : ''}" 
+                                         data-estimate-id="${estimate.id}" 
+                                         onclick="toggleFavorite(this)" 
+                                         title="즐겨찾기">
+                                        ★
+                                    </div>
+                                </div>
+                            `;
+                            estimateListContainer.appendChild(estimateCard);
+                        });
+
+                        // 총 견적 수 및 상태별 개수 표시
+                        updateTabCounts(totalCount, statusCounts);
+                    } else {
+                        estimateListContainer.innerHTML = `
+                            <div class="no-estimates">
+                                받은 견적 요청이 없습니다.
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('견적 요청 목록 조회 중 오류:', error);
+                    estimateListContainer.innerHTML = `
+                        <div class="no-estimates">
+                            견적 요청 목록을 불러오는 중 오류가 발생했습니다.<br>
+                            ${error.message}
+                        </div>
+                    `;
+                }
+            }
+
+            // 탭 클릭 이벤트 리스너
+            statusTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 기존 활성 탭 제거
+                    statusTabs.forEach(t => t.classList.remove('active'));
+                    
+                    // 현재 탭 활성화
+                    this.classList.add('active');
+                    
+                    // 상태 값 업데이트
+                    currentStatus = this.dataset.status;
+                    
+                    // 견적 목록 다시 불러오기
+                    fetchEstimates(currentStatus, searchInput.value);
                 });
             });
-        });
-    });
-    </script>
+
+            // 검색 아이콘 클릭 이벤트
+            searchIcon.addEventListener('click', function() {
+                fetchEstimates(currentStatus, searchInput.value);
+            });
+
+            // 검색 입력 엔터 키 이벤트
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    fetchEstimates(currentStatus, this.value);
+                }
+            });
+
+            // 페이지 로드 시 초기 견적 목록 조회
+            fetchEstimates();
+        }
+
+        // DOMContentLoaded 이벤트 리스너 추가
+        document.addEventListener('DOMContentLoaded', initializeEstimateList);
+
+        // 전역 함수 정의 (필요한 경우)
+        window.toggleFavorite = toggleFavorite;
+        window.viewEstimateDetail = function(estimateId) {
+            window.location.href = `/estimate_list/estimates/received/${estimateId}/`;
+        };
+        window.startChat = function(estimateId) {
+            window.location.href = `/chat/${estimateId}/`;
+        };
+        window.respondToEstimate = function(estimateId) {
+            window.location.href = `/provider_estimate_form/?estimate_id=${estimateId}`;
+        };
+    })();
+</script>
 <div class="estimate-list-container">
     <div class="estimate-header">
         <h1>받은 견적 요청</h1>
-        <div class="filter-section">
-            <select id="statusFilter">
-                <option value="">전체 상태</option>
-                <option value="REQUEST">요청</option>
-                <option value="RESPONSE">응답</option>
-                <option value="APPROVED">승인</option>
-                <option value="REJECTED">거절</option>
-            </select>
-            <input type="text" id="searchInput" placeholder="검색어 입력">
+        
+        <!-- 탭 형식의 상태 필터 -->
+        <div class="status-tabs">
+            <div class="status-tab active" data-status="">
+                전체 <span class="tab-count">0</span>
+            </div>
+            <div class="status-tab" data-status="REQUEST">
+                요청 <span class="tab-count">0</span>
+            </div>
+            <div class="status-tab" data-status="RESPONSE">
+                응답 <span class="tab-count">0</span>
+            </div>
+            <div class="status-tab" data-status="APPROVED">
+                승인 <span class="tab-count">0</span>
+            </div>
+            <div class="status-tab" data-status="REJECTED">
+                거절 <span class="tab-count">0</span>
+            </div>
+            <div class="status-tab" data-status="FAVORITE">
+                즐겨찾기 <span class="tab-count">0</span>
+            </div>
+        </div>
+
+        <!-- 검색 컨테이너 -->
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="검색어를 입력하세요">
+            <svg id="searchIcon" class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
         </div>
     </div>
 
@@ -250,149 +632,7 @@
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const estimateListContainer = document.getElementById('estimateList');
-    const statusFilter = document.getElementById('statusFilter');
-    const searchInput = document.getElementById('searchInput');
-    
-    async function fetchEstimates(status = '', searchTerm = '') {
-        try {
-            const params = new URLSearchParams({
-                status: status,
-                search: searchTerm
-            });
-
-            console.log(`📡 API 요청 URL: /api/estimates/received/?${params}`);
-
-            const response = await fetch(`/api/estimates/received/?${params}`, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            console.log(`📥 응답 상태 코드: ${response.status}`);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('🚨 서버 응답 오류:', errorText);
-                
-                estimateListContainer.innerHTML = `
-                    <div class="no-estimates">
-                        ❌ 서버에서 오류 응답을 받았습니다.<br>
-                        상태 코드: ${response.status}<br>
-                        오류 메시지: ${errorText}
-                    </div>
-                `;
-                return;
-            }
-
-            const data = await response.json();
-            console.log(`📥 응답 데이터:`, data);
-            
-            estimateListContainer.innerHTML = ''; // 기존 목록 초기화
-            
-            const estimates = data.estimates || [];
-            const totalCount = data.total_count || 0
-            
-            if (estimates.length > 0) {
-                estimates.forEach(estimate => {
-                    const estimateCard = document.createElement('div');
-                    estimateCard.classList.add('estimate-item');
-                    
-                    // 상태에 따른 색상 클래스 추가
-                    const statusColorMap = {
-                        'REQUEST': 'status-request',
-                        'RESPONSE': 'status-response',
-                        'APPROVED': 'status-approved',
-                        'REJECTED': 'status-rejected'
-                    };
-                    
-                    estimateCard.innerHTML = `
-                        <div class="company-initial">A</div>
-                        <div class="estimate-info">
-                            <div class="company-name">#${estimate.estimate_number || estimate.id}</div>
-                            <div class="service-type ${statusColorMap[estimate.status] || ''}">${estimate.service_category}</div>
-                            <div class="created-at">${estimate.created_at}</div>
-                        </div>
-                        <div class="estimate-stats">
-                            <div class="action-icon" onclick="viewEstimateDetail(${estimate.id})">
-                                <img src="/static/img/icons/view.png" alt="상세보기">
-                            </div>
-                            <div class="action-icon" onclick="respondToEstimate(${estimate.id})">
-                                <img src="/static/img/icons/respond.png" alt="견적응답">
-                            </div>
-                        </div>
-                    `;
-                    estimateListContainer.appendChild(estimateCard);
-                });
-
-                // 총 견적 수 표시 (선택적)
-                const headerElement = document.querySelector('.estimate-header h1');
-                if (headerElement) {
-                    headerElement.textContent = `받은 견적 요청 (총 ${totalCount}건)`;
-                }
-            } else {
-                estimateListContainer.innerHTML = `
-                    <div class="no-estimates">
-                        받은 견적 요청이 없습니다.
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('견적 요청 목록 조회 중 오류:', error);
-            estimateListContainer.innerHTML = `
-                <div class="no-estimates">
-                    견적 요청 목록을 불러오는 중 오류가 발생했습니다.<br>
-                    ${error.message}
-                </div>
-            `;
-        }
-    }
-
-    function viewEstimateDetail(estimateId) {
-        window.location.href = `/estimates/${estimateId}/`;
-    }
-
-    function respondToEstimate(estimateId) {
-        window.location.href = `/provider_estimate_form/?estimate_id=${estimateId}`;
-    }
-
-    // 페이지 로드 시 견적 목록 조회
-    fetchEstimates();
-
-    // 상태 필터 이벤트 리스너
-    statusFilter.addEventListener('change', function() {
-        fetchEstimates(this.value, searchInput.value);
-    });
-
-    // 검색 입력 이벤트 리스너
-    searchInput.addEventListener('input', function() {
-        fetchEstimates(statusFilter.value, this.value);
-    });
-});
-</script>
-
-<style>
-    /* 상태별 색상 스타일 추가 */
-    .status-request {
-        color: #6c757d;
-    }
-    .status-response {
-        color: #17a2b8;
-    }
-    .status-approved {
-        color: #28a745;
-    }
-    .status-rejected {
-        color: #dc3545;
-    }
-</style>
-
 <!-- 현재 로그인한 사용자의 ID를 hidden input으로 추가 -->
 <input type="hidden" id="providerUserId" value="{{ request.user.id }}">
+<input type="hidden" id="demandUserId" value="{{ request.user.demand_user_id }}">
 {% endblock %}

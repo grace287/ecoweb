@@ -108,6 +108,7 @@ class EstimateListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'estimate_number',
+            'demand_user_id',
             'service_category',
             'service_categories',
             'status',
@@ -117,9 +118,10 @@ class EstimateListSerializer(serializers.ModelSerializer):
             'contact_name',
             'contact_phone',
             'contact_email',
-            'measurement_locations'
+            'measurement_locations',
             'demand_user_id',
-            'provider_user_id'
+            'provider_user_id',
+            'is_favorited'
         ]
         read_only_fields = ['id', 'estimate_number', 'created_at']
 

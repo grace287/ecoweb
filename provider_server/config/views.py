@@ -14,16 +14,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 import logging
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
-# from common_api_server.estimates.serializers import (
-#     ReceivedEstimateListSerializer, 
-#     ReceivedEstimateDetailSerializer
-# )
-# from estimates.models import ReceivedEstimate
 
 ADMIN_PANEL_URL = settings.ADMIN_PANEL_URL
 COMMON_API_URL = settings.COMMON_API_URL
@@ -333,13 +328,16 @@ def provider_profile(request):
     }
     return render(request, 'accounts/profile.html', context)
 
+@api_view(['GET'])
 def provider_estimate_list(request): # 필요에 따라 필터 적용
     return render(request, 'provider/estimates/provider_estimate_list.html')
 
 
+@api_view(['GET'])
 def provider_estimate_detail(request):
     return render(request, 'provider/estimates/provider_estimate_detail.html')
 
+@api_view(['GET'])
 @login_required
 def get_estimate_list(request):
     """견적 리스트 조회 API"""
@@ -390,55 +388,8 @@ def get_estimate_list(request):
         }, status=500)
 
 
-@login_required
-def estimate_detail(request, estimate_id):
-    try:
-        # 공통 API 서버에서 견적서 상세 정보 조회
-        api_url = f"{settings.COMMON_API_URL}/estimates/{estimate_id}/"
-        
-        # 디버깅을 위한 로깅 추가
-        print(f"📝 견적 상세 조회 API URL: {api_url}")
 
-        response = requests.get(
-            api_url, 
-            timeout=10,
-            headers={
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        )
-
-        # 응답 상태 코드 및 내용 로깅
-        print(f"📝 응답 상태 코드: {response.status_code}")
-        print(f"📝 응답 내용: {response.text}")
-
-        # 응답 상태 코드 확인
-        if response.status_code != 200:
-            return JsonResponse({
-                'error': '견적서 조회 중 오류가 발생했습니다.',
-                'details': response.text
-            }, status=response.status_code)
-        
-        # JSON 파싱
-        estimate_data = response.json()
-        
-        # 컨텍스트 생성
-        context = {
-            'estimate': estimate_data,
-            'estimate_id': estimate_id
-        }
-        
-        return render(request, 'provider/estimates/estimate_detail.html', context)
-    
-    except requests.RequestException as e:
-        # 네트워크 오류 처리
-        print(f"🚨 견적서 조회 중 네트워크 오류: {e}")
-        return JsonResponse({
-            'error': '견적서 조회 중 네트워크 오류가 발생했습니다.',
-            'details': str(e)
-        }, status=500)
-
-def provider_estimate_accept(request, pk):
+def provider_estimate_accept(request, estimate_id):
     # 수락 처리 로직 추가
     # 예: estimate.status = 'accepted'
     # estimate.save()
@@ -467,178 +418,31 @@ def notify_estimate_request(request):
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
-
-@login_required
-def provider_estimate_list(request):
-    """받은 견적 요청 페이지 렌더링"""
-    context = {
-        'user': request.user,
-    }
-    return render(request, 'provider/estimates/provider_estimate_list.html', context)
-
-class ReceivedEstimateViewSet(viewsets.ViewSet):
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def list(self, request):
-        """
-        받은 견적 목록 조회
-        """
-        try:
-            # 현재 로그인한 Provider의 ID 사용
-            provider_user_id = request.user.id
-            
-            # 쿼리 파라미터 추출
-            params = {
-                'provider_user_id': provider_user_id,
-                'status': request.query_params.get('status', ''),
-                'search': request.query_params.get('search', '')
-            }
-
-            # 로깅
-            logger.info(f"받은 견적 목록 조회 - Provider ID: {provider_user_id}")
-            logger.info(f"필터 파라미터: {params}")
-
-            # 공통 API 서버에서 견적 데이터 요청
-            response = requests.get(
-                f"{settings.COMMON_API_URL}/estimates/received/", 
-                params=params,
-                headers={
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                timeout=10
-            )
-
-            # 응답 로깅
-            logger.info(f"공통 API 서버 응답 상태: {response.status_code}")
-
-            # 응답 처리
-            if response.status_code == 200:
-                estimates_data = response.json()
-                return Response({
-                    'estimates': estimates_data.get('estimates', []),
-                    'total_count': estimates_data.get('total_count', 0)
-                })
-            else:
-                logger.error(f"API 요청 실패: {response.status_code} - {response.text}")
-                return Response(
-                    {
-                        'estimates': [],
-                        'error': f'API 요청 실패: {response.status_code}',
-                        'detail': response.text
-                    }, 
-                    status=response.status_code
-                )
-
-        except requests.RequestException as e:
-            logger.error(f"네트워크 오류: {e}")
-            return Response(
-                {
-                    'estimates': [],
-                    'error': '네트워크 오류 발생',
-                    'detail': str(e)
-                }, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        except Exception as e:
-            logger.error(f"예상치 못한 오류: {e}")
-            return Response(
-                {
-                    'estimates': [],
-                    'error': '서버 내부 오류',
-                    'detail': str(e)
-                }, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    def retrieve(self, request, pk=None):
-        """
-        특정 견적 상세 조회
-        """
-        try:
-            # 공통 API 서버에서 견적 상세 정보 요청
-            response = requests.get(
-                f"{settings.COMMON_API_URL}/estimates/{pk}/", 
-                headers={'Accept': 'application/json'}
-            )
-
-            # 응답 처리
-            if response.status_code == 200:
-                return Response(response.json())
-            elif response.status_code == 404:
-                return Response(
-                    {'error': '해당 견적을 찾을 수 없습니다.'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            else:
-                return Response(
-                    {'error': '견적 상세 정보를 불러오는 중 오류가 발생했습니다.'}, 
-                    status=response.status_code
-                )
-
-        except requests.RequestException as e:
-            return Response(
-                {'error': f'네트워크 오류: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    @action(detail=True, methods=['POST'], url_path='respond')
-    def respond_to_estimate(self, request, pk=None):
-        """
-        견적에 대한 응답 처리
-        """
-        try:
-            # 공통 API 서버에 응답 전달
-            response = requests.post(
-                f"{settings.COMMON_API_URL}/estimates/{pk}/respond/",
-                json=request.data,
-                headers={
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            )
-
-            if response.status_code in [200, 201]:
-                return Response(response.json(), status=response.status_code)
-            else:
-                return Response(
-                    {'error': '견적 응답 처리 중 오류가 발생했습니다.'}, 
-                    status=response.status_code
-                )
-
-        except requests.RequestException as e:
-            return Response(
-                {'error': f'네트워크 오류: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-@login_required  # 로그인 필수 데코레이터 추가
-@csrf_exempt
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def received_estimates(request):
     try:
         # 현재 로그인한 사용자의 ID 사용
         provider_user_id = request.user.id
-
-        # 로깅 추가
-        print(f"📝 현재 로그인한 사용자 ID: {provider_user_id}")
-
-        # URL 쿼리 파라미터 구성
-        params = {
-            "provider_user_id": provider_user_id,
-            "status": request.GET.get("status", ""),
-            "search": request.GET.get("search", "")
-        }
+        
+        # 쿼리 파라미터 추출
+        status = request.GET.get('status')
+        search_term = request.GET.get('search', '')
 
         # 공통 API 서버에서 받은 견적 요청 조회
-        common_api_url = f"{settings.COMMON_API_URL}/estimates/received/"
+        common_api_url = f"{settings.COMMON_API_URL}/estimates/estimates/received/"
         
-        # 디버깅을 위한 상세 로깅 추가
-        print(f"📝 전체 API URL: {common_api_url}")
-        print(f"📝 요청 파라미터: {params}")
+        params = {
+            "provider_user_id": provider_user_id,
+            "status": status,
+            "search": search_term,
+            "include_customer_info": True  # 고객 정보 포함 요청
+        }
 
-        # requests 라이브러리 사용
+        # 즐겨찾기 탭 처리
+        if status == 'FAVORITE':
+            params['is_favorited'] = True
+
         response = requests.get(
             common_api_url, 
             params=params, 
@@ -649,28 +453,27 @@ def received_estimates(request):
             }
         )
 
-        # 응답 상태 코드 및 내용 확인
-        print(f"📝 응답 상태 코드: {response.status_code}")
-        print(f"📝 응답 내용: {response.text}")
-
         if response.status_code != 200:
             return JsonResponse({
                 'estimates': [],
                 'error': f'API 요청 실패: {response.status_code} - {response.text}'
             }, status=response.status_code)
 
-        try:
-            estimates_data = response.json()
-        except json.JSONDecodeError as e:
-            return JsonResponse({
-                'estimates': [],
-                'error': f'JSON 파싱 오류: {str(e)} - 응답 내용: {response.text}'
-            }, status=500)
+        estimates_data = response.json()
 
-        # JSON 응답
+        # 상태별 개수 계산
+        status_counts = {
+            'REQUEST': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'REQUEST'),
+            'RESPONSE': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'RESPONSE'),
+            'APPROVED': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'APPROVED'),
+            'REJECTED': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'REJECTED'),
+            'FAVORITE': sum(1 for e in estimates_data.get('estimates', []) if e.get('is_favorited'))
+        }
+
         return JsonResponse({
             'estimates': estimates_data.get('estimates', []),
-            'total_count': estimates_data.get('total_count', 0)
+            'total_count': estimates_data.get('total_count', 0),
+            'status_counts': status_counts
         }, status=200)
     
     except requests.RequestException as e:
@@ -678,101 +481,80 @@ def received_estimates(request):
             'estimates': [],
             'error': f'네트워크 오류: {str(e)}'
         }, status=500)
-
-
-
-@csrf_exempt
-def respond_to_estimate(request, estimate_id):
-    """✅ Provider 서버 - 견적 응답"""
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            provider_user_id = data.get("provider_user_id")
-            response_details = data.get("response_details")
-
-            if not provider_user_id or not response_details:
-                return JsonResponse({"error": "필수 입력값이 누락되었습니다."}, status=400)
-
-            # ✅ 공통 API 서버로 견적 응답 전송
-            api_url = f"{settings.COMMON_API_URL}/estimates/{estimate_id}/respond/"
-            response = requests.post(api_url, json=data)
-
-            if response.status_code == 201:
-                return JsonResponse(response.json(), status=201)
-            return JsonResponse(response.json(), status=response.status_code)
-
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
-
-    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
-
-def provider_pending_list(request):
-    """승인 대기 중인 Provider 목록을 JSON으로 반환"""
-    pending_users = ProviderUser.objects.filter(is_active=False).values(
-        "username", "company_name", "email", "business_registration_number"
-    )
-    return JsonResponse(list(pending_users), safe=False)
-
-def provider_signup_all(request):
-    """모든 회사 정보를 반환하는 API"""
-    companies = ProviderUser.objects.all().values(
-        'username', 
-        'company_name', 
-        'business_registration_number', 
-        'email',
-        'business_phone_number',
-        'is_active',
-        'is_approved',
-        'created_at'
-    )
-    return JsonResponse(list(companies), safe=False)
     
-
-def get_all_companies(request):
-    """모든 회사 정보를 반환하는 API"""
-    companies = ProviderUser.objects.all().values(
-        'username', 
-        'company_name', 
-        'business_registration_number', 
-        'email', 
-        'business_phone_number', 
-        'is_active',
-        'is_approved',
-        'created_at'
-    )
-    return JsonResponse(list(companies), safe=False)
-
-def fetch_provider_users():
-    """Provider 서버에서 승인 대기 중인 유저 목록 가져오기"""
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def estimate_detail(request, pk):
     try:
-        url = f"{settings.PROVIDER_API_URL}/signup/pending/"
-        response = requests.get(url, headers={"Content-Type": "application/json"}, timeout=5)
+        # 공통 API 서버에서 견적서 상세 정보 조회
+        api_url = f"{settings.COMMON_API_URL}/estimates/estimates/received/{pk}/"
+        
+        # 디버깅을 위한 로깅 추가
+        logger.info(f"📝 견적 상세 조회 API URL: {api_url}")
 
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return []
-    except requests.RequestException as e:
-        print(f"⚠️ Provider 서버 API 요청 실패: {e}")
-        return []
+        response = requests.get(
+            api_url, 
+            timeout=10,
+            headers={
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        )
 
-class ReceivedEstimatesAPIView(APIView):
-    """
-    받은 견적 목록 조회 API
+        # 응답 상태 코드 및 내용 로깅
+        logger.info(f"📝 응답 상태 코드: {response.status_code}")
+        logger.info(f"📝 응답 내용: {response.text}")
+
+        # 응답 상태 코드 확인
+        if response.status_code != 200:
+            logger.error(f"⚠️ API 요청 실패: {response.status_code} - {response.text}")
+            return JsonResponse({'error': '견적 정보를 불러올 수 없습니다.', 'details': response.text}, status=response.status_code)
+
+        # JSON 데이터 로드
+        estimate_data = response.json()
+        
+        # 고객 정보 추가 조회
+        customer_info = None
+        if estimate_data.get('demand_user_id'):
+            try:
+                customer_info_response = requests.get(
+                    f"{settings.DEMAND_API_URL}/users/{estimate_data['demand_user_id']}/",
+                    timeout=5,
+                    headers={'Accept': 'application/json'}
+                )
+                if customer_info_response.status_code == 200:
+                    customer_info = customer_info_response.json()
+            except Exception as e:
+                logger.error(f"고객 정보 조회 중 오류: {e}")
+
+        # 고객 정보 추가
+        estimate_data['customer_info'] = customer_info
+        
+        # AJAX 요청인지 확인
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(estimate_data)
+
+        # HTML 페이지 렌더링
+        return render(request, 'provider/estimates/estimate_detail.html', {
+            'estimate_id': pk,
+            'estimate_data': estimate_data
+        })
     
-    이 API는 로그인한 프로바이더 사용자가 받은 견적 목록을 조회합니다.
-    """
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    except requests.RequestException as e:
+        # 네트워크 오류 처리
+        logger.error(f"🚨 견적서 조회 중 네트워크 오류: {e}")
+        return JsonResponse({
+            'error': '견적서 조회 중 네트워크 오류가 발생했습니다.',
+            'details': str(e)
+        }, status=500)
 
-    def get(self, request):
-        """
-        로그인한 프로바이더의 견적 목록을 조회합니다.
+@permission_classes([AllowAny])
+class ReceivedEstimateViewSet(viewsets.ViewSet):
+    authentication_classes = []  # ✅ 인증 비활성화
+    permission_classes = [AllowAny]  # ✅ 누구나 접근 가능
 
-        쿼리 파라미터:
-        - status: 견적 상태 필터링 (선택)
-        - search: 검색어 필터링 (선택)
-        """
+    def list(self, request):
+        """받은 견적 목록 조회"""
         try:
             # 현재 로그인한 Provider의 ID 사용
             provider_user_id = request.user.id
@@ -781,7 +563,10 @@ class ReceivedEstimatesAPIView(APIView):
             params = {
                 'provider_user_id': provider_user_id,
                 'status': request.query_params.get('status', ''),
-                'search': request.query_params.get('search', '')
+                'search': request.query_params.get('search', ''),
+                'include_customer_info': True,
+                'page': request.query_params.get('page', 1),
+                'page_size': request.query_params.get('page_size', 10)
             }
 
             # 로깅
@@ -790,7 +575,7 @@ class ReceivedEstimatesAPIView(APIView):
 
             # 공통 API 서버에서 견적 데이터 요청
             response = requests.get(
-                f"{settings.COMMON_API_URL}/estimates/received/", 
+                f"{settings.COMMON_API_URL}/estimates/estimates/received/", 
                 params=params,
                 headers={
                     'Accept': 'application/json',
@@ -807,7 +592,13 @@ class ReceivedEstimatesAPIView(APIView):
                 estimates_data = response.json()
                 return Response({
                     'estimates': estimates_data.get('estimates', []),
-                    'total_count': estimates_data.get('total_count', 0)
+                    'total_count': estimates_data.get('total_count', 0),
+                    'status_counts': estimates_data.get('status_counts', {}),
+                    'pagination': {
+                        'current_page': estimates_data.get('page', 1),
+                        'total_pages': estimates_data.get('total_pages', 1),
+                        'page_size': estimates_data.get('page_size', 10)
+                    }
                 })
             else:
                 logger.error(f"API 요청 실패: {response.status_code} - {response.text}")
@@ -830,85 +621,144 @@ class ReceivedEstimatesAPIView(APIView):
                 }, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        except Exception as e:
-            logger.error(f"예상치 못한 오류: {e}")
-            return Response(
-                {
-                    'estimates': [],
-                    'error': '서버 내부 오류',
-                    'detail': str(e)
-                }, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
-class ReceivedEstimateDetailAPIView(APIView):
-    """받은 견적 상세 조회 API"""
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk):
-        """
-        특정 받은 견적의 상세 정보 조회
-        공통 API 서버에서 데이터를 가져옵니다.
-        """
+    def retrieve(self, request, pk=None):
+        """특정 견적 상세 조회"""
         try:
+            # 현재 로그인한 Provider의 ID 사용
+            provider_user_id = request.user.id
+            
             # 공통 API 서버에서 견적 상세 정보 요청
             response = requests.get(
-                f"{settings.COMMON_API_URL}/estimates/{pk}/", 
-                headers={'Accept': 'application/json'}
+                f"{settings.COMMON_API_URL}/estimates/estimates/received/{pk}/", 
+                # params={'provider_user_id': provider_user_id},
+                headers={
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                timeout=10
             )
+
+            # 로깅
+            logger.info(f"받은 견적 상세 조회 - Provider ID: {provider_user_id}, 견적 ID: {pk}")
+            logger.info(f"공통 API 서버 응답 상태: {response.status_code}")
 
             # 응답 처리
             if response.status_code == 200:
-                return Response(response.json())
+                estimate_data = response.json()
+                
+                # 고객 정보 추가 조회
+                if estimate_data.get('demand_user_id'):
+                    try:
+                        customer_info_response = requests.get(
+                            f"{settings.DEMAND_API_URL}/users/{estimate_data['demand_user_id']}/",
+                            timeout=5,
+                            headers={'Accept': 'application/json'}
+                        )
+                        if customer_info_response.status_code == 200:
+                            estimate_data['customer_info'] = customer_info_response.json()
+                    except Exception as e:
+                        logger.error(f"고객 정보 조회 중 오류: {e}")
+                        estimate_data['customer_info'] = None
+
+                return Response(estimate_data)
             elif response.status_code == 404:
                 return Response(
                     {'error': '해당 견적을 찾을 수 없습니다.'}, 
                     status=status.HTTP_404_NOT_FOUND
                 )
             else:
+                logger.error(f"API 요청 실패: {response.status_code} - {response.text}")
                 return Response(
-                    {'error': '견적 상세 정보를 불러오는 중 오류가 발생했습니다.'}, 
+                    {
+                        'error': '견적 상세 정보를 불러오는 중 오류가 발생했습니다.',
+                        'detail': response.text
+                    }, 
                     status=response.status_code
                 )
 
         except requests.RequestException as e:
+            logger.error(f"네트워크 오류: {e}")
             return Response(
-                {'error': f'네트워크 오류: {str(e)}'}, 
+                {
+                    'error': '네트워크 오류 발생',
+                    'detail': str(e)
+                }, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def respond_to_estimate(request):
-    """
-    받은 견적에 대한 응답 처리
-    공통 API 서버로 응답 전달
-    """
-    try:
-        estimate_id = request.data.get('estimate_id')
-        response_data = {
-            'status': request.data.get('status'),
-            'response_details': request.data.get('response_details', {})
-        }
-
-        # 공통 API 서버에 응답 전달
-        response = requests.post(
-            f"{settings.COMMON_API_URL}/estimates/{estimate_id}/respond/",
-            json=response_data,
-            headers={'Content-Type': 'application/json', 'Accept': 'application/json'}
-        )
-
-        # 응답 처리
-        if response.status_code in [200, 201]:
-            return Response(response.json(), status=response.status_code)
-        else:
-            return Response(
-                {'error': '견적 응답 처리 중 오류가 발생했습니다.'}, 
-                status=response.status_code
+    @action(detail=True, methods=['POST'])
+    def respond(self, request, pk=None):
+        """견적에 대한 응답 처리"""
+        try:
+            # 응답 데이터 검증
+            response_data = request.data
+            
+            # 공통 API 서버로 응답 전달
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/estimates/received/{pk}/respond/",
+                json=response_data,
+                headers={
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                timeout=10
             )
 
-    except requests.RequestException as e:
-        return Response(
-            {'error': f'네트워크 오류: {str(e)}'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+            # 응답 처리
+            if response.status_code == 200:
+                return Response(response.json())
+            else:
+                logger.error(f"응답 처리 실패: {response.status_code} - {response.text}")
+                return Response(
+                    {
+                        'error': '견적 응답 처리 중 오류가 발생했습니다.',
+                        'detail': response.text
+                    },
+                    status=response.status_code
+                )
+
+        except requests.RequestException as e:
+            logger.error(f"네트워크 오류: {e}")
+            return Response(
+                {
+                    'error': '네트워크 오류 발생',
+                    'detail': str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def toggle_star_estimate(request):
+    """견적 즐겨찾기 토글"""
+    try:
+        estimate_id = request.data.get('estimate_id')
+        
+        if not estimate_id:
+            return Response(
+                {"error": "견적 ID가 필요합니다."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 견적 조회
+        estimate = get_object_or_404(Estimate, id=estimate_id)
+        
+        # 즐겨찾기 토글
+        is_favorited = estimate.toggle_favorite(request.user)
+
+        return Response({
+            "success": True,
+            "estimate_id": estimate.id,
+            "is_favorited": is_favorited
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"즐겨찾기 토글 중 오류: {str(e)}")
+        return Response({
+            "error": "즐겨찾기 토글 중 오류가 발생했습니다.",
+            "details": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

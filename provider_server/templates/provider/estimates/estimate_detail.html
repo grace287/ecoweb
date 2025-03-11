@@ -3,77 +3,118 @@
 
 {% block content %}
 <div class="container estimate-detail">
-    <h1>견적 상세 정보</h1>
+    <h1>받은 견적 상세 정보</h1>
     
-    {% if estimate %}
-        <div class="card">
-            <div class="card-header">
-                <h2>견적 번호: {{ estimate.estimate_number }}</h2>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h3>서비스 정보</h3>
-                        <p><strong>서비스 카테고리:</strong> {{ estimate.service_categories|join:", " }}</p>
-                        <p><strong>측정 장소:</strong> {{ estimate.measurement_location }}</p>
-                    </div>
-                    <div class="col-md-6">
-                        <h3>요청 정보</h3>
-                        <p><strong>주소:</strong> {{ estimate.address }}</p>
-                        <p><strong>희망 일정:</strong> {{ estimate.preferred_schedule }}</p>
-                        <p><strong>상태:</strong> {{ estimate.status }}</p>
-                    </div>
-                </div>
-                
-                {% if estimate.contact_info %}
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h3>연락처 정보</h3>
-                        {% if estimate.contact_info.name %}
-                            <p><strong>이름:</strong> {{ estimate.contact_info.name }}</p>
-                        {% endif %}
-                        {% if estimate.contact_info.phone %}
-                            <p><strong>전화번호:</strong> {{ estimate.contact_info.phone }}</p>
-                        {% endif %}
-                        {% if estimate.contact_info.email %}
-                            <p><strong>이메일:</strong> {{ estimate.contact_info.email }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-            <div class="card-footer">
-                <a href="{% url 'received-estimates' %}" class="btn btn-secondary">목록으로 돌아가기</a>
-                {% if estimate.status == 'PENDING' %}
-                    <button class="btn btn-primary" onclick="respondToEstimate({{ estimate_id }})">견적 응답</button>
-                {% endif %}
-            </div>
+    <div id="estimateDetailContainer">
+        <!-- 로딩 스피너 -->
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>견적 정보를 불러오는 중...</p>
         </div>
-    {% else %}
-        <div class="alert alert-warning">
-            견적서 정보를 불러올 수 없습니다.
-        </div>
-    {% endif %}
+    </div>
 </div>
 
 <script>
-function respondToEstimate(estimateId) {
-    // 견적 응답 로직 구현
-    console.log(`견적 ${estimateId} 응답 준비`);
-    // 모달 또는 폼 열기 등의 로직 추가
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const estimateId = {{ estimate_id }};  // Django 템플릿에서 전달받은 견적 ID
+    const detailContainer = document.getElementById('estimateDetailContainer');
 
-handleEstimateSuccess(result) {
-    console.log('✔ 견적 요청 성공:', result);
-    
-    if (!APP_CONFIG.USER.IS_AUTHENTICATED) {
-        // 비로그인 시 회원가입 유도
-        this.showSignupGuide();
-    } else {
-        // 로그인 시 견적 상세 페이지로 이동
-        // 공통 API 서버의 estimate_id 사용
-        window.location.href = `/estimates/${result.estimate_id}/`;
+    async function fetchEstimateDetail() {
+        try {
+            const response = await fetch(`/estimate_list/estimates/received/${estimateId}/`, {
+                method: 'GET',
+                credentials: 'include',  // 세션 쿠키 포함
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'  // AJAX 요청 헤더 추가
+                }
+            });
+
+            // JSON 응답이 아닐 경우 오류 발생 방지
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                throw new Error("서버에서 올바른 JSON을 반환하지 않았습니다.");
+            }
+
+            if (!response.ok) {
+                throw new Error('견적 정보를 불러올 수 없습니다.');
+            }
+
+            const estimateData = await response.json();
+            
+            // 견적 상세 정보 렌더링
+            detailContainer.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <h2>견적 번호: ${estimateData.estimate_number}</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h3>서비스 정보</h3>
+                                <p>
+                                    <strong>서비스 카테고리:</strong> 
+                                    ${estimateData.service_categories.map(cat => cat.name).join(', ')}
+                                </p>
+                                <p>
+                                    <strong>측정 장소:</strong> 
+                                    ${estimateData.measurement_locations.map(loc => loc.name).join(', ')}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <h3>요청 정보</h3>
+                                <p><strong>주소:</strong> ${estimateData.address}</p>
+                                <p><strong>희망 일정:</strong> ${estimateData.preferred_schedule}</p>
+                                <p><strong>상태:</strong> ${estimateData.status_display || estimateData.status}</p>
+                            </div>
+                        </div>
+                        
+                        ${estimateData.customer_info ? `
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h3>고객 정보</h3>
+                                <p><strong>이름:</strong> ${estimateData.customer_info.name || '미지정'}</p>
+                                <p><strong>연락처:</strong> ${estimateData.customer_info.phone || '미지정'}</p>
+                                <p><strong>이메일:</strong> ${estimateData.customer_info.email || '미지정'}</p>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h3>금액 정보</h3>
+                                <p><strong>기본 금액:</strong> ${estimateData.base_amount ? estimateData.base_amount.toLocaleString() + '원' : '미지정'}</p>
+                                <p><strong>할인 금액:</strong> ${estimateData.discount_amount ? estimateData.discount_amount.toLocaleString() + '원' : '미지정'}</p>
+                                <p><strong>부가세:</strong> ${estimateData.vat_amount ? estimateData.vat_amount.toLocaleString() + '원' : '미지정'}</p>
+                                <p><strong>총 금액:</strong> ${estimateData.total_amount ? estimateData.total_amount.toLocaleString() + '원' : '미지정'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'received-estimates' %}" class="btn btn-secondary">목록으로 돌아가기</a>
+                        ${estimateData.status === 'REQUEST' ? `
+                            <button class="btn btn-primary" onclick="respondToEstimate(${estimateId})">견적 응답</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('견적 정보 조회 중 오류:', error);
+            detailContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    견적 정보를 불러오는 중 오류가 발생했습니다.<br>
+                    ${error.message}
+                </div>
+            `;
+        }
     }
-},
+
+    fetchEstimateDetail();
+});
+
+function respondToEstimate(estimateId) {
+    window.location.href = `/provider_estimate_form/?estimate_id=${estimateId}`;
+}
 </script>
 {% endblock %}
