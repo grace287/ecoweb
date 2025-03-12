@@ -31,6 +31,7 @@ from drf_yasg import openapi
 import logging
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
+from django.db import transaction  # transaction 모듈 추가
 
 logger = logging.getLogger(__name__)
 
@@ -47,108 +48,208 @@ def get_provider_user_info(provider_id):
     return response.json() if response.status_code == 200 else None
 
 
+
+@api_view(['POST'])
 @csrf_exempt
+@permission_classes([AllowAny])
 def create_estimate(request):
     """견적서 생성 API"""
     try:
         data = json.loads(request.body)
-        
+        logger.info(f"📝 요청 데이터: {data}")
+
         # 필수 필드 검증
         required_fields = ['service_category_codes', 'measurement_location_id', 'address', 'preferred_schedule']
-        for field in required_fields:
-            if not data.get(field):
-                return JsonResponse({"error": f"{field}는 필수 항목입니다."}, status=400)
+        missing_fields = [field for field in required_fields if not data.get(field)]
+        if missing_fields:
+            return JsonResponse({
+                "error": f"필수 항목이 누락되었습니다: {', '.join(missing_fields)}"
+            }, status=400)
 
-        # 서비스 카테고리 검증 (다중 카테고리)
-        try:
-            categories = ServiceCategory.objects.filter(category_code__in=data['service_category_codes'])
-            if len(categories) != len(data['service_category_codes']):
-                return JsonResponse({"error": "유효하지 않은 서비스 카테고리가 포함되어 있습니다."}, status=400)
-        except ServiceCategory.DoesNotExist:
-            return JsonResponse({"error": "유효하지 않은 서비스 카테고리입니다."}, status=400)
+        with transaction.atomic():
+            # 1. 서비스 카테고리 조회
+            categories = ServiceCategory.objects.filter(
+                category_code__in=data['service_category_codes']
+            )
+            if not categories.exists():
+                return JsonResponse({
+                    "error": "유효하지 않은 서비스 카테고리입니다."
+                }, status=400)
 
-        # 측정 장소 검증
-        try:
-            location = MeasurementLocation.objects.get(id=data['measurement_location_id'])
-        except MeasurementLocation.DoesNotExist:
-            return JsonResponse({"error": "유효하지 않은 측정 장소입니다."}, status=400)
+            # 2. 측정 장소 조회
+            try:
+                location = MeasurementLocation.objects.get(id=data['measurement_location_id'])
+            except MeasurementLocation.DoesNotExist:
+                return JsonResponse({
+                    "error": "유효하지 않은 측정 장소입니다."
+                }, status=400)
 
-        # 담당자 정보 처리
-        contact_info = {
-            'contact_name': '미지정',
-            'contact_phone': '',
-            'contact_email': '',
-            'demand_user_id': None
-        }
-
-        # 로그인된 사용자의 경우 기본 정보 추가
-        if request.user.is_authenticated:
-            contact_info.update({
-                'demand_user_id': request.user.id,
-                'contact_name': request.user.name if hasattr(request.user, 'name') else request.user.username,
-                'contact_email': request.user.email
-            })
-
-        # 사용자가 직접 입력한 담당자 정보가 있다면 우선 적용
-        if data.get('contact_info'):
-            contact_info.update({
-                'contact_name': data['contact_info'].get('name', contact_info['contact_name']),
-                'contact_phone': data['contact_info'].get('phone', contact_info['contact_phone']),
-                'contact_email': data['contact_info'].get('email', contact_info['contact_email'])
-            })
-
-        # 견적서 생성
-        # 첫 번째 카테고리를 기본 카테고리로 설정
-        primary_category = categories.first()
-        
-        estimate = Estimate.objects.create(
-            service_category=primary_category,  # 첫 번째 카테고리를 기본으로 설정
-            address=data['address'],
-            preferred_schedule=data.get('preferred_schedule', 'asap'),
-            status='REQUEST',
-            demand_user_id=contact_info['demand_user_id'],
-            contact_name=contact_info['contact_name'],
-            contact_phone=contact_info['contact_phone'],
-            contact_email=contact_info['contact_email'],
-            provider_user_id=data.get('provider_user_id')
-        )
-        
-        # 다중 카테고리 연결
-        estimate.service_categories.set(categories)
-        estimate.measurement_locations.add(location)
-
-        # 새로 추가: Provider 서버로 견적 전달
-        provider_response = forward_estimate_to_provider(estimate)
-
-        # Provider 서버 전달 결과에 따른 처리
-        if provider_response is None:
-            # Provider 서버 전달 실패 시 로깅
-            print(f"⚠️ 견적 {estimate.id}의 Provider 서버 전달 실패")
-            # 필요하다면 estimate의 상태를 업데이트하거나 추가 처리 가능
+            # 3. 견적서 생성
+            contact_info = data.get('contact_info', {}) or {}
+            estimate = Estimate.objects.create(
+                service_category=categories.first(),  # 첫 번째 카테고리를 기본값으로
+                address=data['address'],
+                preferred_schedule=data['preferred_schedule'],
+                status='REQUEST',
+                contact_name=contact_info.get('name', '미지정'),
+                contact_phone=contact_info.get('phone', ''),
+                contact_email=contact_info.get('email', ''),
+                demand_user_id=request.user.id if request.user.is_authenticated else None  # demand_user → demand_user_id로 수정
+            )
 
 
+            # 4. 다중 카테고리 및 측정 장소 연결
+            estimate.service_categories.set(categories)
+            estimate.measurement_locations.add(location)
+
+            logger.info(f"✅ 견적서 생성 완료: ID={estimate.id}")
+
+            return JsonResponse({
+                "success": True,
+                "estimate_id": estimate.id,
+                "estimate_number": estimate.estimate_number,
+                "message": "견적 요청이 성공적으로 생성되었습니다."
+            }, status=201)
+
+    except json.JSONDecodeError as e:
+        logger.error(f"❌ JSON 파싱 오류: {str(e)}")
         return JsonResponse({
-            "success": True,
-            "estimate_id": estimate.id,
-            "estimate_number": estimate.estimate_number,
-            "message": "견적 요청이 성공적으로 생성되었습니다.",
-            "contact_info": {
-                "name": contact_info['contact_name'],
-                "phone": contact_info['contact_phone'],
-                "email": contact_info['contact_email']
-            }
-        }, status=201)
-
-    except json.JSONDecodeError:
-        return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+            "error": "잘못된 JSON 형식입니다."
+        }, status=400)
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.error(f"❌ 예상치 못한 오류: {str(e)}", exc_info=True)
+        return JsonResponse({
+            "error": str(e)
+        }, status=500)
+# @api_view(['POST'])
+# @csrf_exempt
+# @permission_classes([AllowAny])
+# def create_estimate(request):
+#     """견적서 생성 API"""
 
+#     try:
+#         # ✅ JSON 데이터 파싱 예외 처리
+#         try:
+#             data = json.loads(request.body)
+#             logger.info(f"수신된 데이터: {data}")
+#         except json.JSONDecodeError:
+#             return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+        
+#         # 필수 필드 검증
+#         required_fields = ['service_category_codes', 'measurement_location_id', 'address', 'preferred_schedule']
+#         for field in required_fields:
+#             if not data.get(field):
+#                 return JsonResponse({"error": f"{field}는 필수 항목입니다."}, status=400)
+            
+
+#         # Provider 서버로 견적 전달
+#         # provider_response = forward_estimate_to_provider(estimate)
+
+#         # 2. 서비스 카테고리 검증
+#         try:
+#             categories = ServiceCategory.objects.filter(
+#                 category_code__in=data['service_category_codes']
+#             )
+#             if not categories.exists():
+#                 return JsonResponse({
+#                     "error": "유효하지 않은 서비스 카테고리입니다."
+#                 }, status=400)
+#         except Exception as e:
+#             logger.error(f"카테고리 검증 오류: {str(e)}")
+#             return JsonResponse({
+#                 "error": "서비스 카테고리 처리 중 오류가 발생했습니다."
+#             }, status=400)
+
+#         # 3. 측정 장소 검증
+#         try:
+#             location = MeasurementLocation.objects.get(id=data['measurement_location_id'])
+#         except MeasurementLocation.DoesNotExist:
+#             return JsonResponse({
+#                 "error": "유효하지 않은 측정 장소입니다."
+#             }, status=400)
+#         except Exception as e:
+#             logger.error(f"측정 장소 검증 오류: {str(e)}")
+#             return JsonResponse({
+#                 "error": "측정 장소 처리 중 오류가 발생했습니다."
+#             }, status=400)
+
+#         # 담당자 정보 처리
+#         contact_info = {
+#             'contact_name': '미지정',
+#             'contact_phone': '',
+#             'contact_email': '',
+#             'demand_user_id': None
+#         }
+
+#         # 로그인된 사용자의 경우 기본 정보 추가
+#         if request.user.is_authenticated:
+#             contact_info.update({
+#                 'demand_user_id': request.user.id,
+#                 'contact_name': request.user.name if hasattr(request.user, 'name') else request.user.username,
+#                 'contact_email': request.user.email
+#             })
+
+#         # 사용자가 직접 입력한 담당자 정보가 있다면 우선 적용
+#         if data.get('contact_info'):
+#             contact_info.update({
+#                 'contact_name': data['contact_info'].get('name', contact_info['contact_name']),
+#                 'contact_phone': data['contact_info'].get('phone', contact_info['contact_phone']),
+#                 'contact_email': data['contact_info'].get('email', contact_info['contact_email'])
+#             })
+
+#         # 견적서 생성
+#         # 첫 번째 카테고리를 기본 카테고리로 설정
+#         primary_category = categories.first()
+        
+#         estimate = Estimate.objects.create(
+#             service_category=primary_category,  # 첫 번째 카테고리를 기본으로 설정
+#             address=data['address'],
+#             preferred_schedule=data.get('preferred_schedule', 'asap'),
+#             status='REQUEST',
+#             demand_user_id=contact_info['demand_user_id'],
+#             contact_name=contact_info['contact_name'],
+#             contact_phone=contact_info['contact_phone'],
+#             contact_email=contact_info['contact_email'],
+#             provider_user_id=data.get('provider_user_id')
+#         )
+        
+#         # 다중 카테고리 연결
+#         estimate.service_categories.set(categories)
+#         estimate.measurement_locations.add(location)
+
+#         # 새로 추가: Provider 서버로 견적 전달
+#         provider_response = forward_estimate_to_provider(estimate)
+
+#         # Provider 서버 전달 결과에 따른 처리
+#         if provider_response is None:
+#             # Provider 서버 전달 실패 시 로깅
+#             print(f"⚠️ 견적 {estimate.id}의 Provider 서버 전달 실패")
+#             # 필요하다면 estimate의 상태를 업데이트하거나 추가 처리 가능
+
+
+#         return JsonResponse({
+#             "success": True,
+#             "estimate_id": estimate.id,
+#             "estimate_number": estimate.estimate_number,
+#             "message": "견적 요청이 성공적으로 생성되었습니다.",
+#             "contact_info": {
+#                 "name": contact_info['contact_name'],
+#                 "phone": contact_info['contact_phone'],
+#                 "email": contact_info['contact_email']
+#             }
+#         }, status=201)
+
+#     except json.JSONDecodeError:
+#         return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+#     except Exception as e:
+#         return JsonResponse({"error": str(e)}, status=500)
+
+@api_view(['GET'])
 def forward_estimate_to_provider(estimate):
     """공통 API 서버에서 Provider 서버로 견적 요청을 전달하는 함수"""
     try:
         PROVIDER_API_URL = settings.PROVIDER_API_URL  # settings에서 URL 가져오기
-        provider_url = f"{PROVIDER_API_URL}/estimates/"
+        provider_url = f"{PROVIDER_API_URL}/estimates/received/"
         
         payload = {
             "estimate_id": estimate.id,
@@ -346,6 +447,7 @@ def update_estimate(request, estimate_id):
             return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
+
 
 class EstimateViewSet(viewsets.ModelViewSet):
     queryset = Estimate.objects.all()

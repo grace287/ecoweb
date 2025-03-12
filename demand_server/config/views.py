@@ -16,11 +16,14 @@ from django.core.exceptions import ValidationError
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
 from django.contrib.auth import login as auth_login, get_backends
-
+from rest_framework.decorators import api_view
 from users.models import DemandUser
+import logging
 
 ADMIN_PANEL_URL = settings.ADMIN_PANEL_URL
 COMMON_API_URL = settings.COMMON_API_URL
+
+logger = logging.getLogger(__name__)
 
 def get_demand_user(request, user_id):
     """Demand 서버에서 특정 사용자 정보 제공"""
@@ -78,6 +81,7 @@ def main(request):
 
     return render(request, "main.html", context)
 
+@api_view(['GET', 'POST'])
 @csrf_exempt
 def login(request):
     if request.method == 'POST':
@@ -91,12 +95,26 @@ def login(request):
         if user is not None:
             user.backend = get_backends()[0].__class__.__module__ + "." + get_backends()[0].__class__.__name__
             auth_login(request, user)
-            return JsonResponse({'success': True, 'redirect_url': '/main'})
+
+            # ✅ 세션 유지
+            request.session.set_expiry(0)  # 브라우저 닫으면 세션 만료 (기본값)
+            request.session.modified = True  # 세션 갱신
+
+            # ✅ 로그인 성공 시 메인 페이지로 리다이렉트
+            next_url = request.GET.get('next', '/main')
+            return JsonResponse({'success': True, 'redirect_url': next_url})
+
         else:
             return JsonResponse({'success': False, 'error': '아이디 또는 비밀번호가 올바르지 않습니다.'}, status=400)
 
     return render(request, "accounts/login_modal.html")
 
+@api_view(['GET'])
+def logout(request):
+    auth_logout(request)
+    return redirect('main')
+
+@api_view(['GET'])
 @csrf_protect
 def signup(request):
     """회원가입 API"""
@@ -173,6 +191,7 @@ def signup(request):
 
     return JsonResponse({"success": False, "error": "잘못된 요청 방식입니다."}, status=405)
 
+@api_view(['GET'])
 def signup_success(request):     
     return render(request, "accounts/signup_success.html")
 
@@ -290,153 +309,37 @@ def customization_update(request):
         profile.save()
         return redirect('profile') 
 
-def logout(request):
-    auth_logout(request)
-    return redirect('main')
 
 
+@api_view(['GET'])
 @login_required
 def estimate_list(request):
-    # 임시 데이터 리스트
-    estimates = [
-        {"id": 10, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "측정 진행중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 9, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 8, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 7, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 6, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 5, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 4, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 3, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 2, "type": "실내공기질 측정 외 1건", "location": "지하주차장 외 1곳", "status": "견적 수락완료", "chats": 3, "quotes": 1, "request_date": "2025-01-05", "views": 15},
-        {"id": 1, "type": "중대재해처벌법 컨설팅", "location": "사무실 외 1곳", "status": "견적 요청중", "chats": 3, "quotes": 1, "request_date": "2025-01-04", "views": 7},
-    ]
-
-    # 페이지네이션 적용 (한 페이지당 5개 항목)
-    paginator = Paginator(estimates, 5)
-    page_number = request.GET.get("page", 1)
-    page_obj = paginator.get_page(page_number)
     """견적 목록 조회"""
     try:
-        # Common API 서버에서 견적 목록 조회
         response = requests.get(
             f"{settings.COMMON_API_URL}/api/estimates/",
             params={'demand_user_id': request.user.id},
+            headers={'Accept': 'application/json'}
         )
-        estimates = response.json() if response.status_code == 200 else []
-    except Exception as e:
-        print(f"Error: {e}")
-        estimates = []
         
-    return render(request, 'demand/estimates/demand_estimate_list.html', {
-        'estimates': estimates
-    })
-
-
-@login_required
-# def estimate_detail(request, estimate_id):
-#     try:
-#         # 공통 API 서버에서 견적서 상세 정보 조회
-#         api_url = f"{settings.COMMON_API_URL}/estimates/{estimate_id}/"
-        
-#         # 디버깅을 위한 로깅 추가
-#         print(f"📝 견적 상세 조회 API URL: {api_url}")
-
-#         response = requests.get(
-#             api_url, 
-#             timeout=10,
-#             headers={
-#                 'Accept': 'application/json',
-#                 'Content-Type': 'application/json'
-#             }
-#         )
-
-#         # 응답 상태 코드 및 내용 로깅
-#         print(f"📝 응답 상태 코드: {response.status_code}")
-#         print(f"📝 응답 내용: {response.text}")
-
-#         # 응답 상태 코드 확인
-#         if response.status_code != 200:
-#             return render(request, 'demand/estimates/estimate_detail.html', {
-#                 'error': '견적서 조회 중 오류가 발생했습니다.',
-#                 'details': response.text
-#             }, status=response.status_code)
-        
-#         # JSON 파싱
-#         estimate_data = response.json()
-        
-#         # 컨텍스트 생성
-#         context = {
-#             'estimate': estimate_data,
-#             'estimate_id': estimate_id
-#         }
-        
-#         return render(request, 'demand/estimates/estimate_detail.html', context)
+        if response.status_code == 200:
+            estimates = response.json()
+            return render(request, 'demand/estimates/estimate_list.html', {
+                'estimates': estimates['estimates']
+            })
+        else:
+            return render(request, 'demand/estimates/estimate_list.html', {
+                'error': '견적 목록을 불러오는데 실패했습니다.'
+            })
+            
+    except requests.RequestException as e:
+        logger.error(f"견적 목록 조회 중 오류 발생: {str(e)}")
+        return render(request, 'demand/estimates/estimate_list.html', {
+            'error': '서버와의 통신 중 오류가 발생했습니다.'
+        })
     
-#     except requests.RequestException as e:
-#         # 네트워크 오류 처리
-#         print(f"🚨 견적서 조회 중 네트워크 오류: {e}")
-#         return render(request, 'demand/estimates/estimate_detail.html', {
-#             'error': '견적서 조회 중 네트워크 오류가 발생했습니다.',
-#             'details': str(e)
-#         }, status=500)
-
-
-def estimate_detail(request):
-    # 임시 데이터
-    estimate = {
-        "title": "(주)ABC 고객님.",
-        "request_date": "2025.01.05(화), 15:21",
-        "client_name": "(주)ABC 고객님",
-        "client_phone": "02-123-4567",
-        "client_fax": "02-3456-7890",
-        "client_email": "abc@naver.com",
-        "location": "서울특별시 강남구 테헤란로 129(역삼동)",
-        "estimate_date": "2025.01.13",
-        "company_phone": "02-123-4567",
-        "company_fax": "02-3456-7890",
-        "company_email": "air@naver.com",
-        "note": "측정완료 후 보고서를 제공해드립니다.",
-        "measurements": [
-            {"type": "실내공기질 측정(BPM 10, PM 2.5, 라돈 등)", "maintain": 2, "recommend": 4, "unit_price": 450000, "subtotal": 2700000},
-            {"type": "소음·진동 측정(작업환경측정, 층간소음 등)", "maintain": 2, "recommend": 1, "unit_price": 450000, "subtotal": 1350000},
-        ],
-        "supply_price": 4050000,
-        "discount": 405000,
-        "vat": 364500,
-        "total": 4009500,
-        "company_name": "(주)측정하는업체",
-        "signature_date": "2025.01.13"
-    }
-    return render(request, "demand/estimates/demand_estimate_detail.html", {"estimate": estimate})
-
-def estimate_accept(request):
-    # 임시 데이터
-    estimate = {
-        "title": "(주)ABC 고객님.",
-        "request_date": "2025.01.05(화), 15:21",
-        "client_name": "(주)ABC 고객님",
-        "client_phone": "02-123-4567",
-        "client_fax": "02-3456-7890",
-        "client_email": "abc@naver.com",
-        "location": "서울특별시 강남구 테헤란로 129(역삼동)",
-        "estimate_date": "2025.01.13",
-        "company_phone": "02-123-4567",
-        "company_fax": "02-3456-7890",
-        "company_email": "air@naver.com",
-        "note": "측정완료 후 보고서를 제공해드립니다.",
-        "measurements": [
-            {"type": "실내공기질 측정(BPM 10, PM 2.5, 라돈 등)", "maintain": 2, "recommend": 4, "unit_price": 450000, "subtotal": 2700000},
-            {"type": "소음·진동 측정(작업환경측정, 층간소음 등)", "maintain": 2, "recommend": 1, "unit_price": 450000, "subtotal": 1350000},
-        ],
-        "supply_price": 4050000,
-        "discount": 405000,
-        "vat": 364500,
-        "total": 4009500,
-        "company_name": "(주)측정하는업체",
-        "signature_date": "2025.01.13"
-    }
-    return render(request, 'demand/estimates/demand_estimate_accept.html',{"estimate": estimate})
-
+@api_view(['GET', 'POST'])
+@csrf_exempt
 def estimate_request_guest(request):
     """비회원 견적 요청"""
     if request.user.is_authenticated:
@@ -446,7 +349,7 @@ def estimate_request_guest(request):
         try:
             # Common API 서버로 게스트 견적 요청 전송
             response = requests.post(
-                f"{settings.COMMON_API_URL}/api/estimates/",
+                f"{settings.COMMON_API_URL}/estimates/",
                 json=request.POST.dict(),
                 headers={'Content-Type': 'application/json'}
             )
@@ -461,88 +364,125 @@ def estimate_request_guest(request):
             
     return render(request, 'demand/estimates/estimate_request_guest.html')
 
+@api_view(['GET', 'POST'])
 @login_required
 def estimate_request_form(request):
-    """회원 견적 요청"""
-    if request.method == 'POST':
+    """견적 요청 폼 및 처리"""
+    if request.method == 'GET':
         try:
-            # Common API 서버로 견적 요청 전송
-            response = requests.post(
-                f"{settings.COMMON_API_URL}/estimates/",
-                json={
-                    **request.POST.dict(),
-                    'demand_user_id': request.user.id
-                },
-                headers={
-                    'Content-Type': 'application/json'
-                }
-            )
-            if response.status_code == 201:
-                return JsonResponse({'success': True, 'redirect_url': '/estimates/list/'})
-            return JsonResponse({'success': False, 'error': '견적 요청 실패'}, status=400)
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)}, status=500)
-            
-    return render(request, 'demand/estimates/estimate_request_form.html')
+            # 세션 유효성 검사
+            if not request.user.is_authenticated:
+                return redirect('login')
+                
+            # 세션 갱신
+            request.session.modified = True
 
-@csrf_exempt
-def create_estimate(request):
-    """견적서 생성 API"""
-    if request.method == "POST":
+            # API 엔드포인트 설정
+            api_endpoints = {
+                'categories_url': f"{settings.COMMON_API_URL}/services/service-categories/",
+                'locations_url': f"{settings.COMMON_API_URL}/estimates/measurement-locations/",
+                'create_estimate_url': f"{settings.COMMON_API_URL}/estimates/estimates/create/"
+            }
+            
+            # Common API 서버 요청
+            categories_response = requests.get(
+                api_endpoints['categories_url'],
+                headers={'Accept': 'application/json'}
+            )
+            locations_response = requests.get(
+                api_endpoints['locations_url'],
+                headers={'Accept': 'application/json'}
+            )
+            
+            # API 응답 검증
+            if categories_response.status_code != 200:
+                logger.error(f"카테고리 조회 실패: {categories_response.status_code} - {categories_response.text}")
+                categories = []
+            else:
+                categories = categories_response.json()
+
+            if locations_response.status_code != 200:
+                logger.error(f"측정 장소 조회 실패: {locations_response.status_code} - {locations_response.text}")
+                locations = []
+            else:
+                locations = locations_response.json()
+            
+            # 컨텍스트에 API 엔드포인트 정보 추가
+            context = {
+                'categories': categories,
+                'locations': locations,
+                'user': request.user,
+                'api_endpoints': api_endpoints,  # API 엔드포인트 정보 전달
+                'COMMON_API_URL': settings.COMMON_API_URL,
+                'api_config': {
+                    'baseUrl': settings.COMMON_API_URL,
+                    'endpoints': {
+                        'categories': '/services/service-categories/',
+                        'locations': '/estimates/measurement-locations/',
+                        'createEstimate': '/estimates/estimates/create/'
+                    }
+                }
+            }
+            
+            return render(request, 'demand/estimates/estimate_request_form.html', context)
+        
+        except requests.RequestException as e:
+            logger.error(f"API 요청 중 오류 발생: {str(e)}")
+            return JsonResponse({
+                'error': '서비스 정보를 불러오는 중 오류가 발생했습니다.',
+                'details': str(e)
+            }, status=500)
+            
+    elif request.method == 'POST':
         try:
             data = json.loads(request.body)
             
-            # 필수 필드 검증
-            required_fields = ['service_type', 'measurement_location', 'address', 'preferred_schedule']
-            if not all(field in data for field in required_fields):
-                return JsonResponse({
-                    "error": "필수 항목이 누락되었습니다.",
-                    "required_fields": required_fields
-                }, status=400)
-
-            # 서비스 카테고리 조회
-            try:
-                service_category = ServiceCategory.objects.get(
-                    category_code=data['service_type']
-                )
-            except ServiceCategory.DoesNotExist:
-                return JsonResponse({
-                    "error": "유효하지 않은 서비스 종류입니다."
-                }, status=400)
-
-            # 측정 장소 조회 또는 생성
-            measurement_location, created = MeasurementLocation.objects.get_or_create(
-                name=data['measurement_location']
+            # 견적 요청 데이터 준비
+            estimate_data = {
+                'demand_user_id': request.user.id,
+                'service_category_codes': data.get('service_category_codes', []),
+                'measurement_location_id': data.get('measurement_location_id'),
+                'address': data.get('address'),
+                'preferred_schedule': data.get('preferred_schedule'),
+                'contact_info': {
+                    'name': request.user.username,
+                    'phone': request.user.contact_phone_number,
+                    'email': request.user.email
+                }
+            }
+            
+            # Common API 서버로 견적 요청 전송
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/estimates/estimates/create/",
+                json=estimate_data,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
             )
-
-            # 견적서 생성
-            estimate = Estimate.objects.create(
-                demand_user_id=data.get('demand_user_id'),  # 로그인한 사용자 ID
-                service_category=service_category,
-                preferred_schedule=data['preferred_schedule'],
-                contact_name=data.get('contact_name', ''),
-                contact_phone=data.get('contact_phone', ''),
-                contact_email=data.get('contact_email', ''),
-                status='REQUEST'
-            )
-
-            # 측정 장소 연결
-            estimate.measurement_locations.add(measurement_location)
-
-            return JsonResponse({
-                "success": True,
-                "estimate_id": estimate.id,
-                "estimate_number": estimate.estimate_number
-            }, status=201)
-
+            
+            if response.status_code == 201:
+                result = response.json()
+                return JsonResponse({
+                    'success': True,
+                    'estimate_id': result['estimate_id'],
+                    'message': '견적 요청이 성공적으로 생성되었습니다.'
+                }, status=201)
+            else:
+                logger.error(f"견적 생성 실패: {response.status_code} - {response.text}")
+                return JsonResponse({
+                    'success': False,
+                    'error': '견적 요청 처리 중 오류가 발생했습니다.'
+                }, status=response.status_code)
+                
         except json.JSONDecodeError:
-            return JsonResponse({"error": "잘못된 JSON 형식입니다."}, status=400)
+            return JsonResponse({'error': '잘못된 요청 데이터입니다.'}, status=400)
         except Exception as e:
-            return JsonResponse({"error": f"견적 생성 중 오류가 발생했습니다: {str(e)}"}, status=500)
+            logger.error(f"견적 요청 처리 중 오류 발생: {str(e)}")
+            return JsonResponse({'error': '서버 오류가 발생했습니다.'}, status=500)
 
-    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
-
+@api_view(['GET'])
 @csrf_exempt
 def get_estimate_list(request):
     """견적 리스트 조회 API"""
@@ -572,7 +512,7 @@ def get_estimate_list(request):
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
-
+@api_view(['GET'])
 @csrf_exempt
 def approve_estimate(request, estimate_id):
     """견적 승인 & 결제 요청 (Demand 서버)"""
@@ -597,7 +537,7 @@ def approve_estimate(request, estimate_id):
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
-
+@api_view(['GET'])
 @csrf_exempt
 def request_estimate(request):
     """✅ Demand 사용자가 견적 요청"""
@@ -630,15 +570,13 @@ def request_estimate(request):
                 return JsonResponse({"error": "필수 입력값이 누락되었습니다."}, status=400)
 
             # 🔹 서비스 카테고리 검증
-            try:
-                service_category = ServiceCategory.objects.get(category_code=category_code)
-            except ServiceCategory.DoesNotExist:
+            service_category = ServiceCategory.objects.filter(category_code=category_code).first()
+            if not service_category:
                 return JsonResponse({"error": "잘못된 서비스 카테고리입니다."}, status=400)
 
             # 🔹 측정 장소 검증
-            try:
-                measurement_location = MeasurementLocation.objects.get(id=measurement_location_id)
-            except MeasurementLocation.DoesNotExist:
+            measurement_location = MeasurementLocation.objects.filter(id=measurement_location_id).first()
+            if not measurement_location:
                 return JsonResponse({"error": "잘못된 측정 장소입니다."}, status=400)
 
             # ✅ 견적 요청 생성
@@ -652,7 +590,7 @@ def request_estimate(request):
             )
 
             # ✅ Provider 서버에 견적 요청 알림 전송
-            provider_api_url = f"{settings.PROVIDER_API_URL}/estimates/notify/"
+            provider_api_url = f"{settings.PROVIDER_API_URL}/estimates/received/"
             requests.post(provider_api_url, json={"estimate_id": estimate.id})
 
             return JsonResponse({"success": True, "estimate_id": estimate.id}, status=201)
@@ -662,6 +600,7 @@ def request_estimate(request):
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
+@api_view(['GET'])
 def get_estimate_list(request):
     """Demand 사용자가 요청한 견적 리스트 조회"""
     if request.method == "GET":
@@ -683,6 +622,7 @@ def get_estimate_list(request):
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
+@api_view(['GET'])
 @csrf_exempt
 def pay_estimate(request):
     """Demand 사용자가 견적 승인 후 결제 요청"""
@@ -734,6 +674,7 @@ def chat_estimate(request):
     }
     return render(request, 'demand/estimates/estimate_request_guest.html', context)
 
+@api_view(['GET'])
 @csrf_exempt
 def request_payment(request, estimate_id):
     """견적 결제 요청"""
@@ -770,5 +711,113 @@ def request_payment(request, estimate_id):
             "success": False,
             "error": f"결제 서버 통신 중 오류 발생: {str(e)}"
         }, status=500)
+
+@api_view(['GET'])
+@login_required
+def received_estimates(request):
+    """받은 견적 요청 목록 조회"""
+    try:
+        # Common API 서버에서 받은 견적 목록 조회
+        response = requests.get(
+            f"{settings.COMMON_API_URL}/estimates/received/",
+            params={
+                'demand_user_id': request.user.id,
+                'status': request.GET.get('status', ''),
+                'search': request.GET.get('search', '')
+            },
+            headers={
+                'Content-Type': 'application/json'
+            }
+        )
+
+        # 응답 처리
+        if response.status_code == 200:
+            estimates_data = response.json()
+            return render(request, 'demand/estimates/received_estimates.html', {
+                'estimates': estimates_data.get('estimates', []),
+                'total_count': estimates_data.get('total_count', 0),
+                'status_counts': estimates_data.get('status_counts', {})
+            })
+        else:
+            # 오류 처리
+            logger.error(f"받은 견적 목록 조회 실패: {response.status_code} - {response.text}")
+            return render(request, 'demand/estimates/received_estimates.html', {
+                'error': '견적 목록을 불러오는 중 오류가 발생했습니다.',
+                'estimates': []
+            })
+
+    except requests.RequestException as e:
+        logger.error(f"API 요청 중 오류 발생: {e}")
+        return render(request, 'demand/estimates/received_estimates.html', {
+            'error': '서버와의 통신 중 오류가 발생했습니다.',
+            'estimates': []
+        })
+    
+@api_view(['GET'])
+@login_required
+def received_estimate_detail(request, estimate_id):
+    """받은 견적 상세 정보 조회"""
+    try:
+        # Common API 서버에서 견적 상세 정보 조회
+        response = requests.get(
+            f"{settings.COMMON_API_URL}/estimates/{estimate_id}/",
+            headers={
+                'Content-Type': 'application/json'
+            }
+        )
+
+        # 응답 처리
+        if response.status_code == 200:
+            estimate_data = response.json()
+            return render(request, 'demand/estimates/received_estimate_detail.html', {
+                'estimate': estimate_data
+            })
+        else:
+            # 오류 처리
+            logger.error(f"받은 견적 상세 조회 실패: {response.status_code} - {response.text}")
+            return render(request, 'demand/estimates/received_estimate_detail.html', {
+                'error': '견적 상세 정보를 불러오는 중 오류가 발생했습니다.'
+            })
+
+    except requests.RequestException as e:
+        logger.error(f"API 요청 중 오류 발생: {e}")
+        return render(request, 'demand/estimates/received_estimate_detail.html', {
+            'error': '서버와의 통신 중 오류가 발생했습니다.'
+        })
+
+@api_view(['GET'])
+@login_required
+def estimate_response(request, estimate_id):
+    """견적 응답 처리"""
+    if request.method == 'POST':
+        try:
+            # 응답 데이터 준비
+            response_data = {
+                'status': request.POST.get('status'),  # APPROVED, REJECTED
+                'response_details': request.POST.get('response_details', '')
+            }
+
+            # Common API 서버로 응답 전송
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/api/estimates/{estimate_id}/respond/",
+                json=response_data,
+                headers={
+                    'Content-Type': 'application/json'
+                }
+            )
+
+            # 응답 처리
+            if response.status_code == 200:
+                messages.success(request, "견적에 대한 응답이 성공적으로 처리되었습니다.")
+                return redirect('received_estimates')
+            else:
+                logger.error(f"견적 응답 실패: {response.status_code} - {response.text}")
+                messages.error(request, "견적 응답 처리 중 오류가 발생했습니다.")
+                return redirect('received_estimate_detail', estimate_id=estimate_id)
+
+        except requests.RequestException as e:
+            logger.error(f"API 요청 중 오류 발생: {e}")
+            messages.error(request, "서버와의 통신 중 오류가 발생했습니다.")
+            return redirect('received_estimate_detail', estimate_id=estimate_id)
 
 

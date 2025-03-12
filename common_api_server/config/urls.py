@@ -11,7 +11,7 @@ schema_view = get_schema_view(
       title="EcoMatch Estimates API",
       default_version='v1',
       description="""
-      EcoMatch 견적 관리 API 문서입니다.
+      EcoMatch 공통 API 문서입니다.
       
       ## 주요 기능
       - 견적 생성

@@ -924,7 +924,7 @@
                         <p>주소</p>
                         <p data-type="address">대전광역시 유성구 국제과학로 5(신동)</p>
                     </div>
-                    <button class="request-btn" onclick="EstimateFlow.submitEstimate()">견적 신청</button>
+                    <button class="request-btn">견적 신청</button>
                 </div>
             </div>
 
@@ -936,117 +936,92 @@
 </div>
 
 </div>
-<!-- settings.py에서 정의된 API URL을 JavaScript에서 사용 -->
-<script>
-    const COMMON_API_URL = "http://localhost:8003";
-</script>
 <!-- 다음 우편번호 서비스 스크립트 추가 (head 섹션에 추가) -->
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
 // 1. 전역 설정
 window.APP_CONFIG = {
     API: {
-        BASE_URL: COMMON_API_URL,
+        BASE_URL: "{{ COMMON_API_URL }}",  // http://localhost:8003
         ENDPOINTS: {
-            CATEGORIES: "/services/service-categories/",
-            LOCATIONS: "/estimates/measurement-locations/",
-            ESTIMATE: "/estimates/estimates/create/"
-        }
-    },
-    ICONS: {
-        // 기본 아이콘 경로 추가
-        DEFAULT_ICON: '/static/img/main/category/',
-        'indoor_air': '/static/img/main/category/indoor-air.png',
-        'noise_vibration': '/static/img/main/category/noise-vibration.png',
-        'odor': '/static/img/main/category/odor.png',
-        'water': '/static/img/main/category/water.png',
-        'air': '/static/img/main/category/air.png',
-        'major_disaster': '/static/img/main/category/major-disaster.png',
-        'office': '/static/img/main/category/office.png',
-        'esg': '/static/img/main/category/esg.png'
+             // 서비스 카테고리 관련
+             SERVICE: {
+                CATEGORIES: "http://localhost:8003/services/service-categories/",
+                MEASUREMENT_LOCATIONS: "http://localhost:8003/estimates/measurement-locations/"
+            },
+            // 견적 관련 엔드포인트
+            ESTIMATES: {
+                CREATE: "http://localhost:8003/estimates/estimates/create/", // 견적 생성
+                // LIST: "http://localhost:8003/estimates/", // 견적 목록
+                // DETAIL: "http://localhost:8003/estimates/{id}/", // 개별 견적 상세
+                // RECEIVED: "http://localhost:8003/estimates/received/", // 받은 견적 목록
+                // RESPOND: "http://localhost:8003/estimates/{id}/respond/" // 견적 응답
+            },
+        },
+        /// ✅ CSRF 토큰을 안전하게 가져오는 코드
+        CSRF_TOKEN: "{{ csrf_token }}"
     },
     USER: {
-        IS_AUTHENTICATED: {% if user.is_authenticated %}true{% else %}false{% endif %},
-        ID: {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %}
+        IS_AUTHENTICATED: {{ request.user.is_authenticated|lower }},
+        ID: "{{ request.user.id }}",
+        NAME: "{{ request.user.username }}",
+        EMAIL: "{{ request.user.email }}"
     }
 };
 
 // 2. API 서비스 정의
 const ApiService = {
-    async fetch(endpoint, options = {}) {
+    async fetch(url, options = {}) {
         try {
-            console.log('API 요청:', `${APP_CONFIG.API.BASE_URL}${endpoint}`);
-            console.log('요청 옵션:', JSON.stringify(options, null, 2));
+            if (!url.startsWith('http')) {
+                throw new Error('올바른 URL 형식이 아닙니다.');
+            }
+
+            console.log('📡 API 요청 URL:', url);
+            console.log('📦 요청 옵션:', options);
             
-            const response = await fetch(`${APP_CONFIG.API.BASE_URL}${endpoint}`, {
+            const response = await fetch(url, {
+                ...options,
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
+                    'X-CSRFToken': APP_CONFIG.API.CSRF_TOKEN,
                     ...options.headers
                 },
-                credentials: 'include',  // CORS에서 쿠키 허용
-                ...options
+                credentials: 'include'
             });
 
-            // 응답 상태 코드 로깅
-            console.log('응답 상태 코드:', response.status);
-
             if (!response.ok) {
-                console.error('API 응답 에러:', response.status, response.statusText);
-                const text = await response.text();
-                console.error('응답 내용:', text);
-                
-                // 에러 객체에 응답 추가
-                const error = new Error(`API 요청 실패: ${response.status}`);
-                error.response = response;
-                error.responseBody = text;
-                throw error;
+                const errorData = await response.json().catch(() => ({}));
+                console.error('🚨 API 응답 에러:', errorData);
+                throw new Error(`API 요청 실패: ${response.status} - ${JSON.stringify(errorData)}`);
             }
 
             const data = await response.json();
-            console.log('API 응답:', data);
+            console.log('✅ API 응답 데이터:', data);
             return data;
         } catch (error) {
-            console.error('API 호출 실패:', error);
+            console.error('�� API 호출 실패:', error);
             throw error;
         }
     },
 
     async getCategories() {
-        try {
-            const response = await this.fetch(APP_CONFIG.API.ENDPOINTS.CATEGORIES);
-            console.log('📌 API 응답:', response);
-            
-            return response.categories ?? response; // categories 속성이 없으면 기본 배열 반환
-        } catch (error) {
-            console.error('🚨 카테고리 조회 실패:', error);
-            throw error;
-        }
+        return await this.fetch(APP_CONFIG.API.ENDPOINTS.SERVICE.CATEGORIES);
     },
 
     async getLocations() {
-        try {
-            const response = await this.fetch(APP_CONFIG.API.ENDPOINTS.LOCATIONS);
-            return response;
-        } catch (error) {
-            console.error('측정 장소 조회 실패:', error);
-            throw error;
-        }
+        return await this.fetch(APP_CONFIG.API.ENDPOINTS.SERVICE.MEASUREMENT_LOCATIONS);
     },
 
     async createEstimate(data) {
-    console.log("📤 견적 요청 데이터:", data);  // 요청 데이터 확인
-        try {
-            const response = await this.fetch(APP_CONFIG.API.ENDPOINTS.ESTIMATE, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            return response;
-        } catch (error) {
-            console.error('견적 생성 실패:', error);
-            throw error;
-        }
+        const url = APP_CONFIG.API.ENDPOINTS.ESTIMATES.CREATE;
+        console.log('📤 견적 요청 데이터:', JSON.stringify(data, null, 2));
+        
+        return await this.fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     }
 };
 
@@ -1056,7 +1031,8 @@ const EstimateFlow = {
         selectedCategories: [],
         selectedLocation: null,
         address: '',
-        preferredSchedule: ''
+        preferredSchedule: '',
+        contactInfo: null
     },
 
     async init() {
@@ -1217,9 +1193,12 @@ const EstimateFlow = {
 
         // 견적 요청 제출
         const submitBtn = document.querySelector('.request-btn');
-        if (submitBtn) {
-            submitBtn.addEventListener('click', () => this.submitEstimate());
-        }
+            if (submitBtn) {
+                submitBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();  // 기본 이벤트 방지
+                    await this.submitEstimate();
+                }, { once: true });  // 이벤트 한 번만 실행
+            }
     },
 
     showAllSteps() {
@@ -1249,7 +1228,7 @@ const EstimateFlow = {
             measurement_location_id: this.data.selectedLocation,
             address: this.data.address,
             preferred_schedule: this.data.preferredSchedule,
-            contact_info: this.collectContactInfo()
+            contact_info: this.collectContactInfo() || {}  // ✅ contact_info가 없으면 빈 객체 반환
         };
 
         // 페이로드 상세 로깅 추가
@@ -1319,25 +1298,34 @@ const EstimateFlow = {
 
         return Object.keys(contactInfo).length > 0 ? contactInfo : null;
     },
-
+    
     handleEstimateSuccess(result) {
         console.log('✔ 견적 요청 성공:', result);
         
-        // 견적 번호 추가
-        const estimateNumberDisplay = document.createElement('div');
-        estimateNumberDisplay.innerHTML = `
-            <p>견적 요청 번호: <strong>${result.estimate_number}</strong></p>
-            <p>나중에 이 번호로 견적 상태를 조회할 수 있습니다.</p>
-        `;
+        // 견적 요청 성공 메시지 표시
+        alert(`견적 요청이 성공적으로 접수되었습니다.\n견적 요청 번호: ${result.estimate_number}`);
         
-        if (!APP_CONFIG.USER.IS_AUTHENTICATED) {
-            // 비로그인 시 회원가입 유도
-            this.showSignupGuide(estimateNumberDisplay);
-        } else {
-            // 로그인 시 견적 상세 페이지로 이동
-            window.location.href = `/estimates/${result.estimate_id}/`;
-        }
+        // 페이지 새로고침 (선택사항)
+        window.location.reload();
     },
+
+    // handleEstimateSuccess(result) {
+    //     console.log('✔ 견적 요청 성공:', result);
+        
+    //     // 견적 번호 추가
+    //     const estimateNumberDisplay = document.createElement('div');
+    //     estimateNumberDisplay.innerHTML = `
+    //         <p>견적 요청 번호: <strong>${result.estimate_number}</strong></p>
+    //         <p>나중에 이 번호로 견적 상태를 조회할 수 있습니다.</p>
+    //     `;
+        
+    //     if (APP_CONFIG.USER && !APP_CONFIG.USER.IS_AUTHENTICATED) {
+    //         this.showSignupGuide(estimateNumberDisplay);
+    //     } else {
+    //         window.location.href = `/estimates/${result.estimate_id}/`;
+    //     }
+
+    // },
 
     showSignupGuide(additionalContent = null) {
         const signupGuide = document.querySelector('.signup-guide');
@@ -1390,22 +1378,14 @@ const EstimateFlow = {
 };
 
 // 5. 초기화 코드
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     try {
-        // navbar 초기화
-        const navbarToggle = document.querySelector('[data-collapse-toggle="navbar-default"]');
-        if (navbarToggle) {
-            navbarToggle.addEventListener('click', function() {
-                const target = document.getElementById('navbar-default');
-                if (target) {
-                    target.classList.toggle('hidden');
-                }
-            });
-        }
-
         // EstimateFlow 초기화
         if (document.querySelector('.chat-estimate-container')) {
-            await EstimateFlow.init();
+            EstimateFlow.init().catch(error => {
+                console.error('초기화 실패:', error);
+                alert('시스템 초기화 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
+            });
         }
     } catch (error) {
         console.error('초기화 실패:', error);
