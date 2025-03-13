@@ -388,7 +388,6 @@ def get_estimate_list(request):
         }, status=500)
 
 
-
 def provider_estimate_accept(request, estimate_id):
     # 수락 처리 로직 추가
     # 예: estimate.status = 'accepted'
@@ -397,7 +396,7 @@ def provider_estimate_accept(request, estimate_id):
 
 
 def provider_estimate_form(request):
-    return render(request, 'provider/estimates/provider_estimate_form.html')
+    return render(request, 'provider/estimates/estimate_form.html')
 
 @csrf_exempt
 def notify_estimate_request(request):
@@ -547,6 +546,163 @@ def estimate_detail(request, pk):
             'error': '견적서 조회 중 네트워크 오류가 발생했습니다.',
             'details': str(e)
         }, status=500)
+
+@api_view(['GET', 'POST'])
+def provider_estimate_form(request, pk):
+    try:
+        if request.method == 'GET':
+            response = requests.get(
+                f"{settings.COMMON_API_URL}/estimates/estimates/received/{pk}/",
+                headers={'Accept': 'application/json'}
+            )
+            response.raise_for_status()
+            estimate_data = response.json()
+            
+            logger.info(f"받은 견적 요청 데이터: {estimate_data}")
+
+            # 고객 정보 추출
+            customer_info = estimate_data.get('customer_info', {})
+
+            # 고객 정보 추가 조회
+            customer_info = None
+            if estimate_data.get('demand_user_id'):
+                try:
+                    customer_info_response = requests.get(
+                        f"{settings.DEMAND_API_URL}/users/{estimate_data['demand_user_id']}/",
+                        timeout=5,
+                        headers={'Accept': 'application/json'}
+                    )
+                    if customer_info_response.status_code == 200:
+                        customer_info = customer_info_response.json()
+                except Exception as e:
+                    logger.error(f"고객 정보 조회 중 오류: {e}")
+
+            context = {
+            'original_request': estimate_data,
+            'customer': customer_info,
+            'estimate_id': pk
+        }
+            
+            return render(request, 'provider/estimates/estimate_form.html', context)
+
+
+        elif request.method == 'POST':
+            estimate_data = request.data
+            # 견적 저장 API 호출
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/estimates/estimates/",
+                json=estimate_data,
+                headers={'Accept': 'application/json'}
+            )
+            response.raise_for_status()
+            saved_estimate = response.json()
+            
+            # 견적 저장 성공 시 견적 조회 페이지로 리다이렉트
+            return JsonResponse({
+                'success': True,
+                'message': '견적이 저장되었습니다.',
+                'redirect_url': f'/estimate_list/estimates/received/{saved_estimate["id"]}/view/'
+            })
+
+    except Exception as e:
+        logger.error(f"견적 처리 중 오류: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+def provider_estimate_form_view(request, pk):
+    """견적 조회"""
+    try:
+        # 저장된 견적 정보 조회
+        response = requests.get(
+            url=f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/",
+            headers={'Accept': 'application/json'}
+        )
+        response.raise_for_status()
+        estimate_data = response.json()
+
+        # 고객 정보 조회
+        customer_info = None
+        if estimate_data.get('demand_user_id'):
+            try:
+                customer_info_response = requests.get(
+                    f"{settings.DEMAND_API_URL}/users/{estimate_data['demand_user_id']}/",
+                    timeout=5,
+                    headers={'Accept': 'application/json'}
+                )
+                if customer_info_response.status_code == 200:
+                    customer_info = customer_info_response.json()
+            except Exception as e:
+                logger.error(f"고객 정보 조회 중 오류: {e}")
+
+        context = {
+            'estimate': estimate_data,
+            'customer': customer_info,
+            'can_edit': estimate_data.get('status') == 'DRAFT',
+            'can_send': estimate_data.get('status') in ['DRAFT', 'SAVED']
+        }
+        
+        return render(request, 'provider/estimate_list/estimates/estimate_form_view.html', context)
+
+    except Exception as e:
+        logger.error(f"견적 조회 중 오류 발생: {e}")
+        return render(request, 'error.html', {'error_message': str(e)})
+    
+
+@api_view(['PUT'])
+def provider_estimate_form_update(request, pk):
+    """견적 수정"""
+    try:
+        estimate_data = request.data
+        
+        # 견적 수정 API 호출
+        response = requests.put(
+            f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/",
+            json=estimate_data,
+            headers={'Accept': 'application/json'}
+        )
+        response.raise_for_status()
+        updated_estimate = response.json()
+        
+        return JsonResponse({
+            'success': True,
+            'message': '견적이 수정되었습니다.',
+            'redirect_url': f'/estimate_list/estimates/received/{pk}/view/'
+        })
+
+    except Exception as e:
+        logger.error(f"견적 수정 중 오류 발생: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+    
+
+@api_view(['POST'])
+def provider_send_estimate(request, pk):
+    """견적 발송"""
+    try:
+        response = requests.post(
+            f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/send/",
+            headers={'Accept': 'application/json'}
+        )
+        response.raise_for_status()
+        
+        # 견적 발송 알림 전송
+        notification_data = {
+            'estimate_id': pk,
+            'type': 'ESTIMATE_SENT',
+            'message': '견적서가 발송되었습니다.'
+        }
+        
+        requests.post(
+            f"{settings.COMMON_API_URL}/notifications/",
+            json=notification_data,
+            headers={'Accept': 'application/json'}
+        )
+        
+        return JsonResponse({'message': '견적이 발송되었습니다.'})
+
+    except Exception as e:
+        logger.error(f"견적 발송 중 오류 발생: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 @permission_classes([AllowAny])
 class ReceivedEstimateViewSet(viewsets.ViewSet):

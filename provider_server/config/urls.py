@@ -70,6 +70,7 @@ urlpatterns = [
     path('estimate_list/', views.provider_estimate_list, name='provider_estimate_list'),
     path('estimate_list/estimates/received/', views.received_estimates, name='received-estimates'),
     path('estimate_list/estimates/received/<int:pk>/', views.estimate_detail, name='estimate-detail'),
+    path('estimate_list/estimates/received/<int:pk>/respond/', views.provider_estimate_form, name='provider_estimate_form'),
     
     
     
@@ -78,7 +79,7 @@ urlpatterns = [
     path('estimate_accept/<int:estimate_id>', views.provider_estimate_accept, name='provider_estimate_accept'),
     # path('estimate_reject/<int:pk>', views.provider_estimate_reject, name='provider_estimate_reject'),
 
-    path('provider_estimate_form/', views.provider_estimate_form, name='provider_estimate_form'),
+    #path('provider_estimate_form/', views.provider_estimate_form, name='provider_estimate_form'),
 
     # JSON API 엔드포인트
     path('received_estimates/', views.received_estimates, name='received_estimates'),

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="estimate-view-container">
+    <div class="action-buttons">
+        {% if estimate.can_edit %}
+        <button type="button" class="btn btn-primary" onclick="editEstimate()">견적 수정</button>
+        {% endif %}
+        {% if estimate.can_send %}
+        <button type="button" class="btn btn-success" onclick="sendEstimate()">견적 발송</button>
+        {% endif %}
+    </div>
+
+    <!-- 견적 상세 내용 표시 -->
+    <div class="estimate-content">
+        <!-- 기존 견적 폼 내용과 동일한 구조로 표시 -->
+    </div>
+</div>
+
+<script>
+function editEstimate() {
+    window.location.href = `/estimates/${estimateId}/form/`;
+}
+
+async function sendEstimate() {
+    if (!confirm('견적을 발송하시겠습니까?')) return;
+
+    try {
+        const response = await fetch(`/estimates/${estimateId}/send/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (!response.ok) throw new Error('견적 발송 실패');
+
+        alert('견적이 발송되었습니다.');
+        window.location.reload();
+    } catch (error) {
+        alert('견적 발송 중 오류가 발생했습니다.');
+        console.error(error);
+    }
+}
+</script>
+{% endblock %}

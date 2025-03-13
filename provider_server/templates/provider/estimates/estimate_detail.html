@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function createEstimate(estimateId) {
-    window.location.href = `/provider_estimate_form/?estimate_id=${estimateId}`;
+    window.location.href = `/estimate_list/estimates/received/${estimateId}/respond/`;
 }
 </script>
 {% endblock %}

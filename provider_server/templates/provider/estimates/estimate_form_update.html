@@ -1,0 +1,846 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="estimate-form-container">
+    <h1 class="main-title">ESTIMATE VIEW <span class="subtitle">견적 작성</span></h1>
+
+    <div class="estimate-form-wrapper">
+        <!-- 상단 버튼 그룹 -->
+        <div class="action-buttons">
+            <div class="left-buttons">
+                <button type="button" class="btn btn-outline-primary" id="saveTemplateBtn">자주 쓰는 견적 저장</button>
+                <button type="button" class="btn btn-outline-primary" id="loadTemplateBtn">빠른 견적 불러오기</button>
+            </div>
+            <div class="right-buttons">
+                <button type="button" class="btn btn-secondary" id="saveDraftBtn">임시저장</button>
+                <button type="button" class="btn btn-outline-primary" id="modifyEstimateBtn">견적 수정</button>
+                <button type="button" class="btn btn-outline-primary" id="viewEstimateBtn">견적 조회</button>
+                <button type="button" class="btn btn-danger" id="deleteRequestBtn">발송 취소</button>
+                <button type="button" class="btn btn-primary" id="sendEstimateBtn">견적 보내기</button>
+            </div>
+        </div>
+
+        <!-- 수요자(고객) 정보 섹션 -->
+        <div class="customer-info-section">
+            <h3>수요자(고객) 정보</h3>
+            <div class="customer-stats">
+                <div class="stat-item">
+                    <label>최초가입일</label>
+                    <span>{{ customer.joined_at|date:"Y.m.d" }}</span>
+                </div>
+                <div class="stat-item">
+                    <label>이용횟수</label>
+                    <span>{{ customer.usage_count }}회</span>
+                </div>
+                <div class="stat-item">
+                    <label>주요지역</label>
+                    <span>{{ customer.region }}</span>
+                </div>
+            </div>
+            <div class="customer-request">
+                <h4>요청사항</h4>
+                <div class="request-content">
+                    {{ original_request.request_details|linebreaks }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 견적서 폼 -->
+        <form id="estimateForm" class="estimate-form">
+            <!-- 견적서 헤더 -->
+            <div class="estimate-header">
+                <h2 class="estimate-title">견적서 {{ original_request.contact_name }} 고객님.</h2>
+            </div>
+
+            <!-- 견적 정보 그리드 -->
+            <div class="info-grid">
+                <!-- 외뢰인 정보 -->
+                <div class="info-section">
+                    <h3>의뢰인 정보</h3>
+                    <table class="info-table">
+                        <tr>
+                            <th>견적 신청일</th>
+                            <td>{{ original_request.created_at|date:"Y.m.d(D) H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>견적 의뢰인</th>
+                            <td>{{ original_request.contact_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>연락처</th>
+                            <td>{{ original_request.contact_phone }}</td>
+                        </tr>
+                        <tr>
+                            <th>이메일</th>
+                            <td>{{ original_request.contact_email }}</td>
+                        </tr>
+                        <tr>
+                            <th>현장 주소</th>
+                            <td>{{ original_request.address }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- 측정업체 정보 -->
+                <div class="info-section">
+                    <h3>측정업체 정보</h3>
+                    <table class="info-table">
+                        <tr>
+                            <th>견적 작성일</th>
+                            <td>{% now "Y.m.d(D) H:i" %}</td>
+                        </tr>
+                        <tr>
+                            <th>견적 작성인</th>
+                            <td> <input type="text" class="form-control" id="estimateWriter"> </td>
+                        </tr>
+                        <tr>
+                            <th>이메일</th>
+                            <td> <input type="text" class="form-control" id="estimateWriterEmail"> </td>
+                        </tr>
+                        <tr>
+                            <th>※</th>
+                            <td>견적은 사정에 따라 추후 변경될 수 있습니다.</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 측정 항목 테이블 -->
+            <div class="measurement-section">
+                <div class="section-header">
+                    <h3>측정 항목</h3>
+                    <span>단위 : 원</span>
+                </div>
+                <table class="measurement-table">
+                    <thead>
+                        <tr>
+                            <th>측정 종류</th>
+                            <th>유지</th>
+                            <th>권고</th>
+                            <th>단가</th>
+                            <th>부분합</th>
+                        </tr>
+                    </thead>
+                    <tbody id="measurementItems">
+                        {% for category in service_categories %}
+                        <tr class="measurement-item" data-category-id="{{ category.id }}">
+                            <td class="category-name">{{ category.name }}</td>
+                            <td>
+                                <input type="number" class="form-control quantity-input maintain-qty" 
+                                       min="0" value="0" onchange="calculateAmount(this)">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control quantity-input recommend-qty" 
+                                       min="0" value="0" onchange="calculateAmount(this)">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control price-input unit-price" 
+                                       value="0" onchange="calculateAmount(this)">
+                            </td>
+                            <td class="subtotal">0</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 견적 설명 -->
+            <div class="estimate-description">
+                <h3>견적 설명</h3>
+                <textarea name="description" rows="4" class="form-control" 
+                    placeholder="견적에 대한 상세 설명을 입력하세요..."></textarea>
+            </div>
+
+            <!-- 파일 첨부 섹션 -->
+            <div class="file-attachment-section">
+                <h3>파일 첨부</h3>
+                <div class="attachment-grid">
+                    <div class="attachment-item">
+                        <label>견적 상세 내역</label>
+                        <div class="file-list" id="estimateDetailFiles">
+                            <div class="file-input-group">
+                                <input type="file" class="form-control" name="estimate_detail[]" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                                <button type="button" class="btn btn-sm btn-danger remove-file">삭제</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary add-file" data-target="estimateDetailFiles">파일 추가</button>
+                        <small class="text-muted">PDF, Word, Excel 파일 가능</small>
+                    </div>
+                    <div class="attachment-item">
+                        <label>현장 사진</label>
+                        <div class="file-list" id="sitePhotoFiles">
+                            <div class="file-input-group">
+                                <input type="file" class="form-control" name="site_photos[]" accept="image/*">
+                                <button type="button" class="btn btn-sm btn-danger remove-file">삭제</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary add-file" data-target="sitePhotoFiles">사진 추가</button>
+                        <small class="text-muted">이미지 파일만 가능</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 금액 정보 -->
+            <div class="price-section">
+                <div class="price-row">
+                    <span>공급가액</span>
+                    <span class="amount" id="baseAmount">0</span>
+                </div>
+                <div class="price-row">
+                    <span>할인</span>
+                    <div class="discount-input">
+                        <input type="text" class="form-control" id="discountInput" value="0">
+                        <span class="amount discount" id="discountAmount">0</span>
+                    </div>
+                </div>
+                <div class="price-row">
+                    <span>부가세</span>
+                    <span class="amount" id="vatAmount">0</span>
+                </div>
+                <div class="price-row total">
+                    <span>최종 합계</span>
+                    <span class="amount" id="totalAmount">0</span>
+                </div>
+            </div>
+
+            <!-- 하단 서명 영역 -->
+            <div class="signature-section">
+                <p class="signature-text">(주)ABC 고객님을 위한 견적을 다음과 같이 제안합니다.</p>
+                <div class="company-stamp">
+                    <p class="company-name">(주)측정하는업체</p>
+                    <div class="stamp-image">
+                        <!-- 도장 이미지 -->
+                    </div>
+                    <p class="date">{% now "Y.m.d" %}</p>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 견적 템플릿 저장 모달 -->
+<!-- <div class="modal fade" id="saveTemplateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">자주 쓰는 견적 저장</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>템플릿 이름</label>
+                    <input type="text" class="form-control" id="templateName">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" id="confirmSaveTemplate">저장</button>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+<!-- 견적 템플릿 불러오기 모달 -->
+<!-- <div class="modal fade" id="loadTemplateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">빠른 견적 불러오기</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="template-list">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+<style>
+/* 전체 컨테이너 스타일 */
+.estimate-form-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
+}
+
+.main-title {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 1rem;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1rem;
+    margin-left: 1rem;
+}
+
+/* 버튼 그룹 스타일 */
+.action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.left-buttons, .right-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+/* 견적서 스타일 */
+.estimate-form-wrapper {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.info-table th,
+.info-table td {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+}
+
+.info-table th {
+    background-color: #f8f9fa;
+    width: 30%;
+    text-align: left;
+}
+
+/* 측정 항목 테이블 스타일 */
+.measurement-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+}
+
+.measurement-table th,
+.measurement-table td {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.measurement-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.quantity-input {
+    text-align: center;
+    padding: 0.375rem;
+}
+
+.price-input {
+    text-align: right;
+    padding: 0.375rem;
+}
+
+.subtotal {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+/* 숫자 입력 화살표 스타일링 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    height: 24px;
+}
+
+/* 금액 정보 스타일 */
+.price-section {
+    margin-left: auto;
+    width: 300px;
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.price-row:last-child {
+    border-bottom: none;
+}
+
+.discount-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.discount-input input {
+    width: 120px;
+    text-align: right;
+}
+
+.amount {
+    font-family: monospace;
+    font-weight: 600;
+}
+
+.total {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid #333;
+}
+
+.total .amount {
+    font-size: 1.2rem;
+    color: #0d6efd;
+}
+
+/* 서명 영역 스타일 */
+.signature-section {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.company-stamp {
+    margin-top: 2rem;
+}
+
+.stamp-image {
+    width: 100px;
+    height: 100px;
+    margin: 1rem auto;
+    border: 2px solid #red;
+    border-radius: 50%;
+}
+
+.customer-info-section {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.customer-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-item label {
+    display: block;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.customer-request {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.estimate-description {
+    margin: 2rem 0;
+}
+
+.file-attachment-section {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.attachment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.attachment-item {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.attachment-item label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.attachment-item small {
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .customer-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .attachment-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.category-name {
+    text-align: left;
+    padding-left: 1rem !important;
+    font-weight: 500;
+    color: #495057;
+}
+
+.measurement-table td {
+    vertical-align: middle;
+}
+
+.quantity-input, .price-input {
+    text-align: right;
+    font-family: monospace;
+}
+
+.subtotal {
+    font-family: monospace;
+    font-weight: 600;
+    text-align: right;
+    padding-right: 1rem !important;
+}
+
+.file-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    align-items: center;
+}
+
+.file-input-group .form-control {
+    flex: 1;
+}
+
+.add-file {
+    margin-top: 0.5rem;
+}
+
+.template-item {
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.template-item:last-child {
+    border-bottom: none;
+}
+
+.template-item h6 {
+    margin: 0;
+}
+
+.template-item small {
+    color: #6c757d;
+}
+</style>
+
+<script>
+// 금액 계산 관련 함수
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function unformatNumber(str) {
+    return parseInt(str.replace(/[^\d]/g, '')) || 0;
+}
+
+function calculateAmount(input) {
+    const row = input.closest('tr');
+    const maintainQty = parseInt(row.querySelector('.maintain-qty').value) || 0;
+    const recommendQty = parseInt(row.querySelector('.recommend-qty').value) || 0;
+    const unitPrice = unformatNumber(row.querySelector('.unit-price').value);
+    
+    // 부분합 계산
+    const subtotal = (maintainQty + recommendQty) * unitPrice;
+    row.querySelector('.subtotal').textContent = formatNumber(subtotal);
+    
+    // 전체 금액 재계산
+    calculateTotalAmount();
+}
+
+function calculateTotalAmount() {
+    // 공급가액 계산 (모든 부분합의 합)
+    let baseAmount = 0;
+    document.querySelectorAll('.subtotal').forEach(el => {
+        baseAmount += unformatNumber(el.textContent);
+    });
+    
+    // 할인금액
+    const discountAmount = unformatNumber(document.getElementById('discountInput').value);
+    
+    // 할인 적용된 금액
+    const discountedAmount = baseAmount - discountAmount;
+    
+    // 부가세 계산 (10%)
+    const vatAmount = Math.round(discountedAmount * 0.1);
+    
+    // 최종 합계
+    const totalAmount = discountedAmount + vatAmount;
+    
+    // 화면에 표시
+    document.getElementById('baseAmount').textContent = formatNumber(baseAmount);
+    document.getElementById('discountAmount').textContent = formatNumber(discountAmount);
+    document.getElementById('vatAmount').textContent = formatNumber(vatAmount);
+    document.getElementById('totalAmount').textContent = formatNumber(totalAmount);
+}
+
+// 파일 첨부 관련 함수
+function addFileInput(targetId) {
+    const container = document.getElementById(targetId);
+    const fileInputGroup = document.createElement('div');
+    fileInputGroup.className = 'file-input-group';
+    
+    const fileInput = container.querySelector('input[type="file"]').cloneNode(true);
+    fileInput.value = ''; // 값 초기화
+    
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'btn btn-sm btn-danger remove-file';
+    removeButton.textContent = '삭제';
+    
+    fileInputGroup.appendChild(fileInput);
+    fileInputGroup.appendChild(removeButton);
+    container.appendChild(fileInputGroup);
+}
+
+// 견적 데이터 수집 함수
+function collectEstimateData() {
+    const items = [];
+    document.querySelectorAll('.measurement-item').forEach(row => {
+        items.push({
+            category_id: row.dataset.categoryId,
+            category_name: row.querySelector('.category-name').textContent,
+            maintain_qty: parseInt(row.querySelector('.maintain-qty').value) || 0,
+            recommend_qty: parseInt(row.querySelector('.recommend-qty').value) || 0,
+            unit_price: unformatNumber(row.querySelector('.unit-price').value)
+        });
+    });
+
+    return {
+        items: items,
+        description: document.querySelector('[name="description"]').value,
+        discount: unformatNumber(document.getElementById('discountInput').value)
+    };
+}
+
+// 견적 데이터 적용 함수
+function applyEstimateData(data) {
+    // 측정 항목 데이터 적용
+    data.items.forEach(item => {
+        const row = document.querySelector(`[data-category-id="${item.category_id}"]`);
+        if (row) {
+            row.querySelector('.maintain-qty').value = item.maintain_qty;
+            row.querySelector('.recommend-qty').value = item.recommend_qty;
+            row.querySelector('.unit-price').value = formatNumber(item.unit_price);
+            calculateAmount(row.querySelector('.maintain-qty'));
+        }
+    });
+
+    // 설명 및 할인 적용
+    document.querySelector('[name="description"]').value = data.description;
+    document.getElementById('discountInput').value = formatNumber(data.discount);
+    calculateTotalAmount();
+}
+
+// 자주 쓰는 견적 저장
+async function saveEstimateTemplate() {
+    const templateName = document.getElementById('templateName').value;
+    if (!templateName) {
+        alert('템플릿 이름을 입력해주세요.');
+        return;
+    }
+
+    const estimateData = collectEstimateData();
+    estimateData.name = templateName;
+
+    try {
+        const response = await fetch('/api/estimate-templates/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(estimateData)
+        });
+
+        if (!response.ok) throw new Error('템플릿 저장 실패');
+
+        alert('템플릿이 저장되었습니다.');
+        $('#saveTemplateModal').modal('hide');
+    } catch (error) {
+        alert('템플릿 저장 중 오류가 발생했습니다.');
+        console.error(error);
+    }
+}
+
+// 견적 템플릿 목록 로드
+async function loadTemplateList() {
+    try {
+        const response = await fetch('/api/estimate-templates/');
+        if (!response.ok) throw new Error('템플릿 목록 로드 실패');
+
+        const templates = await response.json();
+        const templateList = document.querySelector('.template-list');
+        templateList.innerHTML = templates.map(template => `
+            <div class="template-item" data-template-id="${template.id}">
+                <h6>${template.name}</h6>
+                <small>저장일: ${new Date(template.created_at).toLocaleDateString()}</small>
+                <button class="btn btn-sm btn-primary load-template">불러오기</button>
+            </div>
+        `).join('');
+    } catch (error) {
+        alert('템플릿 목록을 불러오는데 실패했습니다.');
+        console.error(error);
+    }
+}
+
+// 임시저장 기능
+async function saveDraft() {
+    const estimateData = collectEstimateData();
+    estimateData.estimate_id = '{{ estimate_id }}';
+
+    try {
+        const response = await fetch('/api/estimate-drafts/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(estimateData)
+        });
+
+        if (!response.ok) throw new Error('임시저장 실패');
+
+        alert('임시저장되었습니다.');
+    } catch (error) {
+        alert('임시저장 중 오류가 발생했습니다.');
+        console.error(error);
+    }
+}
+
+// 이벤트 리스너
+document.addEventListener('DOMContentLoaded', function() {
+    // 금액 입력 이벤트
+    document.querySelectorAll('.price-input').forEach(input => {
+        input.addEventListener('input', function(e) {
+            const value = e.target.value.replace(/[^\d]/g, '');
+            e.target.value = formatNumber(value);
+            calculateAmount(e.target);
+        });
+    });
+
+    // 수량 입력 이벤트
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        input.addEventListener('input', function(e) {
+            calculateAmount(e.target);
+        });
+    });
+
+    // 할인 입력 이벤트
+    document.getElementById('discountInput').addEventListener('input', function(e) {
+        const value = e.target.value.replace(/[^\d]/g, '');
+        e.target.value = formatNumber(value);
+        calculateTotalAmount();
+    });
+
+    // 파일 추가 버튼 이벤트
+    document.querySelectorAll('.add-file').forEach(button => {
+        button.addEventListener('click', function() {
+            addFileInput(this.dataset.target);
+        });
+    });
+
+    // 파일 삭제 버튼 이벤트 (동적으로 추가된 요소도 처리)
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-file')) {
+            const fileInputGroup = e.target.closest('.file-input-group');
+            if (fileInputGroup.parentElement.querySelectorAll('.file-input-group').length > 1) {
+                fileInputGroup.remove();
+            }
+        }
+    });
+
+    // 자주 쓰는 견적 저장 버튼
+    document.getElementById('saveTemplateBtn').addEventListener('click', () => {
+        $('#saveTemplateModal').modal('show');
+    });
+
+    // 빠른 견적 불러오기 버튼
+    document.getElementById('loadTemplateBtn').addEventListener('click', () => {
+        loadTemplateList();
+        $('#loadTemplateModal').modal('show');
+    });
+
+    // 템플릿 저장 확인 버튼
+    document.getElementById('confirmSaveTemplate').addEventListener('click', saveEstimateTemplate);
+
+    // 임시저장 버튼
+    document.getElementById('saveDraftBtn').addEventListener('click', saveDraft);
+
+    // 템플릿 불러오기 버튼 클릭 이벤트 (동적 요소)
+    document.querySelector('.template-list').addEventListener('click', async (e) => {
+        if (e.target.classList.contains('load-template')) {
+            const templateId = e.target.closest('.template-item').dataset.templateId;
+            try {
+                const response = await fetch(`/api/estimate-templates/${templateId}/`);
+                if (!response.ok) throw new Error('템플릿 로드 실패');
+
+                const template = await response.json();
+                applyEstimateData(template);
+                $('#loadTemplateModal').modal('hide');
+            } catch (error) {
+                alert('템플릿을 불러오는데 실패했습니다.');
+                console.error(error);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -99,3 +99,35 @@ class Attachment(models.Model):
         return f"{self.user.company_name} - {self.file_type}"
 
 
+# provider_server/estimates/models.py
+
+class ProviderEstimate(models.Model):
+    """Provider 서버의 견적서 모델"""
+    estimate_request_id = models.IntegerField(help_text="공통 API의 견적 요청 ID")
+    provider = models.ForeignKey('users.ProviderUser', on_delete=models.CASCADE)
+    
+    # 견적 상세 정보
+    maintain_points = models.IntegerField(default=0)
+    recommend_points = models.IntegerField(default=0)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=0)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=0)
+    
+    # 상태 관리
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('DRAFT', '임시저장'),
+            ('SENT', '발송됨'),
+            ('ACCEPTED', '수락됨'),
+            ('REJECTED', '거절됨')
+        ],
+        default='DRAFT'
+    )
+    
+    # 메타 정보
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'provider_estimates'
+        ordering = ['-created_at']

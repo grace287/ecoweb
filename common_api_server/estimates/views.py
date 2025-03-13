@@ -88,13 +88,15 @@ def create_estimate(request):
             contact_info = data.get('contact_info', {}) or {}
             estimate = Estimate.objects.create(
                 service_category=categories.first(),  # 첫 번째 카테고리를 기본값으로
+                measurement_location=location,
                 address=data['address'],
                 preferred_schedule=data['preferred_schedule'],
                 status='REQUEST',
                 contact_name=contact_info.get('name', '미지정'),
                 contact_phone=contact_info.get('phone', ''),
                 contact_email=contact_info.get('email', ''),
-                demand_user_id=request.user.id if request.user.is_authenticated else None  # demand_user → demand_user_id로 수정
+                demand_user_id=request.user.id if request.user.is_authenticated else None,  # demand_user → demand_user_id로 수정
+                provider_user_id=request.user.id if request.user.is_authenticated else None  # demand_user → demand_user_id로 수정
             )
 
 
