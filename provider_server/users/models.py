@@ -111,12 +111,15 @@ class ProviderEstimate(models.Model):
     recommend_points = models.IntegerField(default=0)
     unit_price = models.DecimalField(max_digits=10, decimal_places=0)
     total_amount = models.DecimalField(max_digits=12, decimal_places=0)
+    notes = models.TextField(null=True, blank=True)
+    measurement_manager = models.CharField(max_length=255, null=True, blank=True)
     
     # 상태 관리
     status = models.CharField(
         max_length=20,
         choices=[
             ('DRAFT', '임시저장'),
+            ('SAVED', '저장됨'),
             ('SENT', '발송됨'),
             ('ACCEPTED', '수락됨'),
             ('REJECTED', '거절됨')

@@ -71,8 +71,11 @@ urlpatterns = [
     path('estimate_list/estimates/received/', views.received_estimates, name='received-estimates'),
     path('estimate_list/estimates/received/<int:pk>/', views.estimate_detail, name='estimate-detail'),
     path('estimate_list/estimates/received/<int:pk>/respond/', views.provider_estimate_form, name='provider_estimate_form'),
-    
-    
+    path('estimate_list/estimates/received/<int:pk>/view/', views.provider_estimate_form_view, name='provider_estimate_form_view'),
+    path('estimate_list/estimates/received/<int:pk>/update/', views.provider_estimate_form_update, name='provider_estimate_form_update'),
+    path('estimate_list/estimates/received/<int:pk>/send/', views.provider_send_estimate, name='provider_send_estimate'),
+
+    path('estimate_list/estimates/check/<int:pk>/', views.check_estimate_exists, name='check_estimate_exists'),
     
     # path('provider_estimate_detail/', views.provider_estimate_detail, name='provider_estimate_detail'),    
     # path('estimate_detail/<int:pk>', views.provider_estimate_detail, name='provider_estimate_detail'),

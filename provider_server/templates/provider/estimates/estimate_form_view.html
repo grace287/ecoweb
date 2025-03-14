@@ -3,34 +3,145 @@
 
 {% block content %}
 <div class="estimate-view-container">
-    <div class="action-buttons">
-        {% if estimate.can_edit %}
-        <button type="button" class="btn btn-primary" onclick="editEstimate()">견적 수정</button>
-        {% endif %}
-        {% if estimate.can_send %}
-        <button type="button" class="btn btn-success" onclick="sendEstimate()">견적 발송</button>
-        {% endif %}
-    </div>
+    {% if estimate %}
+        <div class="estimate-header">
+            <h2>견적서 상세</h2>
+            <div class="action-buttons">
+                {% if can_edit %}
+                    <button type="button" class="btn btn-primary" onclick="editEstimate()">견적 수정</button>
+                {% endif %}
+                {% if can_send %}
+                    <button type="button" class="btn btn-success" onclick="sendEstimate()">견적 발송</button>
+                {% endif %}
+            </div>
+        </div>
 
-    <!-- 견적 상세 내용 표시 -->
-    <div class="estimate-content">
-        <!-- 기존 견적 폼 내용과 동일한 구조로 표시 -->
-    </div>
+        <div class="estimate-content">
+            <!-- 견적 기본 정보 -->
+            <div class="section">
+                <h3>기본 정보</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>견적 상태</label>
+                        <p>{{ estimate.get_status_display }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>작성일</label>
+                        <p>{{ estimate.created_at|date:"Y-m-d H:i" }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>수정일</label>
+                        <p>{{ estimate.updated_at|date:"Y-m-d H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 측정 항목 정보 -->
+            <div class="section">
+                <h3>측정 항목</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>항목</th>
+                            <th>유지 측정점</th>
+                            <th>권장 측정점</th>
+                            <th>단가</th>
+                            <th>소계</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ estimate.measurement_category }}</td>
+                            <td class="text-right">{{ estimate.maintain_points }}</td>
+                            <td class="text-right">{{ estimate.recommend_points }}</td>
+                            <td class="text-right">{{ estimate.unit_price|floatformat:0 }}원</td>
+                            <td class="text-right">{{ estimate.total_amount|floatformat:0 }}원</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 비고 -->
+            {% if estimate.notes %}
+            <div class="section">
+                <h3>비고</h3>
+                <p>{{ estimate.notes|linebreaks }}</p>
+            </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            견적서를 찾을 수 없습니다.
+        </div>
+    {% endif %}
 </div>
+
+<style>
+.estimate-view-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.estimate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.section {
+    margin-bottom: 30px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.info-item label {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 0;
+}
+</style>
 
 <script>
 function editEstimate() {
-    window.location.href = `/estimates/${estimateId}/form/`;
+    const estimateId = '{{ estimate.id }}';
+    window.location.href = `/estimate_list/estimates/received/${estimateId}/respond/`;
 }
 
 async function sendEstimate() {
     if (!confirm('견적을 발송하시겠습니까?')) return;
 
+    const estimateId = '{{ estimate.id }}';
     try {
-        const response = await fetch(`/estimates/${estimateId}/send/`, {
+        const response = await fetch(`/estimate_list/estimates/received/${estimateId}/send/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
             }
         });
 
@@ -39,8 +150,8 @@ async function sendEstimate() {
         alert('견적이 발송되었습니다.');
         window.location.reload();
     } catch (error) {
+        console.error('견적 발송 오류:', error);
         alert('견적 발송 중 오류가 발생했습니다.');
-        console.error(error);
     }
 }
 </script>
