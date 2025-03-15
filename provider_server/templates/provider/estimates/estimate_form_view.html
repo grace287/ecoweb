@@ -1,12 +1,15 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block content %}
-<div class="estimate-view-container">
-    {% if estimate %}
-        <div class="estimate-header">
-            <h2>견적서 상세</h2>
-            <div class="action-buttons">
+<div class="estimate-form-container">
+    <h1 class="main-title">ESTIMATE VIEW <span class="subtitle">견적서 조회</span></h1>
+
+    <div class="estimate-form-wrapper">
+        <!-- 상단 버튼 그룹 -->
+        <div class="action-buttons">
+            <div class="right-buttons">
                 {% if can_edit %}
                     <button type="button" class="btn btn-primary" onclick="editEstimate()">견적 수정</button>
                 {% endif %}
@@ -16,120 +19,444 @@
             </div>
         </div>
 
+        <!-- 수요자(고객) 정보 섹션 -->
+        <div class="customer-info-section">
+            <h3>수요자(고객) 정보</h3>
+            <div class="customer-stats">
+                <div class="stat-item">
+                    <label>최초가입일</label>
+                    <span>{{ customer.joined_at|date:"Y.m.d" }}</span>
+                </div>
+                <div class="stat-item">
+                    <label>이용횟수</label>
+                    <span>{{ customer.usage_count }}회</span>
+                </div>
+                <div class="stat-item">
+                    <label>주요지역</label>
+                    <span>{{ customer.region }}</span>
+                </div>
+            </div>
+            <div class="customer-request">
+                <h4>요청사항</h4>
+                <div class="request-content">
+                    {{ original_request.request_details|linebreaks }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 견적서 내용 -->
         <div class="estimate-content">
-            <!-- 견적 기본 정보 -->
-            <div class="section">
-                <h3>기본 정보</h3>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <label>견적 상태</label>
-                        <p>{{ estimate.get_status_display }}</p>
-                    </div>
-                    <div class="info-item">
-                        <label>작성일</label>
-                        <p>{{ estimate.created_at|date:"Y-m-d H:i" }}</p>
-                    </div>
-                    <div class="info-item">
-                        <label>수정일</label>
-                        <p>{{ estimate.updated_at|date:"Y-m-d H:i" }}</p>
-                    </div>
+            <h2 class="estimate-title">견적서_(주){{ estimate.customer_name }} 고객님.</h2>
+            
+            <!-- 견적 정보 그리드 -->
+            <div class="info-grid">
+                <!-- 의뢰인 정보 -->
+                <div class="info-section">
+                    <h3>의뢰인 정보</h3>
+                    <table class="info-table">
+                        <tr>
+                            <th>견적 신청일</th>
+                            <td>{{ original_request.created_at|date:"Y.m.d(일) H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>견적 의뢰인</th>
+                            <td>{{ original_request.contact_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>연락처</th>
+                            <td>{{ original_request.contact_phone }}</td>
+                        </tr>
+                        <tr>
+                            <th>이메일</th>
+                            <td>{{ original_request.contact_email }}</td>
+                        </tr>
+                        <tr>
+                            <th>현장 주소</th>
+                            <td>{{ original_request.address }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- 측정업체 정보 -->
+                <div class="info-section">
+                    <h3>측정업체 정보</h3>
+                    <table class="info-table">
+                        <tr>
+                            <th>견적 작성일</th>
+                            <td>{{ estimate.created_at|date:"Y.m.d(일) H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>견적 작성인</th>
+                            <td>{{ estimate.writer_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>이메일</th>
+                            <td>{{ estimate.writer_email }}</td>
+                        </tr>
+                        <tr>
+                            <th>※</th>
+                            <td>견적은 사정에 따라 추후 변경될 수 있습니다.</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
 
-            <!-- 측정 항목 정보 -->
-            <div class="section">
-                <h3>측정 항목</h3>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>항목</th>
-                            <th>유지 측정점</th>
-                            <th>권장 측정점</th>
-                            <th>단가</th>
-                            <th>소계</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{ estimate.measurement_category }}</td>
-                            <td class="text-right">{{ estimate.maintain_points }}</td>
-                            <td class="text-right">{{ estimate.recommend_points }}</td>
-                            <td class="text-right">{{ estimate.unit_price|floatformat:0 }}원</td>
-                            <td class="text-right">{{ estimate.total_amount|floatformat:0 }}원</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- 측정 항목 테이블 -->
+            <div class="measurement-section">
+                <div class="section-header">
+                    <h3>측정 항목</h3>
+                    <span>단위 : 원</span>
+                </div>
+                <div class="measurement-items">
+                    {% for category in original_request.service_categories %}
+                    <div class="measurement-item">
+                        <div class="form-row">
+                            <div class="form-group item-name">
+                                <label>측정 종류 {{ forloop.counter }}</label>
+                                <p>{{ category.name }}</p>
+                            </div>
+                            <div class="form-group qty">
+                                <label>유지 지점수</label>
+                                <p>{{ estimate.maintain_points|default:"0"|intcomma }}</p>
+                            </div>
+                            <div class="form-group qty">
+                                <label>권고 지점수</label>
+                                <p>{{ estimate.recommend_points|default:"0"|intcomma }}</p>
+                            </div>
+                            <div class="form-group price">
+                                <label>단가</label>
+                                <p>{{ estimate.unit_price|default:"0"|intcomma }}원</p>
+                            </div>
+                            <div class="form-group subtotal">
+                                <label>소계</label>
+                                <p class="amount">{{ estimate.total_amount|default:"0"|intcomma }}원</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
-            <!-- 비고 -->
+            <!-- 견적 설명 -->
             {% if estimate.notes %}
-            <div class="section">
-                <h3>비고</h3>
-                <p>{{ estimate.notes|linebreaks }}</p>
+            <div class="estimate-description">
+                <h3>견적 설명</h3>
+                <div class="description-content">
+                    {{ estimate.notes|linebreaks }}
+                </div>
             </div>
             {% endif %}
+
+            <!-- 금액 정보 -->
+            <div class="price-section">
+                <div class="price-row">
+                    <span>공급가액</span>
+                    <span class="amount">{{ estimate.base_amount|floatformat:0 }}원</span>
+                </div>
+                <div class="price-row">
+                    <span>할인</span>
+                    <span class="amount discount">{{ estimate.discount_amount|floatformat:0 }}원</span>
+                </div>
+                <div class="price-row">
+                    <span>부가세</span>
+                    <span class="amount">{{ estimate.vat_amount|floatformat:0 }}원</span>
+                </div>
+                <div class="price-row total">
+                    <span>최종 합계</span>
+                    <span class="amount">{{ estimate.total_amount|floatformat:0 }}원</span>
+                </div>
+            </div>
+
+            <!-- 하단 서명 영역 -->
+            <div class="signature-section">
+                <p class="signature-text">(주){{ estimate.customer_name }} 고객님을 위한 견적을 다음과 같이 제안합니다.</p>
+                <div class="company-stamp">
+                    <p class="company-name">(주)측정하는업체</p>
+                    <div class="stamp-image">
+                        <!-- 도장 이미지 -->
+                    </div>
+                    <p class="date">{{ estimate.updated_at|date:"Y.m.d" }}</p>
+                </div>
+            </div>
         </div>
-    {% else %}
-        <div class="alert alert-warning">
-            견적서를 찾을 수 없습니다.
-        </div>
-    {% endif %}
+    </div>
 </div>
 
 <style>
-.estimate-view-container {
-    padding: 20px;
-    max-width: 1200px;
-    margin: 0 auto;
+/* 기본 레이아웃 */
+.estimate-form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #fff;
 }
 
-.estimate-header {
+/* 타이틀 */
+.main-title {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #eee;
+}
+
+.subtitle {
+    margin-left: 1rem;
+    font-size: 16px;
+    color: #666;
+}
+
+/* 버튼 그룹 */
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.btn {
+    padding: 8px 24px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+/* 견적서 내용 */
+.estimate-content {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 2rem;
+}
+
+.estimate-title {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+/* 정보 그리드 */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.info-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.info-section h3 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.info-table th,
+.info-table td {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.info-table th {
+    background-color: #f8f9fa;
+    width: 30%;
+    text-align: left;
+    font-weight: 500;
+    color: #495057;
+}
+
+/* 측정 항목 섹션 */
+.measurement-section {
+    margin: 2rem 0;
+}
+
+.section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 1rem;
 }
 
-.action-buttons {
-    display: flex;
-    gap: 10px;
+.section-header h3 {
+    font-size: 16px;
+    color: #333;
 }
 
-.section {
-    margin-bottom: 30px;
-    background: #fff;
-    padding: 20px;
+.measurement-items {
+    background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
 }
 
-.info-grid {
+.measurement-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.measurement-item:last-child {
+    border-bottom: none;
+}
+
+.form-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr 1.5fr;
+    gap: 1rem;
+    align-items: center;
 }
 
-.info-item label {
-    font-weight: bold;
-    color: #666;
-    margin-bottom: 5px;
+.form-group label {
     display: block;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-size: 14px;
 }
 
-.text-right {
+.form-group p {
+    margin: 0;
+    font-size: 15px;
+    color: #333;
+}
+
+/* 견적 설명 */
+.estimate-description {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.estimate-description h3 {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.description-content {
+    color: #495057;
+    line-height: 1.6;
+}
+
+/* 금액 정보 */
+.price-section {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-top: 2rem;
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.price-row:last-child {
+    border-bottom: none;
+}
+
+.price-row.total {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.amount {
+    font-family: monospace;
+    font-size: 16px;
     text-align: right;
 }
 
-.table {
-    width: 100%;
-    margin-bottom: 0;
+.discount {
+    color: #dc3545;
+}
+
+/* 서명 영역 */
+.signature-section {
+    text-align: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.signature-text {
+    color: #495057;
+    margin-bottom: 2rem;
+}
+
+.company-stamp {
+    display: inline-block;
+}
+
+.company-name {
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.stamp-image {
+    width: 100px;
+    height: 100px;
+    margin: 1rem auto;
+    border: 1px solid #dee2e6;
+    border-radius: 50%;
+}
+
+.date {
+    color: #666;
+    margin-top: 1rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
 }
 </style>
 
 <script>
-function editEstimate() {
-    const estimateId = '{{ estimate.id }}';
-    window.location.href = `/estimate_list/estimates/received/${estimateId}/respond/`;
+
+async function editEstimate() {
+    if (!confirm('견적서를 수정하시겠습니까?')) return;
+
+    const estimateId = '{{ estimate.estimate_request_id }}';
+    window.location.href = `/estimate_list/estimates/received/${estimateId}/update/`;
 }
 
 async function sendEstimate() {

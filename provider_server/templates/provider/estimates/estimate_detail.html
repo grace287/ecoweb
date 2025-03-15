@@ -260,8 +260,45 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchEstimateDetail();
 });
 
-function createEstimate(estimateId) {
-    window.location.href = `/estimate_list/estimates/received/${estimateId}/respond/`;
+async function createEstimate(estimateId) {
+    try {
+        console.log(`🔎 견적 존재 여부 확인 - 견적 요청 ID: ${estimateId}`);
+        
+        // 견적 존재 여부 확인 API 호출
+        const response = await fetch(`/estimate_list/estimates/check/${estimateId}/`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('견적 확인 중 오류가 발생했습니다.');
+        }
+
+        const data = await response.json();
+        console.log("✅ 견적 확인 결과:", data);
+
+        if (data.exists) {
+            // 기존 견적이 있는 경우
+            console.log(`✅ 기존 견적 발견 - 견적 ID: ${data.estimate_id}`);
+            if (confirm('이미 작성한 견적이 있습니다. 견적서를 확인하시겠습니까?')) {
+                window.location.href = `/estimate_list/estimates/received/${estimateId}/view/`;
+            }
+        } else {
+            // 기존 견적이 없는 경우
+            console.log("⚠️ 기존 견적 없음 - 견적 작성 페이지로 이동");
+            window.location.href = `/estimate_list/estimates/received/${estimateId}/respond/`;
+        }
+
+    } catch (error) {
+        console.error('🚨 견적 확인 중 오류:', error);
+        alert(error.message);
+    }
 }
+
+// function createEstimate(estimateId) {
+//     window.location.href = `/estimate_list/estimates/received/${estimateId}/respond/`;
+// }
 </script>
 {% endblock %}

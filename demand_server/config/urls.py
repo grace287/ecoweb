@@ -52,7 +52,7 @@ urlpatterns = [
     # path('estimates_request_form/', views.estimate_request_form, name='estimate_request_form'),
     # path('estimates/create/', views.create_estimate, name='create_estimate'),
     path('estimates_list/', views.estimate_list, name='estimate_list'),
-    # path('estimates/<int:estimate_id>/', views.estimate_detail, name='estimate_detail'),
+    path('estimates/<int:estimate_id>/', views.received_estimate_detail, name='estimate_detail'),
     # path('estimate_accept/', views.estimate_accept, name='estimate_accept'),
     # path('estimates/detail/<int:estimate_id>/', views.estimate_detail, name='estimate_detail'),
 

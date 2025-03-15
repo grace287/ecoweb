@@ -106,13 +106,20 @@ class ProviderEstimate(models.Model):
     estimate_request_id = models.IntegerField(help_text="공통 API의 견적 요청 ID")
     provider = models.ForeignKey('users.ProviderUser', on_delete=models.CASCADE)
     
-    # 견적 상세 정보
+    # 작성자 정보
+    writer_name = models.CharField(max_length=100, null=True, blank=True)
+    writer_email = models.EmailField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    
+    # 측정 항목 정보
     maintain_points = models.IntegerField(default=0)
     recommend_points = models.IntegerField(default=0)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=0)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=0)
-    notes = models.TextField(null=True, blank=True)
-    measurement_manager = models.CharField(max_length=255, null=True, blank=True)
+    unit_price = models.IntegerField(default=0)
+    
+    # 금액 정보
+    discount_amount = models.IntegerField(default=0)
+    total_amount = models.IntegerField(default=0)
+    
     
     # 상태 관리
     status = models.CharField(

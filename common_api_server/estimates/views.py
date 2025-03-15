@@ -722,3 +722,77 @@ def estimate_detail(request, estimate_id):
             'error': '견적서 조회 중 오류가 발생했습니다.',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+@api_view(['POST'])
+def estimate_send(request, pk):
+    """견적서 발송 처리"""
+    try:
+        # 1. 견적 요청 조회
+        estimate_request = EstimateRequest.objects.get(id=pk)
+        
+        # 2. 견적서 데이터 저장
+        estimate_data = request.data
+        logger.info(f"수신된 견적서 데이터: {estimate_data}")
+
+        estimate = Estimate.objects.create(
+            estimate_request=estimate_request,
+            provider_id=estimate_data['provider_id'],
+            provider_name=estimate_data['provider_name'],
+            writer_name=estimate_data.get('writer_name'),
+            writer_email=estimate_data.get('writer_email'),
+            maintain_points=estimate_data.get('maintain_points', 0),
+            recommend_points=estimate_data.get('recommend_points', 0),
+            unit_price=estimate_data.get('unit_price', 0),
+            discount_amount=estimate_data.get('discount_amount', 0),
+            total_amount=estimate_data.get('total_amount', 0),
+            notes=estimate_data.get('notes', ''),
+            status='SENT'
+        )
+
+        # 3. 수요자 서버에 견적서 알림
+        try:
+            notification_data = {
+                'estimate_id': estimate.id,
+                'estimate_request_id': pk,
+                'provider_id': estimate_data['provider_id'],
+                'provider_name': estimate_data['provider_name'],
+                'total_amount': estimate_data.get('total_amount', 0),
+                'created_at': estimate.created_at.isoformat()
+            }
+
+            response = requests.post(
+                f"{settings.DEMAND_API_URL}/estimates/notifications/",
+                json=notification_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"수요자 서버 알림 실패: {response.status_code} - {response.text}")
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"수요자 서버 알림 전송 실패: {e}")
+            # 알림 실패해도 견적서는 저장됨
+
+        return JsonResponse({
+            'success': True,
+            'message': '견적서가 성공적으로 발송되었습니다.',
+            'estimate_id': estimate.id
+        })
+
+    except EstimateRequest.DoesNotExist:
+        logger.error(f"견적 요청 {pk}를 찾을 수 없음")
+        return JsonResponse({
+            'success': False,
+            'error': '견적 요청을 찾을 수 없습니다.'
+        }, status=404)
+    
+    except Exception as e:
+        logger.error(f"견적서 발송 처리 중 오류: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': '견적서 발송 중 오류가 발생했습니다.',
+            'details': str(e)
+        }, status=500)

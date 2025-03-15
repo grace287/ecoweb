@@ -692,109 +692,238 @@ def provider_estimate_form(request, pk):
 
 @api_view(['GET'])
 def provider_estimate_form_view(request, pk):
-    """견적 조회 또는 작성 페이지로 이동"""
+    """견적 조회 페이지"""
     try:
-        logger.info(f"견적 조회/작성 페이지 요청 - 견적 요청 ID: {pk}")
+        logger.info(f"견적 조회 페이지 요청 - 견적 요청 ID: {pk}")
         
-        # 견적 존재 여부 확인
+        # 1. Provider 서버에 저장된 견적서 데이터 조회
         existing_estimate = ProviderEstimate.objects.filter(
             estimate_request_id=pk,
             provider=request.user 
         ).first()
 
-        if existing_estimate:
-            # 기존 견적서가 있는 경우 조회 페이지로
-            context = {
-                'estimate': existing_estimate,
-                'can_edit': existing_estimate.status in ['DRAFT', 'SAVED'],
-                'can_send': existing_estimate.status in ['DRAFT', 'SAVED']
-            }
-            return render(request, 'provider/estimates/estimate_form_view.html', context)
-        else:
-            # 기존 견적서가 없는 경우 작성 페이지로
-            return render(request, 'provider/estimates/estimate_form.html', {
-                'estimate_request_id': pk
-            })
+        if not existing_estimate:
+            logger.info("저장된 견적서가 없습니다.")
+            return redirect('provider_estimate_form', pk=pk)
 
+        # 2. 공통 API 서버에서 원본 견적 요청 데이터 조회
+        response = requests.get(
+            f"{settings.COMMON_API_URL}/estimates/estimates/received/{pk}/", 
+            headers={'Accept': 'application/json'}
+        )
+        response.raise_for_status()
+        estimate_data = response.json()
+        
+        # 3. 고객 정보 조회
+        customer_info = None
+        if estimate_data.get('demand_user_id'):
+            try:
+                customer_info_response = requests.get(
+                    f"{settings.DEMAND_API_URL}/users/{estimate_data['demand_user_id']}/",
+                    timeout=5,
+                    headers={'Accept': 'application/json'}
+                )
+                if customer_info_response.status_code == 200:
+                    customer_info = customer_info_response.json()
+            except Exception as e:
+                logger.error(f"고객 정보 조회 중 오류: {e}")
+
+        # 4. 측정 항목 데이터 준비
+        measurement_items = []
+        for item in estimate_data.get('measurement_items', []):
+            measurement_item = {
+                'service_category': item.get('service_category', {}),
+                'maintain_points': existing_estimate.maintain_points,
+                'recommend_points': existing_estimate.recommend_points,
+                'unit_price': existing_estimate.unit_price
+            }
+            measurement_items.append(measurement_item)
+
+        context = {
+            'estimate': existing_estimate,
+            'original_request': estimate_data,
+            'customer': customer_info,
+            'measurement_items': estimate_data.get('measurement_items', []),  # 공통 API의 측정 항목 데이터 사용
+            'can_edit': existing_estimate.status in ['DRAFT', 'SAVED'],
+            'can_send': existing_estimate.status in ['DRAFT', 'SAVED']
+        }
+
+        logger.info("견적서 조회 데이터 준비 완료")
+        return render(request, 'provider/estimates/estimate_form_view.html', context)
+
+    except requests.RequestException as e:
+        logger.error(f"API 요청 중 오류: {e}")
+        return JsonResponse({
+            'error': 'API 서버 통신 중 오류가 발생했습니다.',
+            'details': str(e)
+        }, status=500)
     except Exception as e:
-        logger.error(f"견적 조회/작성 페이지 이동 중 오류: {e}")
+        logger.error(f"견적 조회 중 오류: {e}")
         return JsonResponse({
             'error': '견적 조회 중 오류가 발생했습니다.',
             'details': str(e)
         }, status=500)
     
 
-@api_view(['PUT'])
+@api_view(['GET', 'PUT'])
 def provider_estimate_form_update(request, pk):
-    """견적 수정"""
+    """견적 수정 페이지 및 처리"""
     try:
-        # 견적서 조회
-        provider_estimate = ProviderEstimate.objects.filter(
+        logger.info(f"견적 수정 요청 - 견적 요청 ID: {pk}")
+
+        existing_estimate = ProviderEstimate.objects.filter(
             estimate_request_id=pk,
             provider=request.user
         ).first()
-        
-        if not provider_estimate:
-            return JsonResponse({
-                'error': '해당 견적서를 찾을 수 없습니다.'
-            }, status=404)
-        
-        # 수정 가능한 상태인지 확인
-        if provider_estimate.status not in ['DRAFT', 'SAVED']:
-            return JsonResponse({
-                'error': '수정할 수 없는 상태의 견적서입니다.'
-            }, status=400)
 
-        # 데이터 업데이트
-        estimate_data = request.data
-        for field, value in estimate_data.items():
-            if hasattr(provider_estimate, field):
-                setattr(provider_estimate, field, value)
-        
-        provider_estimate.save()
-        
-        return JsonResponse({
-            'success': True,
-            'message': '견적이 수정되었습니다.',
-            'estimate_id': provider_estimate.id,
-            'redirect_url': f'/estimate_list/estimates/received/{provider_estimate.id}/view/'
-        })
+        if not existing_estimate:
+            logger.warning(f"견적 ID {pk}에 대한 견적서를 찾을 수 없음")
+            return JsonResponse({'error': '해당 견적서를 찾을 수 없습니다.'}, status=404)
+
+        if request.method == 'GET':
+            response = requests.get(
+                f"{settings.COMMON_API_URL}/estimates/estimates/received/{pk}/",
+                headers={'Accept': 'application/json'}
+            )
+            response.raise_for_status()
+            estimate_data = response.json()
+
+            context = {
+                'estimate': existing_estimate,
+                'original_request': estimate_data,
+                'can_edit': existing_estimate.status in ['DRAFT', 'SAVED'],
+                'estimateId': pk  
+            }
+
+            return render(request, 'provider/estimates/estimate_form_update.html', context)
+
+        elif request.method == 'PUT':
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+                logger.info(f"수정 데이터 수신: {data}")
+
+                existing_estimate.writer_name = data.get('writer_name', existing_estimate.writer_name)
+                existing_estimate.writer_email = data.get('writer_email', existing_estimate.writer_email)
+                existing_estimate.notes = data.get('notes', existing_estimate.notes)
+                existing_estimate.discount_amount = int(data.get('discount_amount', 0))
+
+                measurement_items = data.get('measurement_items', [])
+                total_maintain = sum(int(item.get('maintain_points', 0)) for item in measurement_items)
+                total_recommend = sum(int(item.get('recommend_points', 0)) for item in measurement_items)
+                total_price = sum(
+                    (int(item.get('maintain_points', 0)) + int(item.get('recommend_points', 0))) * int(item.get('unit_price', 0))
+                    for item in measurement_items
+                )
+
+                existing_estimate.maintain_points = total_maintain
+                existing_estimate.recommend_points = total_recommend
+                existing_estimate.unit_price = total_price // max(1, (total_maintain + total_recommend))
+
+                base_amount = total_price
+                vat_amount = int((base_amount - existing_estimate.discount_amount) * 0.1)
+                existing_estimate.total_amount = base_amount - existing_estimate.discount_amount + vat_amount
+
+                existing_estimate.save()
+                logger.info(f"견적서 수정 완료: {existing_estimate.id}")
+
+                return JsonResponse({
+                    'success': True,
+                    'message': '견적이 수정되었습니다.',
+                    'redirect_url': f'/estimate_list/estimates/received/{pk}/view/'
+                })
+
+            except Exception as e:
+                logger.error(f"견적 수정 오류 발생: {e}")
+                return JsonResponse({'error': '견적 수정 중 오류 발생', 'details': str(e)}, status=500)
+
+        # 🔴 Make sure there's always a return statement
+        return JsonResponse({'error': 'Invalid request method'}, status=400)
 
     except Exception as e:
-        logger.error(f"견적 수정 중 오류 발생: {e}")
-        return JsonResponse({
-            'error': str(e)
-        }, status=500)
-    
+        logger.error(f"예상치 못한 오류: {e}")
+        return JsonResponse({'error': '알 수 없는 오류가 발생했습니다.', 'details': str(e)}, status=500)
 
+
+    
 @api_view(['POST'])
 def provider_send_estimate(request, pk):
-    """견적 발송"""
+    """견적서 발송"""
     try:
-        response = requests.post(
-            f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/send/",
-            headers={'Accept': 'application/json'}
-        )
-        response.raise_for_status()
-        
-        # 견적 발송 알림 전송
-        notification_data = {
-            'estimate_id': pk,
-            'type': 'ESTIMATE_SENT',
-            'message': '견적서가 발송되었습니다.'
+        # 1. 기존 견적서 조회
+        estimate = ProviderEstimate.objects.select_for_update().filter(
+            estimate_request_id=pk,
+            provider=request.user
+        ).first()
+
+        if not estimate:
+            return JsonResponse({'error': '견적서를 찾을 수 없습니다.'}, status=404)
+
+        if estimate.status == 'SENT':
+            return JsonResponse({'error': '이미 발송된 견적서입니다.'}, status=400)
+
+        # 2. 견적서 데이터 준비
+        estimate_data = {
+            'estimate_request_id': estimate.estimate_request_id,
+            'provider_id': request.user.id,
+            'provider_name': request.user.name,  # 공급자 이름 추가
+            'writer_name': estimate.writer_name,
+            'writer_email': estimate.writer_email,
+            'maintain_points': estimate.maintain_points,
+            'recommend_points': estimate.recommend_points,
+            'unit_price': estimate.unit_price,
+            'discount_amount': estimate.discount_amount,
+            'total_amount': estimate.total_amount,
+            'notes': estimate.notes,
+            'status': 'SENT'
         }
-        
-        requests.post(
-            f"{settings.COMMON_API_URL}/notifications/",
-            json=notification_data,
-            headers={'Accept': 'application/json'}
-        )
-        
-        return JsonResponse({'message': '견적이 발송되었습니다.'})
+
+        logger.info(f"견적서 발송 데이터: {estimate_data}")
+
+        # 3. 공통 API 서버로 견적서 발송
+        try:
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/estimates/{pk}/send/",
+                json=estimate_data,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                timeout=10  # 타임아웃 설정
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"공통 API 서버 응답 오류: {response.status_code} - {response.text}")
+                return JsonResponse({
+                    'error': '견적서 발송 중 오류가 발생했습니다.',
+                    'details': response.text
+                }, status=500)
+
+            # 4. 견적서 상태 업데이트
+            estimate.status = 'SENT'
+            estimate.sent_at = timezone.now()
+            estimate.save()
+
+            logger.info(f"견적서 발송 완료: {estimate.id}")
+
+            return JsonResponse({
+                'success': True,
+                'message': '견적서가 성공적으로 발송되었습니다.',
+                'estimate_id': estimate.id
+            })
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"견적 발송 중 네트워크 오류: {e}")
+            return JsonResponse({
+                'error': '견적 발송 중 네트워크 오류가 발생했습니다.',
+                'details': str(e)
+            }, status=500)
 
     except Exception as e:
-        logger.error(f"견적 발송 중 오류 발생: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.error(f"견적 발송 중 예상치 못한 오류: {e}", exc_info=True)
+        return JsonResponse({
+            'error': '견적 발송 중 오류가 발생했습니다.',
+            'details': str(e)
+        }, status=500)
 
 
 @permission_classes([AllowAny])

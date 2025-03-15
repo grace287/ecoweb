@@ -317,24 +317,24 @@ def estimate_list(request):
     """견적 목록 조회"""
     try:
         response = requests.get(
-            f"{settings.COMMON_API_URL}/api/estimates/",
+            f"{settings.COMMON_API_URL}/estimates/",
             params={'demand_user_id': request.user.id},
             headers={'Accept': 'application/json'}
         )
         
         if response.status_code == 200:
             estimates = response.json()
-            return render(request, 'demand/estimates/estimate_list.html', {
+            return render(request, 'demand/estimates/demand_estimate_list.html', {
                 'estimates': estimates['estimates']
             })
         else:
-            return render(request, 'demand/estimates/estimate_list.html', {
+            return render(request, 'demand/estimates/demand_estimate_list.html', {
                 'error': '견적 목록을 불러오는데 실패했습니다.'
             })
             
     except requests.RequestException as e:
         logger.error(f"견적 목록 조회 중 오류 발생: {str(e)}")
-        return render(request, 'demand/estimates/estimate_list.html', {
+        return render(request, 'demand/estimates/demand_estimate_list.html', {
             'error': '서버와의 통신 중 오류가 발생했습니다.'
         })
     
