@@ -20,6 +20,8 @@ urlpatterns = [
     
     # 측정 장소 조회
     path('measurement-locations/', views.get_measurement_locations, name='measurement-locations'),
+
+    path('estimates/<int:pk>/send/', views.estimate_send, name='estimate_send'),
     
     # ViewSet 라우트 추가
     *router.urls

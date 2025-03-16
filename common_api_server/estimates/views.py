@@ -32,6 +32,7 @@ import logging
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from django.db import transaction  # transaction 모듈 추가
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -726,55 +727,30 @@ def estimate_detail(request, estimate_id):
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
+@csrf_exempt
 def estimate_send(request, pk):
     """견적서 발송 처리"""
     try:
-        # 1. 견적 요청 조회
-        estimate_request = EstimateRequest.objects.get(id=pk)
+        # 1. 기존 견적 조회
+        estimate = get_object_or_404(Estimate, id=pk)
         
-        # 2. 견적서 데이터 저장
-        estimate_data = request.data
-        logger.info(f"수신된 견적서 데이터: {estimate_data}")
+        # 2. 견적서 데이터 업데이트
+        data = request.data
+        logger.info(f"수신된 견적서 데이터: {data}")
 
-        estimate = Estimate.objects.create(
-            estimate_request=estimate_request,
-            provider_id=estimate_data['provider_id'],
-            provider_name=estimate_data['provider_name'],
-            writer_name=estimate_data.get('writer_name'),
-            writer_email=estimate_data.get('writer_email'),
-            maintain_points=estimate_data.get('maintain_points', 0),
-            recommend_points=estimate_data.get('recommend_points', 0),
-            unit_price=estimate_data.get('unit_price', 0),
-            discount_amount=estimate_data.get('discount_amount', 0),
-            total_amount=estimate_data.get('total_amount', 0),
-            notes=estimate_data.get('notes', ''),
-            status='SENT'
-        )
-
-        # 3. 수요자 서버에 견적서 알림
-        try:
-            notification_data = {
-                'estimate_id': estimate.id,
-                'estimate_request_id': pk,
-                'provider_id': estimate_data['provider_id'],
-                'provider_name': estimate_data['provider_name'],
-                'total_amount': estimate_data.get('total_amount', 0),
-                'created_at': estimate.created_at.isoformat()
-            }
-
-            response = requests.post(
-                f"{settings.DEMAND_API_URL}/estimates/notifications/",
-                json=notification_data,
-                headers={'Content-Type': 'application/json'},
-                timeout=10
-            )
-            
-            if response.status_code != 200:
-                logger.error(f"수요자 서버 알림 실패: {response.status_code} - {response.text}")
-
-        except requests.exceptions.RequestException as e:
-            logger.error(f"수요자 서버 알림 전송 실패: {e}")
-            # 알림 실패해도 견적서는 저장됨
+        # 견적서 업데이트
+        estimate.writer_name = data.get('writer_name')
+        estimate.writer_email = data.get('writer_email')
+        estimate.maintain_points = data.get('maintain_points', 0)
+        estimate.recommend_points = data.get('recommend_points', 0)
+        estimate.unit_price = data.get('unit_price', 0)
+        estimate.discount_amount = data.get('discount_amount', 0)
+        estimate.total_amount = data.get('total_amount', 0)
+        estimate.notes = data.get('notes')
+        estimate.status = 'SENT'
+        estimate.sent_at = timezone.now()
+        estimate.save()
 
         return JsonResponse({
             'success': True,
@@ -782,17 +758,15 @@ def estimate_send(request, pk):
             'estimate_id': estimate.id
         })
 
-    except EstimateRequest.DoesNotExist:
-        logger.error(f"견적 요청 {pk}를 찾을 수 없음")
+    except Estimate.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'error': '견적 요청을 찾을 수 없습니다.'
+            'error': '견적을 찾을 수 없습니다.'
         }, status=404)
     
     except Exception as e:
         logger.error(f"견적서 발송 처리 중 오류: {e}", exc_info=True)
         return JsonResponse({
             'success': False,
-            'error': '견적서 발송 중 오류가 발생했습니다.',
-            'details': str(e)
+            'error': str(e)
         }, status=500)

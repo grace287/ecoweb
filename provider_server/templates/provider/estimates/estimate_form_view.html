@@ -3,20 +3,22 @@
 {% load humanize %}
 
 {% block content %}
+<!-- CSRF 토큰을 숨겨진 input으로 추가 -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
 <div class="estimate-form-container">
-    <h1 class="main-title">ESTIMATE VIEW <span class="subtitle">견적서 조회</span></h1>
+    <div class="main-title">
+        <h2>견적서 조회</h2>
+        <span class="subtitle">견적서 ID: {{ estimate.estimate_request_id }}</span>
+    </div>
 
     <div class="estimate-form-wrapper">
         <!-- 상단 버튼 그룹 -->
         <div class="action-buttons">
-            <div class="right-buttons">
-                {% if can_edit %}
-                    <button type="button" class="btn btn-primary" onclick="editEstimate()">견적 수정</button>
-                {% endif %}
-                {% if can_send %}
-                    <button type="button" class="btn btn-success" onclick="sendEstimate()">견적 발송</button>
-                {% endif %}
-            </div>
+            {% if estimate.status != 'SENT' %}
+                <button onclick="editEstimate()" class="btn btn-primary">수정하기</button>
+                <button onclick="sendEstimate('{{ estimate.estimate_request_id }}')" class="btn btn-success">견적서 발송</button>
+            {% endif %}
         </div>
 
         <!-- 수요자(고객) 정보 섹션 -->
@@ -44,9 +46,10 @@
             </div>
         </div>
 
-        <!-- 견적서 내용 -->
+        <div class="estimate-form" data-estimate-id="{{ estimate.estimate_request_id }}">
+            <!-- 견적서 내용 -->
         <div class="estimate-content">
-            <h2 class="estimate-title">견적서_(주){{ estimate.customer_name }} 고객님.</h2>
+            <h2 class="estimate-title">견적서_(주){{ original_request.contact_name }} 고객님.</h2>
             
             <!-- 견적 정보 그리드 -->
             <div class="info-grid">
@@ -178,6 +181,7 @@
                     <p class="date">{{ estimate.updated_at|date:"Y.m.d" }}</p>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 </div>
@@ -449,7 +453,9 @@
     }
 }
 </style>
-
+<script>
+    const COMMON_API_URL = "{{ common_api_url }}";  // Django에서 전달한 API URL
+</script>
 <script>
 
 async function editEstimate() {
@@ -459,27 +465,60 @@ async function editEstimate() {
     window.location.href = `/estimate_list/estimates/received/${estimateId}/update/`;
 }
 
-async function sendEstimate() {
-    if (!confirm('견적을 발송하시겠습니까?')) return;
+async function sendEstimate(estimateId) {
+    if (!confirm('견적서를 발송하시겠습니까?')) return;
 
-    const estimateId = '{{ estimate.id }}';
     try {
-        const response = await fetch(`/estimate_list/estimates/received/${estimateId}/send/`, {
+        console.log("발송할 견적 ID:", estimateId);
+
+        // CSRF 토큰 가져오기
+        const csrfTokenElement = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (!csrfTokenElement) {
+            throw new Error('CSRF 토큰을 찾을 수 없습니다.');
+        }
+        const csrfToken = csrfTokenElement.value;
+
+        // 요청 실행
+        const response = await fetch(`${COMMON_API_URL}/estimates/estimates/${estimateId}/send/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': csrfToken
             }
         });
 
-        if (!response.ok) throw new Error('견적 발송 실패');
+        // 🚨 응답이 JSON이 아닐 가능성이 있으므로 확인 후 처리
+        let data;
+        if (response.headers.get('content-type')?.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            console.error('서버 응답이 JSON 형식이 아님:', text);
+            throw new Error('서버 오류: 응답이 올바르지 않습니다.');
+        }
 
-        alert('견적이 발송되었습니다.');
-        window.location.reload();
+        // HTTP 상태 코드 확인
+        if (!response.ok) {
+            throw new Error(data.error || `견적서 발송 실패 (HTTP ${response.status})`);
+        }
+
+        alert('✅ 견적서가 성공적으로 발송되었습니다!');
+        window.location.href = `/estimate_list/estimates/received/${estimateId}/view/`;
+
     } catch (error) {
-        console.error('견적 발송 오류:', error);
-        alert('견적 발송 중 오류가 발생했습니다.');
+        console.error('🚨 견적 발송 오류:', error);
+        alert(`❌ 견적 발송 중 오류가 발생했습니다: ${error.message}`);
     }
+}
+
+
+// CSRF 토큰 가져오기 함수
+function getCsrfToken() {
+    const token = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (!token) {
+        throw new Error('CSRF 토큰을 찾을 수 없습니다.');
+    }
+    return token.value;
 }
 </script>
 {% endblock %}
