@@ -160,7 +160,6 @@
 <script id="estimateData" type="application/json">
     {{ original_request|json_script:"estimateData" }}
 </script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const estimateId = '{{ estimate_id }}';
@@ -239,61 +238,60 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 견적 저장 함수
-    async function saveEstimate(isDraft = false) {
-        try {
-            // 측정 항목 데이터 수집
-            const measurementItems = [];
-            document.querySelectorAll('.measurement-item').forEach(item => {
-                const maintainQty = parseInt(item.querySelector('.maintain-qty')?.value || '0');
-                const recommendQty = parseInt(item.querySelector('.recommend-qty')?.value || '0');
-                const unitPrice = parseInt((item.querySelector('.unit-price')?.value || '0').replace(/[^\d]/g, ''));
-                
-                measurementItems.push({
-                    category_id: item.dataset.categoryId,
-                    maintain_points: maintainQty,
-                    recommend_points: recommendQty,
-                    unit_price: unitPrice
-                });
+    async function saveEstimate() {
+    try {
+        const estimateId = '{{ estimate_id }}';
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        const formData = new FormData();
+
+        // 측정 항목 수집
+        const measurementItems = [];
+        document.querySelectorAll('.measurement-item').forEach(item => {
+            measurementItems.push({
+                category_id: item.dataset.categoryId,
+                maintain_points: parseInt(item.querySelector('.maintain-qty').value || '0'),
+                recommend_points: parseInt(item.querySelector('.recommend-qty').value || '0'),
+                unit_price: parseInt(item.querySelector('.unit-price').value.replace(/,/g, '') || '0')
             });
+        });
 
-            // FormData 객체 생성
-            const formData = new FormData();
-            formData.append('estimate_request_id', estimateId);
-            formData.append('measurement_items', JSON.stringify(measurementItems));
-            formData.append('total_amount', unformatNumber(document.getElementById('totalAmount').value));
-            formData.append('status', isDraft ? 'DRAFT' : 'SAVED');
-            formData.append('notes', document.querySelector('textarea')?.value || '');
+        // JSON 항목은 문자열로 stringify해서 FormData에 넣어야 함
+        formData.append('measurement_items', JSON.stringify(measurementItems));
+        formData.append('total_amount', document.getElementById('totalAmount').value.replace(/,/g, ''));
+        formData.append('notes', document.querySelector('textarea[name="notes"]').value);
 
-            // 파일 추가
-            uploadedFiles.forEach((fileData, fileId) => {
-                formData.append(fileId, fileData.file);
-            });
-
-            // 서버에 데이터 전송
-            const response = await fetch(`/estimate_list/estimates/received/${estimateId}/respond/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken // ✅ Content-Type 제거하여 FormData 자동 처리
-                },
-                body: formData
-            });
-
-
-            if (!response.ok) {
-                throw new Error('견적 저장 실패');
+        // 파일들 추가
+        document.querySelectorAll('.file-upload-section input[type="file"]').forEach(input => {
+            if (input.files.length > 0) {
+                formData.append(input.name, input.files[0]);
             }
+        });
 
-            const result = await response.json();
-            alert(isDraft ? '견적이 임시저장되었습니다.' : '견적이 저장되었습니다.');
+        // fetch 요청
+        const response = await fetch(`/estimate_list/estimates/received/${estimateId}/respond/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+                // Content-Type 생략: 자동 처리
+            },
+            body: formData
+        });
 
-            // ✅ 견적 조회 화면으로 이동
-            window.location.href = result.redirect_url;  // 변경된 URL 적용
-
-        } catch (error) {
-            console.error('견적 저장 오류:', error);
-            alert('견적 저장 중 오류가 발생했습니다.');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || '견적 저장 실패');
         }
+
+        const data = await response.json();
+        alert('견적이 저장되었습니다.');
+        window.location.href = `/estimate_list/estimates/received/${estimateId}/view/`;
+
+    } catch (error) {
+        console.error('견적 저장 오류:', error);
+        alert(`견적 저장 실패: ${error.message}`);
     }
+}
 
     // 견적 취소 처리
     function handleCancel() {

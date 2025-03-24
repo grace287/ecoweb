@@ -479,13 +479,13 @@ async function sendEstimate(estimateId) {
         const csrfToken = csrfTokenElement.value;
 
         // 요청 실행
-        const response = await fetch(`${COMMON_API_URL}/estimates/estimates/${estimateId}/send/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            }
-        });
+        const response = await fetch(`/estimate_list/estimates/received/${estimateId}/send/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                });
 
         // 🚨 응답이 JSON이 아닐 가능성이 있으므로 확인 후 처리
         let data;

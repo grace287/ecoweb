@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 import logging
 from rest_framework import viewsets, permissions
@@ -336,10 +336,6 @@ def provider_estimate_list(request): # 필요에 따라 필터 적용
 
 
 @api_view(['GET'])
-def provider_estimate_detail(request):
-    return render(request, 'provider/estimates/provider_estimate_detail.html')
-
-@api_view(['GET'])
 @login_required
 def get_estimate_list(request):
     """견적 리스트 조회 API"""
@@ -397,8 +393,10 @@ def provider_estimate_accept(request, estimate_id):
     return render(request, 'provider/estimates/provider_estimate_detail.html')
 
 
-def provider_estimate_form(request):
-    return render(request, 'provider/estimates/estimate_form.html')
+@api_view(['GET'])
+def provider_estimate_detail(request):
+    return render(request, 'provider/estimates/provider_estimate_detail.html')
+
 
 @csrf_exempt
 def notify_estimate_request(request):
@@ -551,6 +549,7 @@ def estimate_detail(request, pk):
     
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def check_estimate_exists(request, pk):
     """견적 존재 여부 확인"""
     try:
@@ -580,173 +579,87 @@ def check_estimate_exists(request, pk):
         return JsonResponse({
             'error': str(e)
         }, status=500)
+    
 
 @api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
 def provider_estimate_form(request, pk):
     """견적서 조회 및 저장"""
     try:
         if request.method == 'GET':
-            # 견적 요청 정보 조회
             response = requests.get(
                 f"{settings.COMMON_API_URL}/estimates/estimates/received/{pk}/",
                 headers={'Accept': 'application/json'}
             )
             response.raise_for_status()
             estimate_data = response.json()
-            
-            logger.info(f"받은 견적 요청 데이터: {estimate_data}")
 
-            # 고객 정보 조회
             customer_info = None
             if estimate_data.get('demand_user_id'):
                 try:
-                    customer_info_response = requests.get(
+                    resp = requests.get(
                         f"{settings.DEMAND_API_URL}/users/{estimate_data['demand_user_id']}/",
                         timeout=5,
                         headers={'Accept': 'application/json'}
                     )
-                    if customer_info_response.status_code == 200:
-                        customer_info = customer_info_response.json()
+                    if resp.status_code == 200:
+                        customer_info = resp.json()
                 except Exception as e:
-                    logger.error(f"고객 정보 조회 중 오류: {e}")
+                    logger.warning(f"고객 정보 조회 실패: {e}")
 
-            # 기존 견적서 조회
             existing_estimate = ProviderEstimate.objects.filter(
                 estimate_request_id=pk,
                 provider=request.user
             ).first()
 
-            context = {
+            return render(request, 'provider/estimates/estimate_form.html', {
                 'original_request': estimate_data,
                 'customer': customer_info,
                 'estimate_id': pk,
                 'existing_estimate': existing_estimate
-            }
-            
-            return render(request, 'provider/estimates/estimate_form.html', context)
+            })
 
         elif request.method == 'POST':
-            logger.info(f"견적서 저장 요청 - 견적 요청 ID: {pk}")
-            
-            # 요청 데이터 파싱
             measurement_items = json.loads(request.POST.get('measurement_items', '[]'))
-            total_amount = request.POST.get('total_amount', '0').replace(',', '')  # 콤마 제거
-            status = request.POST.get('status', 'DRAFT')
+            total_amount = request.POST.get('total_amount', '0').replace(',', '')
             notes = request.POST.get('notes', '')
 
-            logger.info(f"측정 항목: {measurement_items}")
-            logger.info(f"총 금액: {total_amount}")
-
-            # 견적서 생성 또는 업데이트
-            estimate, created = ProviderEstimate.objects.update_or_create(
-                estimate_request_id=pk,
-                provider=request.user,
-                defaults={
-                    'maintain_points': sum(item.get('maintain_points', 0) for item in measurement_items),
-                    'recommend_points': sum(item.get('recommend_points', 0) for item in measurement_items),
-                    'unit_price': measurement_items[0].get('unit_price', 0) if measurement_items else 0,
-                    'total_amount': total_amount,
-                    'status': status,
-                    'notes': notes
-                }
-            )
-
-            # 공통 API 서버에 상태 업데이트
-            common_api_data = {
-                'status': 'RESPONSE',
+            payload = {
+                'estimate_id': pk,
                 'provider_user_id': request.user.id,
                 'measurement_items': measurement_items,
                 'total_amount': total_amount,
-                'notes': notes
+                'notes': notes,
             }
 
-            response = requests.put(
-                f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/",
-                json=common_api_data,
-                headers={'Accept': 'application/json'}
+            response = requests.post(
+                f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/create_or_update/",
+                json=payload,
+                headers={'Content-Type': 'application/json'}
             )
             response.raise_for_status()
 
-            # 📌 파일 업로드 처리
-        for file_key, file in request.FILES.items():
-            EstimateFile.objects.create(estimate=estimate, file_type=file_key, file=file)
-
+            estimate_obj, _ = ProviderEstimate.objects.get_or_create(
+                estimate_request_id=pk,
+                provider=request.user
+            )
+            for file_key, file in request.FILES.items():
+                EstimateFile.objects.create(estimate=estimate_obj, file_type=file_key, file=file)
 
             return JsonResponse({
                 'success': True,
                 'message': '견적이 저장되었습니다.',
-                'estimate_id': estimate.id,
-                'redirect_url': f'/estimate_list/estimates/received/{estimate.id}/view/'
+                'estimate_id': pk,
+                'redirect_url': f'/estimate_list/estimates/received/{pk}/view/'
             })
 
-    except requests.RequestException as e:
-        logger.error(f"API 요청 중 오류: {e}")
-        return JsonResponse({
-            'error': 'API 서버 통신 중 오류가 발생했습니다.',
-            'details': str(e)
-        }, status=500)
     except Exception as e:
-        logger.error(f"견적 처리 중 오류: {e}")
-        return JsonResponse({
-            'error': '견적 처리 중 오류가 발생했습니다.',
-            'details': str(e)
-        }, status=500)
-
-
-@api_view(['POST'])
-def provider_estimate_save(request, pk):
-    """견적서 저장 및 조회 가능 상태로 변경"""
-    try:
-        # 요청 데이터 파싱
-        measurement_items = json.loads(request.POST.get('measurement_items', '[]'))
-        total_amount = request.POST.get('total_amount', '0').replace(',', '')
-        notes = request.POST.get('notes', '')
-        
-        # Provider 서버에 견적서 생성 또는 업데이트
-        estimate, created = ProviderEstimate.objects.update_or_create(
-            estimate_request_id=pk,
-            provider=request.user,
-            defaults={
-                'maintain_points': sum(item.get('maintain_points', 0) for item in measurement_items),
-                'recommend_points': sum(item.get('recommend_points', 0) for item in measurement_items),
-                'unit_price': measurement_items[0].get('unit_price', 0) if measurement_items else 0,
-                'total_amount': total_amount,
-                'status': 'SAVED',  # 저장된 상태로 변경
-                'notes': notes
-            }
-        )
-        
-        # Common API 서버에 상태 업데이트
-        common_api_data = {
-            'status': 'SAVED',
-            'provider_user_id': request.user.id,
-            'measurement_items': measurement_items,
-            'total_amount': total_amount,
-            'notes': notes
-        }
-        
-        response = requests.put(
-            f"{settings.COMMON_API_URL}/estimates/{pk}/",  # common_api_server의 URL 패턴 확인 필요
-            json=common_api_data,
-            headers={'Content-Type': 'application/json'}
-        )
-        response.raise_for_status()
-        
-        return JsonResponse({
-            'success': True,
-            'message': '견적이 저장되었습니다.',
-            'estimate_id': estimate.id,
-            'redirect_url': f'/estimate_list/estimates/received/{estimate.id}/view/'
-        })
-        
-    except requests.RequestException as e:
-        logger.error(f"API 요청 중 오류: {e}")
+        logger.error(f"[provider_estimate_form] 오류 발생: {e}", exc_info=True)
         return JsonResponse({'error': str(e)}, status=500)
-    except Exception as e:
-        logger.error(f"견적 저장 중 오류: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def provider_estimate_form_view(request, pk):
     """견적 조회 페이지"""
     try:
@@ -821,87 +734,45 @@ def provider_estimate_form_view(request, pk):
         }, status=500)
     
 
-@api_view(['GET', 'PUT'])
+@api_view(['PUT'])
+@permission_classes([AllowAny])
 def provider_estimate_form_update(request, pk):
-    """견적 수정 페이지 및 처리"""
     try:
-        logger.info(f"견적 수정 요청 - 견적 요청 ID: {pk}")
+        data = json.loads(request.body.decode('utf-8'))
 
-        existing_estimate = ProviderEstimate.objects.filter(
-            estimate_request_id=pk,
-            provider=request.user
-        ).first()
+        payload = {
+            'estimate_id': pk,
+            'provider_user_id': request.user.id,
+            'measurement_items': data.get('measurement_items', []),
+            'total_amount': data.get('total_amount', '0'),
+            'notes': data.get('notes', ''),
+            'writer_name': data.get('writer_name', ''),
+            'writer_email': data.get('writer_email', ''),
+            'status': 'SAVED'
+        }
 
-        if not existing_estimate:
-            logger.warning(f"견적 ID {pk}에 대한 견적서를 찾을 수 없음")
-            return JsonResponse({'error': '해당 견적서를 찾을 수 없습니다.'}, status=404)
+        response = requests.post(
+            f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/create_or_update/",
+            json=payload,
+            headers={'Content-Type': 'application/json'}
+        )
+        response.raise_for_status()
 
-        if request.method == 'GET':
-            response = requests.get(
-                f"{settings.COMMON_API_URL}/estimates/estimates/received/{pk}/",
-                headers={'Accept': 'application/json'}
-            )
-            response.raise_for_status()
-            estimate_data = response.json()
-
-            context = {
-                'estimate': existing_estimate,
-                'original_request': estimate_data,
-                'can_edit': existing_estimate.status in ['DRAFT', 'SAVED'],
-                'estimateId': pk  
-            }
-
-            return render(request, 'provider/estimates/estimate_form_update.html', context)
-
-        elif request.method == 'PUT':
-            try:
-                data = json.loads(request.body.decode('utf-8'))
-                logger.info(f"수정 데이터 수신: {data}")
-
-                existing_estimate.writer_name = data.get('writer_name', existing_estimate.writer_name)
-                existing_estimate.writer_email = data.get('writer_email', existing_estimate.writer_email)
-                existing_estimate.notes = data.get('notes', existing_estimate.notes)
-                existing_estimate.discount_amount = int(data.get('discount_amount', 0))
-
-                measurement_items = data.get('measurement_items', [])
-                total_maintain = sum(int(item.get('maintain_points', 0)) for item in measurement_items)
-                total_recommend = sum(int(item.get('recommend_points', 0)) for item in measurement_items)
-                total_price = sum(
-                    (int(item.get('maintain_points', 0)) + int(item.get('recommend_points', 0))) * int(item.get('unit_price', 0))
-                    for item in measurement_items
-                )
-
-                existing_estimate.maintain_points = total_maintain
-                existing_estimate.recommend_points = total_recommend
-                existing_estimate.unit_price = total_price // max(1, (total_maintain + total_recommend))
-
-                base_amount = total_price
-                vat_amount = int((base_amount - existing_estimate.discount_amount) * 0.1)
-                existing_estimate.total_amount = base_amount - existing_estimate.discount_amount + vat_amount
-
-                existing_estimate.save()
-                logger.info(f"견적서 수정 완료: {existing_estimate.id}")
-
-                return JsonResponse({
-                    'success': True,
-                    'message': '견적이 수정되었습니다.',
-                    'redirect_url': f'/estimate_list/estimates/received/{pk}/view/'
-                })
-
-            except Exception as e:
-                logger.error(f"견적 수정 오류 발생: {e}")
-                return JsonResponse({'error': '견적 수정 중 오류 발생', 'details': str(e)}, status=500)
-
-        # 🔴 Make sure there's always a return statement
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
+        return JsonResponse({
+            'success': True,
+            'message': '견적이 수정되었습니다.',
+            'redirect_url': f'/estimate_list/estimates/received/{pk}/view/'
+        })
 
     except Exception as e:
-        logger.error(f"예상치 못한 오류: {e}")
-        return JsonResponse({'error': '알 수 없는 오류가 발생했습니다.', 'details': str(e)}, status=500)
+        logger.error(f"수정 오류: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 
     
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def provider_send_estimate(request, pk):
     """견적서 발송"""
     try:
@@ -932,7 +803,7 @@ def provider_send_estimate(request, pk):
         
         # 3. Common API 서버로 견적서 발송
         response = requests.post(
-            f"{settings.COMMON_API_URL}/estimates/{pk}/send/",  # Common API 서버의 URL 패턴 확인 필요
+            f"{settings.COMMON_API_URL}/estimates/estimates/{pk}/send/",  # Common API 서버의 URL 패턴 확인 필요
             json=estimate_data,
             headers={'Content-Type': 'application/json'}
         )
@@ -1142,7 +1013,7 @@ class ReceivedEstimateViewSet(viewsets.ViewSet):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def toggle_star_estimate(request):
     """견적 즐겨찾기 토글"""
     try:

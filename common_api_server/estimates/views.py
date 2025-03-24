@@ -14,7 +14,6 @@ from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 import json
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .serializers import (
@@ -599,7 +598,6 @@ def calculate_status_counts(estimates):
     return status_counts
     
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
 @permission_classes([AllowAny])
 def received_estimates(request):
     """받은 견적 요청 목록 조회"""
@@ -723,8 +721,48 @@ def estimate_detail(request, estimate_id):
             'error': '견적서 조회 중 오류가 발생했습니다.',
             'details': str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+from rest_framework.decorators import authentication_classes
 
-
+@api_view(['POST'])
+@permission_classes([AllowAny])  # 임시로 모든 요청 허용
+@authentication_classes([])      # ✅ 인증 비활성화 명시적으로 추가
+@csrf_exempt                     # ✅ CSRF도 제거
+def create_or_update_estimate(request, pk):  # pk 파라미터 추가
+    """견적서 생성 또는 업데이트"""
+    try:
+        data = request.data
+        
+        # 기존 견적서 조회
+        estimate = Estimate.objects.filter(id=pk).first()
+        
+        if estimate:
+            # 기존 견적서 업데이트
+            serializer = EstimateSerializer(estimate, data=data, partial=True)
+        else:
+            # 새 견적서 생성
+            data['id'] = pk  # pk 값을 데이터에 추가
+            serializer = EstimateSerializer(data=data)
+            
+        if serializer.is_valid():
+            estimate = serializer.save()
+            return Response({
+                'success': True,
+                'message': '견적이 저장되었습니다.',
+                'estimate_id': estimate.id
+            })
+        else:
+            logger.error(f"유효성 검사 실패: {serializer.errors}")
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=400)
+            
+    except Exception as e:
+        logger.error(f"견적 저장 중 오류: {e}", exc_info=True)
+        return Response({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

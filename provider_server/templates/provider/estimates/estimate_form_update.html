@@ -699,8 +699,8 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             console.log('전송할 데이터:', formData); // 디버깅용
-
-            const response = await fetch(`/estimate_list/estimates/received/${estimateId}/update/`, {
+            // 공통api서버 견적서 수정 엔드포인트
+            const response = await fetch(`${COMMON_API_URL}/estimates/estimates/create_or_update/${estimateId}/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

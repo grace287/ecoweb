@@ -97,29 +97,35 @@ MIDDLEWARE = [
 
 AUTH_USER_MODEL = "users.ProviderUser"
 
+# 세션 설정
+SESSION_COOKIE_AGE = 86400  # 24시간
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+
+# 인증 설정
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+# REST Framework 설정
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ],
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
-        'rest_framework.parsers.FormParser',
-        'rest_framework.parsers.MultiPartParser',
-    ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated',
         'rest_framework.permissions.AllowAny',
     ],
 }
 
+# CSRF 설정
+CSRF_COOKIE_SECURE = False  # 개발환경에서는 False
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = True
 
+# 쿠키 설정
+SESSION_COOKIE_SECURE = False  # 개발환경에서는 False
+SESSION_COOKIE_HTTPONLY = True
 
 ROOT_URLCONF = 'config.urls'
 

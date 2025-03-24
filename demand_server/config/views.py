@@ -311,32 +311,6 @@ def customization_update(request):
 
 
 
-@api_view(['GET'])
-@login_required
-def estimate_list(request):
-    """견적 목록 조회"""
-    try:
-        response = requests.get(
-            f"{settings.COMMON_API_URL}/estimates/",
-            params={'demand_user_id': request.user.id},
-            headers={'Accept': 'application/json'}
-        )
-        
-        if response.status_code == 200:
-            estimates = response.json()
-            return render(request, 'demand/estimates/demand_estimate_list.html', {
-                'estimates': estimates['estimates']
-            })
-        else:
-            return render(request, 'demand/estimates/demand_estimate_list.html', {
-                'error': '견적 목록을 불러오는데 실패했습니다.'
-            })
-            
-    except requests.RequestException as e:
-        logger.error(f"견적 목록 조회 중 오류 발생: {str(e)}")
-        return render(request, 'demand/estimates/demand_estimate_list.html', {
-            'error': '서버와의 통신 중 오류가 발생했습니다.'
-        })
     
 @api_view(['GET', 'POST'])
 @csrf_exempt
@@ -711,35 +685,73 @@ def request_payment(request, estimate_id):
             "success": False,
             "error": f"결제 서버 통신 중 오류 발생: {str(e)}"
         }, status=500)
+    
+
 
 @api_view(['GET'])
 @login_required
-def received_estimates(request):
-    """받은 견적 요청 목록 조회"""
+def estimate_list(request):
+    """견적 요청 목록 조회"""
     try:
-        # Common API 서버에서 받은 견적 목록 조회
         response = requests.get(
-            f"{settings.COMMON_API_URL}/estimates/received/",
+            f"{settings.COMMON_API_URL}/estimates/estimates/demand/received/",  # 엔드포인트 수정
             params={
                 'demand_user_id': request.user.id,
                 'status': request.GET.get('status', ''),
                 'search': request.GET.get('search', '')
             },
-            headers={
-                'Content-Type': 'application/json'
-            }
+            headers={'Accept': 'application/json'}
         )
-
-        # 응답 처리
+        
         if response.status_code == 200:
             estimates_data = response.json()
-            return render(request, 'demand/estimates/received_estimates.html', {
+            return render(request, 'demand/estimates/demand_estimate_list.html', {
                 'estimates': estimates_data.get('estimates', []),
                 'total_count': estimates_data.get('total_count', 0),
                 'status_counts': estimates_data.get('status_counts', {})
             })
         else:
-            # 오류 처리
+            logger.error(f"견적 목록 조회 실패: {response.status_code} - {response.text}")
+            return render(request, 'demand/estimates/demand_estimate_list.html', {
+                'error': '견적 목록을 불러오는데 실패했습니다.'
+            })
+            
+    except requests.RequestException as e:
+        logger.error(f"견적 목록 조회 중 오류 발생: {str(e)}")
+        return render(request, 'demand/estimates/demand_estimate_list.html', {
+            'error': '서버와의 통신 중 오류가 발생했습니다.'
+        })
+
+@api_view(['GET'])
+@login_required
+def received_estimates(request):
+    """받은 견적 목록 조회"""
+    try:
+        response = requests.get(
+            f"{settings.COMMON_API_URL}/estimates/estimates/demand/received/",
+            params={
+                'demand_user_id': request.user.id,
+                'status': request.GET.get('status', ''),
+                'search': request.GET.get('search', ''),
+                'sort': request.GET.get('sort', '-created_at')  # 정렬 옵션 추가
+            },
+            headers={'Accept': 'application/json'}
+        )
+
+        if response.status_code == 200:
+            estimates_data = response.json()
+            
+            # 상태별 필터링을 위한 현재 상태 추가
+            current_status = request.GET.get('status', '')
+            
+            return render(request, 'demand/estimates/received_estimates.html', {
+                'estimates': estimates_data.get('estimates', []),
+                'total_count': estimates_data.get('total_count', 0),
+                'status_counts': estimates_data.get('status_counts', {}),
+                'current_status': current_status,
+                'search_term': request.GET.get('search', '')
+            })
+        else:
             logger.error(f"받은 견적 목록 조회 실패: {response.status_code} - {response.text}")
             return render(request, 'demand/estimates/received_estimates.html', {
                 'error': '견적 목록을 불러오는 중 오류가 발생했습니다.',
@@ -755,25 +767,29 @@ def received_estimates(request):
     
 @api_view(['GET'])
 @login_required
-def received_estimate_detail(request, estimate_id):
-    """받은 견적 상세 정보 조회"""
+def received_estimate_detail(request, pk):
+    """받은 견적 상세 조회"""
     try:
-        # Common API 서버에서 견적 상세 정보 조회
         response = requests.get(
-            f"{settings.COMMON_API_URL}/estimates/{estimate_id}/",
-            headers={
-                'Content-Type': 'application/json'
-            }
+            f"{settings.COMMON_API_URL}/estimates/estimates/demand/received/{pk}/",
+            headers={'Accept': 'application/json'}
         )
 
-        # 응답 처리
         if response.status_code == 200:
             estimate_data = response.json()
+            
+            # 견적 상태에 따른 처리 가능한 액션 결정
+            available_actions = {
+                'can_approve': estimate_data.get('status') == 'RESPONSE',
+                'can_reject': estimate_data.get('status') == 'RESPONSE',
+                'can_cancel': estimate_data.get('status') in ['REQUEST', 'RESPONSE']
+            }
+            
             return render(request, 'demand/estimates/received_estimate_detail.html', {
-                'estimate': estimate_data
+                'estimate': estimate_data,
+                'available_actions': available_actions
             })
         else:
-            # 오류 처리
             logger.error(f"받은 견적 상세 조회 실패: {response.status_code} - {response.text}")
             return render(request, 'demand/estimates/received_estimate_detail.html', {
                 'error': '견적 상세 정보를 불러오는 중 오류가 발생했습니다.'
