@@ -1,203 +1,255 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}견적 요청 목록 - EcoAnE{% endblock %}
+{% block title %}견적 목록 - EcoAnE{% endblock %}
 
 {% block content %}
-<div class="estimates-container">
-    <h2 class="page-title">견적요청 목록</h2>
-    
-    <!-- 상태 필터 추가 -->
-    <div class="status-filter">
-        <select id="statusFilter" class="form-select">
-            <option value="">전체 상태</option>
-            <option value="REQUEST">요청</option>
-            <option value="RESPONSE">응답</option>
-            <option value="APPROVED">승인</option>
-            <option value="REJECTED">거절</option>
-        </select>
+<div class="container mt-5">
+    <h1 class="text-center mb-4">견적 목록</h1>
+
+    <!-- 견적 유형 탭 -->
+    <ul class="nav nav-pills mb-4 justify-content-center">
+        <li class="nav-item">
+            <a class="nav-link active" id="requestTab" onclick="loadEstimates('request')">보낸 견적 요청</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="responseTab" onclick="loadEstimates('response')">받은 견적서</a>
+        </li>
+    </ul>
+
+    <!-- 상태 필터 -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="input-group">
+                <input type="text" class="form-control" id="searchInput" placeholder="서비스 또는 주소로 검색">
+                <button class="btn btn-outline-primary" onclick="searchEstimates()">검색</button>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="statusFilter" onchange="loadEstimates(currentPage)">
+                <option value="">전체보기</option>
+                <option value="REQUEST">견적 요청중</option>
+                <option value="RESPONSE">견적서 수신</option>
+                <option value="APPROVED">승인완료</option>
+                <option value="REJECTED">거절됨</option>
+            </select>
+        </div>
     </div>
-    
-    <div class="estimates-table">
-        <table>
-            <thead>
+
+    <!-- 견적 목록 테이블 -->
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
                 <tr>
-                    <th>순번</th>
+                    <th>번호</th>
                     <th>서비스</th>
                     <th>장소</th>
                     <th>상태</th>
-                    <th>견적금액</th>
-                    <th>제공자</th>
-                    <th>요청일</th>
-                    <th>조회수</th>
+                    <th>견적수</th>
+                    <th>등록일</th>
                 </tr>
             </thead>
-            <tbody id="estimateList">
-                {% if estimates %}
-                    {% for estimate in estimates %}
-                    <tr class="estimate-row" data-id="{{ estimate.id }}">
-                        <td>{{ estimate.id }}</td>
-                        <td>
-                            {% if estimate.service_categories %}
-                                {{ estimate.service_categories.0.name }}
-                            {% else %}
-                                미지정
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if estimate.measurement_locations %}
-                                {{ estimate.measurement_locations.0.name }}
-                            {% else %}
-                                미지정
-                            {% endif %}
-                        </td>
-                        <td class="status-{{ estimate.status|lower }}">{{ estimate.status }}</td>
-                        <td>{{ estimate.total_amount|default:"미정" }}</td>
-                        <td>{{ estimate.provider_info.name|default:"미정" }}</td>
-                        <td>{{ estimate.created_at|date:"Y-m-d" }}</td>
-                        <td>{{ estimate.views|default:"0" }}</td>
-                    </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="8" class="no-data">견적 요청 내역이 없습니다.</td>
-                    </tr>
-                {% endif %}
+            <tbody id="estimatesList">
+                <!-- 여기에 동적으로 데이터가 로드됩니다 -->
             </tbody>
         </table>
     </div>
 
     <!-- 페이지네이션 -->
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-            <a href="?page=1">처음</a>
-            <a href="?page={{ page_obj.previous_page_number }}">이전</a>
-        {% endif %}
-
-        {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-                <strong>{{ num }}</strong>
-            {% else %}
-                <a href="?page={{ num }}">{{ num }}</a>
-            {% endif %}
-        {% endfor %}
-
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}">다음</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}">마지막</a>
-        {% endif %}
-    </div>
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center" id="pagination">
+            <!-- 페이지네이션은 동적으로 생성됩니다 -->
+        </ul>
+    </nav>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // 상태 필터 변경 이벤트
-    const statusFilter = document.getElementById('statusFilter');
-    if (statusFilter) {
-        statusFilter.addEventListener('change', function() {
-            fetchEstimates(this.value);
-        });
-    }
-
-    // 견적 행 클릭 이벤트
-    const rows = document.querySelectorAll('.estimate-row');
-    rows.forEach(row => {
-        row.addEventListener('click', function() {
-            const estimateId = this.dataset.id;
-            window.location.href = `/estimates/received/${estimateId}/`;
-        });
-    });
-
-    // 견적 목록 조회 함수
-    async function fetchEstimates(status = '') {
-        try {
-            const response = await fetch(`/estimates/received/?status=${status}`, {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('견적 목록 조회 실패');
-            }
-
-            const data = await response.json();
-            updateEstimateList(data.estimates);
-
-        } catch (error) {
-            console.error('견적 목록 조회 중 오류:', error);
-        }
-    }
-
-    // 견적 목록 업데이트 함수
-    function updateEstimateList(estimates) {
-        const tbody = document.getElementById('estimateList');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        if (estimates && estimates.length > 0) {
-            estimates.forEach(estimate => {
-                const tr = document.createElement('tr');
-                tr.className = 'estimate-row';
-                tr.dataset.id = estimate.id;
-
-                tr.innerHTML = `
-                    <td>${estimate.id}</td>
-                    <td>${estimate.service_categories ? estimate.service_categories[0].name : '미지정'}</td>
-                    <td>${estimate.measurement_locations ? estimate.measurement_locations[0].name : '미지정'}</td>
-                    <td class="status-${estimate.status.toLowerCase()}">${estimate.status}</td>
-                    <td>${estimate.total_amount || '미정'}</td>
-                    <td>${estimate.provider_info ? estimate.provider_info.name : '미정'}</td>
-                    <td>${new Date(estimate.created_at).toLocaleDateString()}</td>
-                    <td>${estimate.views || 0}</td>
-                `;
-
-                tbody.appendChild(tr);
-            });
-        } else {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="no-data">견적 요청 내역이 없습니다.</td>
-                </tr>
-            `;
-        }
-    }
-});
-</script>
-
 <style>
-/* 기존 스타일 유지 */
-.status-filter {
-    margin-bottom: 20px;
-    text-align: right;
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
 }
-
-.form-select {
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    min-width: 150px;
-}
-
-/* 상태별 색상 */
-.status-request { color: #6c757d; }
-.status-response { color: #17a2b8; }
-.status-approved { color: #28a745; }
-.status-rejected { color: #dc3545; }
-
-.estimate-row {
+.nav-pills .nav-link {
+    color: #0d6efd;
     cursor: pointer;
 }
-
-.estimate-row:hover {
-    background-color: #f8f9fa;
-}
-
-.no-data {
-    text-align: center;
-    padding: 20px;
-    color: #6c757d;
+.badge {
+    font-size: 0.9em;
+    padding: 0.5em 1em;
 }
 </style>
+
+<script>
+let currentPage = 1;
+let isLoading = false;
+
+function showLoading() {
+    const tbody = document.getElementById('estimatesList');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">불러오는 중...</span>
+                </div>
+                <div class="mt-2">견적 목록을 불러오는 중입니다...</div>
+            </td>
+        </tr>`;
+}
+
+function showError(message) {
+    const tbody = document.getElementById('estimatesList');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center py-4 text-danger">
+                <i class="bi bi-exclamation-circle"></i> ${message}
+            </td>
+        </tr>`;
+}
+
+function loadEstimates(page = 1) {
+    if (isLoading) return;
+
+    currentPage = page;
+    isLoading = true;
+
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchInput').value;
+
+    showLoading();
+
+    const url = `/estimates_list/?status=${status}&search=${search}&page=${page}&sort=latest`;
+    console.log("📤 [요청 URL]:", url);
+    console.log("🔍 [전송 파라미터] status:", status, "| search:", search, "| page:", page);
+
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        credentials: 'include'
+    })
+    .then(response => {
+        console.log("📥 [응답 상태]:", response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log("📦 [받은 데이터]:", data);
+
+        const estimates = data?.estimates || [];
+        if (!Array.isArray(estimates)) {
+            console.warn("❌ 예상과 다른 데이터 구조:", data);
+        }
+
+        console.log("📌 최종 estimate 수:", estimates.length);
+
+        updateEstimatesList(estimates);
+        updatePagination(data);
+        updateStatusCounts(data.status_counts || {});
+        isLoading = false;
+    })
+    .catch(error => {
+        console.error('❌ [API 호출 실패]:', error);
+        showError('견적 목록을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+        isLoading = false;
+    });
+}
+
+
+function updateEstimatesList(estimates) {
+    const tbody = document.getElementById('estimatesList');
+    tbody.innerHTML = '';
+
+    console.log("📝 [목록 렌더링 시작] 총 건수:", estimates.length);
+
+    if (estimates.length === 0) {
+        console.warn("⚠️ 견적 데이터 없음");
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">견적 내역이 없습니다.</td>
+            </tr>`;
+        return;
+    }
+
+    estimates.forEach((estimate, index) => {
+        console.log(`➡️ #${index + 1} 견적`, estimate);
+
+        const statusClass = {
+            'REQUEST': 'bg-secondary',
+            'RESPONSE': 'bg-primary',
+            'APPROVED': 'bg-success',
+            'REJECTED': 'bg-danger'
+        }[estimate.status] || 'bg-secondary';
+
+        tbody.innerHTML += `
+            <tr onclick="viewEstimateDetail('${estimate.id}', '${estimate.status}')" style="cursor: pointer">
+                <td>${index + 1}</td>
+                <td>${estimate.service_category_name}</td>
+                <td>${estimate.measurement_location_name}</td>
+                <td><span class="badge rounded-pill ${statusClass}">${estimate.status_display}</span></td>
+                <td>${estimate.estimate_count || 0}</td>
+                <td>${estimate.created_at}</td>
+            </tr>`;
+    });
+}
+
+
+function updatePagination(data) {
+    const pagination = document.getElementById('pagination');
+    pagination.innerHTML = '';
+
+    if (data.has_previous) {
+        pagination.innerHTML += `
+            <li class="page-item">
+                <a class="page-link" onclick="loadEstimates(${currentPage - 1})">이전</a>
+            </li>`;
+    }
+
+    for (let i = 1; i <= data.total_pages; i++) {
+        pagination.innerHTML += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" onclick="loadEstimates(${i})">${i}</a>
+            </li>`;
+    }
+
+    if (data.has_next) {
+        pagination.innerHTML += `
+            <li class="page-item">
+                <a class="page-link" onclick="loadEstimates(${currentPage + 1})">다음</a>
+            </li>`;
+    }
+}
+
+function updateStatusCounts(counts) {
+    const statusFilter = document.getElementById('statusFilter');
+    statusFilter.querySelector('option[value="REQUEST"]').textContent = `견적 요청중 (${counts.REQUEST || 0})`;
+    statusFilter.querySelector('option[value="RESPONSE"]').textContent = `견적서 수신 (${counts.RESPONSE || 0})`;
+    statusFilter.querySelector('option[value="APPROVED"]').textContent = `승인완료 (${counts.APPROVED || 0})`;
+    statusFilter.querySelector('option[value="REJECTED"]').textContent = `거절됨 (${counts.REJECTED || 0})`;
+}
+
+function searchEstimates() {
+    loadEstimates(1);
+}
+
+function viewEstimateDetail(id, status) {
+    // 견적 상태에 따른 상세 페이지 라우팅
+    let detailUrl;
+    if (status === 'REQUEST') {
+        detailUrl = `/estimates/${id}/request/`;
+    } else {
+        detailUrl = `/estimates/${id}/response/`;
+    }
+    location.href = detailUrl;
+}
+
+// 검색어 입력 시 엔터키 처리
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchEstimates();
+    }
+});
+
+// 초기 로드
+document.addEventListener('DOMContentLoaded', function() {
+    loadEstimates(1);
+});
+</script>
 {% endblock %}

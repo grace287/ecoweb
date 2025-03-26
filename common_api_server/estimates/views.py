@@ -32,6 +32,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from django.db import transaction  # transaction 모듈 추가
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +89,6 @@ def create_estimate(request):
             contact_info = data.get('contact_info', {}) or {}
             estimate = Estimate.objects.create(
                 service_category=categories.first(),  # 첫 번째 카테고리를 기본값으로
-                measurement_location=location,
                 address=data['address'],
                 preferred_schedule=data['preferred_schedule'],
                 status='REQUEST',
@@ -727,42 +727,29 @@ from rest_framework.decorators import authentication_classes
 @permission_classes([AllowAny])  # 임시로 모든 요청 허용
 @authentication_classes([])      # ✅ 인증 비활성화 명시적으로 추가
 @csrf_exempt                     # ✅ CSRF도 제거
-def create_or_update_estimate(request, pk):  # pk 파라미터 추가
-    """견적서 생성 또는 업데이트"""
+def create_or_update_estimate(request, pk):
     try:
         data = request.data
-        
-        # 기존 견적서 조회
         estimate = Estimate.objects.filter(id=pk).first()
-        
+
         if estimate:
-            # 기존 견적서 업데이트
             serializer = EstimateSerializer(estimate, data=data, partial=True)
         else:
-            # 새 견적서 생성
-            data['id'] = pk  # pk 값을 데이터에 추가
+            data['id'] = pk  # 이 부분이 핵심
             serializer = EstimateSerializer(data=data)
-            
+
         if serializer.is_valid():
-            estimate = serializer.save()
+            saved = serializer.save()
             return Response({
                 'success': True,
                 'message': '견적이 저장되었습니다.',
-                'estimate_id': estimate.id
+                'estimate_id': saved.id
             })
-        else:
-            logger.error(f"유효성 검사 실패: {serializer.errors}")
-            return Response({
-                'success': False,
-                'errors': serializer.errors
-            }, status=400)
-            
+        return Response({'success': False, 'errors': serializer.errors}, status=400)
+
     except Exception as e:
-        logger.error(f"견적 저장 중 오류: {e}", exc_info=True)
-        return Response({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        logger.error(f"견적 저장 오류: {e}", exc_info=True)
+        return Response({'success': False, 'error': str(e)}, status=500)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -808,3 +795,162 @@ def estimate_send(request, pk):
             'success': False,
             'error': str(e)
         }, status=500)
+
+from rest_framework import status  # 반드시 있어야 함
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # 필요시 IsAuthenticated로 강화
+def demand_estimate_list(request):
+    """견적 요청 + 받은 견적 목록 API"""
+    try:
+        # 🟡 로그인 유저 ID를 기준으로 조회
+        demand_user_id = getattr(request.user, 'id', None)
+
+        status_filter = request.GET.get('status')
+        search = request.GET.get('search', '')
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 10))
+
+        queryset = Estimate.objects.filter(
+            demand_user_id=demand_user_id
+        ).select_related('service_category').prefetch_related(
+            'measurement_locations', 'service_categories'
+        ).order_by('-created_at')
+
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        else:
+            queryset = queryset.filter(status__in=['REQUEST', 'SENT'])  # ✅ 기본 필터 추가
+
+        logger.info(f"[ESTIMATE_LIST] demand_user_id={demand_user_id}, status={status_filter}, count={queryset.count()}")
+
+        if search:
+            queryset = queryset.filter(
+                Q(service_categories__name__icontains=search) |
+                Q(measurement_locations__name__icontains=search) |
+                Q(address__icontains=search)
+            ).distinct()
+
+        paginator = Paginator(queryset, page_size)
+        current_page = paginator.get_page(page)
+
+        estimates_data = [{
+            'id': e.id,
+            'estimate_number': e.estimate_number,
+            'service_category_name': e.service_category.name if e.service_category else '',
+            'measurement_location_name': e.measurement_locations.first().name if e.measurement_locations.exists() else '',
+            'status': e.status,
+            'status_display': e.get_status_display(),
+            'created_at': e.created_at.strftime('%Y-%m-%d'),
+            'address': e.address,
+            'total_amount': getattr(e, 'total_amount', 0),
+            'estimate_count': getattr(e, 'estimate_count', 0),
+            'view_count': getattr(e, 'views', 0)
+        } for e in current_page]
+
+        status_counts = {
+            'REQUEST': queryset.filter(status='REQUEST').count(),
+            'RESPONSE': queryset.filter(status='RESPONSE').count(),
+            'APPROVED': queryset.filter(status='APPROVED').count(),
+            'REJECTED': queryset.filter(status='REJECTED').count()
+        }
+
+        return Response({
+            'estimates': estimates_data,
+            'total_count': queryset.count(),
+            'status_counts': status_counts,
+            'has_next': current_page.has_next(),
+            'has_previous': current_page.has_previous(),
+            'current_page': page
+        }, status=200)
+
+    except Exception as e:
+        logger.exception("견적 목록 조회 실패")
+        return Response({'error': str(e)}, status=500)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def demand_request_detail(request, pk):
+    """보낸 견적 요청 상세 조회"""
+    try:
+        estimate = get_object_or_404(Estimate.objects.prefetch_related(
+            'service_categories',  # ManyToMany 관계
+            'measurement_locations'
+        ), id=pk)
+        
+        estimate_data = {
+            'id': estimate.id,
+            'estimate_number': estimate.estimate_number,
+            # 서비스 카테고리 수정
+            'service_categories': [
+                {
+                    'id': category.id,
+                    'name': category.name
+                } for category in estimate.service_categories.all()
+            ],
+            # 측정 장소 수정
+            'measurement_location': {
+                'id': estimate.measurement_locations.first().id,
+                'name': estimate.measurement_locations.first().name
+            } if estimate.measurement_locations.exists() else None,
+            'address': estimate.address,
+            'preferred_schedule': estimate.preferred_schedule,
+            'status': estimate.status,
+            'contact_name': estimate.contact_name,
+            'contact_phone': estimate.contact_phone,
+            'contact_email': estimate.contact_email,
+            'created_at': estimate.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        }
+        
+        return Response(estimate_data, status=status.HTTP_200_OK)
+
+    except Estimate.DoesNotExist:
+        return Response({"error": "견적을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"견적 상세 조회 중 오류: {e}", exc_info=True)
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def demand_response_detail(request, pk):
+    """받은 견적 상세 조회"""
+    try:
+        estimate = get_object_or_404(Estimate, id=pk)
+        
+        # 제공자 정보 조회
+        provider_info = None
+        if estimate.provider_user_id:
+            provider_info = {
+                'id': estimate.provider_user_id,
+                'name': getattr(estimate, 'provider_name', ''),  # provider_name이 없을 경우 빈 문자열 반환
+            }
+
+        estimate_data = {
+            'id': estimate.id,
+            'estimate_number': estimate.estimate_number,
+            'service_categories': [
+                {'id': cat.id, 'name': cat.name}
+                for cat in estimate.service_categories.all()
+            ],
+            'measurement_location': {
+                'id': estimate.measurement_locations.first().id,
+                'name': estimate.measurement_locations.first().name
+            } if estimate.measurement_locations.exists() else None,
+            'address': estimate.address,
+            'preferred_schedule': estimate.preferred_schedule,
+            'status': estimate.status,
+            'total_amount': getattr(estimate, 'total_amount', 0),
+            'base_amount': getattr(estimate, 'base_amount', 0),
+            'discount_amount': getattr(estimate, 'discount_amount', 0),
+            'provider_info': provider_info,
+            'created_at': estimate.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+        }
+        
+        return Response(estimate_data, status=status.HTTP_200_OK)
+
+    except Estimate.DoesNotExist:
+        return Response({"error": "견적을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"견적 상세 조회 중 오류: {e}", exc_info=True)
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -19,6 +19,7 @@ from django.contrib.auth import login as auth_login, get_backends
 from rest_framework.decorators import api_view
 from users.models import DemandUser
 import logging
+from django.urls import reverse
 
 ADMIN_PANEL_URL = settings.ADMIN_PANEL_URL
 COMMON_API_URL = settings.COMMON_API_URL
@@ -448,7 +449,7 @@ def estimate_request_form(request):
                     'success': False,
                     'error': '견적 요청 처리 중 오류가 발생했습니다.'
                 }, status=response.status_code)
-                
+
         except json.JSONDecodeError:
             return JsonResponse({'error': '잘못된 요청 데이터입니다.'}, status=400)
         except Exception as e:
@@ -456,35 +457,7 @@ def estimate_request_form(request):
             return JsonResponse({'error': '서버 오류가 발생했습니다.'}, status=500)
 
 
-@api_view(['GET'])
-@csrf_exempt
-def get_estimate_list(request):
-    """견적 리스트 조회 API"""
-    if request.method == "GET":
-        provider_user_id = request.GET.get("provider_user_id")
-        demand_user_id = request.GET.get("demand_user_id")
-        status = request.GET.get("status")
 
-        estimates = Estimate.objects.filter(
-            provider_user_id=provider_user_id if provider_user_id else None,
-            demand_user_id=demand_user_id if demand_user_id else None,
-            status=status if status else None
-        ).order_by("-created_at")
-
-        result = [
-            {
-                "estimate_number": e.estimate_number,
-                "service_category": e.service_category.name,
-                "status": e.status,
-                "total_amount": e.total_amount,
-                "created_at": e.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            }
-            for e in estimates
-        ]
-
-        return JsonResponse({"estimates": result}, status=200)
-
-    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
 @api_view(['GET'])
 @csrf_exempt
@@ -574,27 +547,6 @@ def request_estimate(request):
 
     return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
-@api_view(['GET'])
-def get_estimate_list(request):
-    """Demand 사용자가 요청한 견적 리스트 조회"""
-    if request.method == "GET":
-        demand_user_id = request.GET.get("demand_user_id")
-
-        estimates = Estimate.get_estimates(demand_user_id=demand_user_id)
-        result = [
-            {
-                "estimate_number": e.estimate_number,
-                "service_category": e.service_category.name,
-                "status": e.status,
-                "total_amount": e.total_amount,
-                "created_at": e.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-            }
-            for e in estimates
-        ]
-
-        return JsonResponse({"estimates": result}, status=200)
-
-    return JsonResponse({"error": "잘못된 요청 방식입니다."}, status=405)
 
 @api_view(['GET'])
 @csrf_exempt
@@ -687,153 +639,197 @@ def request_payment(request, estimate_id):
         }, status=500)
     
 
+from django.http import JsonResponse
+
+# demand/views.py
 
 @api_view(['GET'])
 @login_required
 def estimate_list(request):
-    """견적 요청 목록 조회"""
+    """견적 요청 + 받은 견적 목록 조회"""
     try:
-        response = requests.get(
-            f"{settings.COMMON_API_URL}/estimates/estimates/demand/received/",  # 엔드포인트 수정
-            params={
-                'demand_user_id': request.user.id,
-                'status': request.GET.get('status', ''),
-                'search': request.GET.get('search', '')
-            },
-            headers={'Accept': 'application/json'}
-        )
-        
-        if response.status_code == 200:
-            estimates_data = response.json()
-            return render(request, 'demand/estimates/demand_estimate_list.html', {
-                'estimates': estimates_data.get('estimates', []),
-                'total_count': estimates_data.get('total_count', 0),
-                'status_counts': estimates_data.get('status_counts', {})
-            })
-        else:
-            logger.error(f"견적 목록 조회 실패: {response.status_code} - {response.text}")
-            return render(request, 'demand/estimates/demand_estimate_list.html', {
-                'error': '견적 목록을 불러오는데 실패했습니다.'
-            })
-            
-    except requests.RequestException as e:
-        logger.error(f"견적 목록 조회 중 오류 발생: {str(e)}")
-        return render(request, 'demand/estimates/demand_estimate_list.html', {
-            'error': '서버와의 통신 중 오류가 발생했습니다.'
-        })
+        status = request.GET.get('status') or None  # 빈 문자열이면 None
+        search = request.GET.get('search', '')
+        page = request.GET.get('page', '1')
 
-@api_view(['GET'])
-@login_required
-def received_estimates(request):
-    """받은 견적 목록 조회"""
-    try:
+        common_api_url = f"{settings.COMMON_API_URL}/estimates/estimates/demand/list/"
+        params = {
+            "demand_user_id": request.user.id,
+            "search": search,
+            "page": page,
+            "page_size": 10
+        }
+
+        if status:
+            params["status"] = status
+
+        logger.info(f"[LOAD_ESTIMATES] 요청: {common_api_url} | params: {params}")
+
         response = requests.get(
-            f"{settings.COMMON_API_URL}/estimates/estimates/demand/received/",
-            params={
-                'demand_user_id': request.user.id,
-                'status': request.GET.get('status', ''),
-                'search': request.GET.get('search', ''),
-                'sort': request.GET.get('sort', '-created_at')  # 정렬 옵션 추가
-            },
-            headers={'Accept': 'application/json'}
+            common_api_url,
+            params=params,
+            timeout=10,
+            headers={
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
         )
 
-        if response.status_code == 200:
-            estimates_data = response.json()
-            
-            # 상태별 필터링을 위한 현재 상태 추가
-            current_status = request.GET.get('status', '')
-            
-            return render(request, 'demand/estimates/received_estimates.html', {
-                'estimates': estimates_data.get('estimates', []),
-                'total_count': estimates_data.get('total_count', 0),
-                'status_counts': estimates_data.get('status_counts', {}),
-                'current_status': current_status,
-                'search_term': request.GET.get('search', '')
-            })
-        else:
-            logger.error(f"받은 견적 목록 조회 실패: {response.status_code} - {response.text}")
-            return render(request, 'demand/estimates/received_estimates.html', {
-                'error': '견적 목록을 불러오는 중 오류가 발생했습니다.',
-                'estimates': []
-            })
+        if response.status_code != 200:
+            logger.error(f"[LOAD_ESTIMATES] API Error: {response.status_code} - {response.text}")
+            return JsonResponse({
+                'error': 'API 요청 실패',
+                'code': response.status_code,
+                'text': response.text
+            }, status=response.status_code)
+
+        estimates_data = response.json()
+        logger.debug(f"[LOAD_ESTIMATES] 수신 데이터: {estimates_data}")
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(estimates_data, status=200)
+
+        status_counts = {
+            'REQUEST': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'REQUEST'),
+            'RESPONSE': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'RESPONSE'),
+            'APPROVED': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'APPROVED'),
+            'REJECTED': sum(1 for e in estimates_data.get('estimates', []) if e.get('status') == 'REJECTED')
+        }
+
+        context = {
+            'estimates': estimates_data.get('estimates', []),
+            'total_count': estimates_data.get('total_count', 0),
+            'status_counts': status_counts,
+            'has_next': estimates_data.get('has_next', False),
+            'has_previous': estimates_data.get('has_previous', False),
+            'current_page': int(page),
+            'status': status,
+            'search': search
+        }
+
+        logger.info(f"[LOAD_ESTIMATES] 페이지 렌더링: 견적 수={len(context['estimates'])}")
+        return render(request, 'demand/estimates/demand_estimate_list.html', context)
 
     except requests.RequestException as e:
-        logger.error(f"API 요청 중 오류 발생: {e}")
-        return render(request, 'demand/estimates/received_estimates.html', {
-            'error': '서버와의 통신 중 오류가 발생했습니다.',
-            'estimates': []
-        })
-    
+        logger.exception(f"[LOAD_ESTIMATES] API 네트워크 오류: {e}")
+        return JsonResponse({
+            'error': 'API 서버 연결 실패',
+            'details': str(e)
+        }, status=500)
+
+    except Exception as e:
+        logger.exception(f"[LOAD_ESTIMATES] 처리 중 서버 오류: {e}")
+        return JsonResponse({
+            'error': '서버 처리 중 오류 발생',
+            'details': str(e)
+        }, status=500)
+
+
 @api_view(['GET'])
 @login_required
 def received_estimate_detail(request, pk):
     """받은 견적 상세 조회"""
     try:
+        # Common API 서버의 실제 엔드포인트로 수정
         response = requests.get(
-            f"{settings.COMMON_API_URL}/estimates/estimates/demand/received/{pk}/",
+            f"{settings.COMMON_API_URL}/estimates/estimates/demand/response/{pk}/",
             headers={'Accept': 'application/json'}
         )
 
         if response.status_code == 200:
             estimate_data = response.json()
             
-            # 견적 상태에 따른 처리 가능한 액션 결정
-            available_actions = {
-                'can_approve': estimate_data.get('status') == 'RESPONSE',
-                'can_reject': estimate_data.get('status') == 'RESPONSE',
-                'can_cancel': estimate_data.get('status') in ['REQUEST', 'RESPONSE']
-            }
+            # 견적 상태에 따른 한글 표시
+            estimate_data['status_display'] = {
+                'RESPONSE': '견적서 발송 완료',
+                'APPROVED': '승인완료',
+                'REJECTED': '거절됨'
+            }.get(estimate_data['status'], estimate_data['status'])
             
-            return render(request, 'demand/estimates/received_estimate_detail.html', {
-                'estimate': estimate_data,
-                'available_actions': available_actions
+            return render(request, 'demand/estimates/demand_response_detail.html', {
+                'estimate': estimate_data
             })
         else:
             logger.error(f"받은 견적 상세 조회 실패: {response.status_code} - {response.text}")
-            return render(request, 'demand/estimates/received_estimate_detail.html', {
-                'error': '견적 상세 정보를 불러오는 중 오류가 발생했습니다.'
+            return render(request, 'demand/estimates/demand_response_detail.html', {
+                'error': '견적 상세 정보를 불러오는데 실패했습니다.'
             })
 
-    except requests.RequestException as e:
-        logger.error(f"API 요청 중 오류 발생: {e}")
-        return render(request, 'demand/estimates/received_estimate_detail.html', {
+    except Exception as e:
+        logger.error(f"견적 상세 조회 중 오류 발생: {str(e)}")
+        return render(request, 'demand/estimates/demand_response_detail.html', {
             'error': '서버와의 통신 중 오류가 발생했습니다.'
         })
 
 @api_view(['GET'])
 @login_required
-def estimate_response(request, estimate_id):
-    """견적 응답 처리"""
-    if request.method == 'POST':
-        try:
-            # 응답 데이터 준비
-            response_data = {
-                'status': request.POST.get('status'),  # APPROVED, REJECTED
-                'response_details': request.POST.get('response_details', '')
-            }
+def request_estimate_detail(request, pk):
+    """보낸 견적 요청 상세 조회"""
+    try:
+        response = requests.get(
+            f"{settings.COMMON_API_URL}/estimates/estimates/demand/request/{pk}/",
+            headers={'Accept': 'application/json'}
+        )
 
-            # Common API 서버로 응답 전송
-            response = requests.post(
-                f"{settings.COMMON_API_URL}/api/estimates/{estimate_id}/respond/",
-                json=response_data,
-                headers={
-                    'Content-Type': 'application/json'
-                }
-            )
+        if response.status_code == 200:
+            estimate_data = response.json()
+            return render(request, 'demand/estimates/demand_request_detail.html', {
+                'estimate': estimate_data
+            })
+        else:
+            logger.error(f"견적 요청 상세 조회 실패: {response.status_code} - {response.text}")
+            return render(request, 'demand/estimates/demand_request_detail.html', {
+                'error': '견적 요청 정보를 불러오는데 실패했습니다.'
+            })
 
-            # 응답 처리
-            if response.status_code == 200:
-                messages.success(request, "견적에 대한 응답이 성공적으로 처리되었습니다.")
-                return redirect('received_estimates')
-            else:
-                logger.error(f"견적 응답 실패: {response.status_code} - {response.text}")
-                messages.error(request, "견적 응답 처리 중 오류가 발생했습니다.")
-                return redirect('received_estimate_detail', estimate_id=estimate_id)
+    except Exception as e:
+        logger.error(f"견적 요청 상세 조회 중 오류 발생: {str(e)}")
+        return render(request, 'demand/estimates/demand_request_detail.html', {
+            'error': '서버와의 통신 중 오류가 발생했습니다.'
+        })
 
-        except requests.RequestException as e:
-            logger.error(f"API 요청 중 오류 발생: {e}")
-            messages.error(request, "서버와의 통신 중 오류가 발생했습니다.")
-            return redirect('received_estimate_detail', estimate_id=estimate_id)
+@api_view(['POST'])
+@login_required
+def estimate_accept(request, pk):
+    """견적 수락"""
+    try:
+        response = requests.post(
+            f"{settings.COMMON_API_URL}/estimates/demand/response/{pk}/accept/",
+            headers={'Accept': 'application/json'}
+        )
 
+        if response.status_code == 200:
+            return JsonResponse({'message': '견적이 성공적으로 수락되었습니다.'})
+        else:
+            return JsonResponse({
+                'error': '견적 수락 처리 중 오류가 발생했습니다.'
+            }, status=400)
 
+    except Exception as e:
+        logger.error(f"견적 수락 처리 중 오류 발생: {str(e)}")
+        return JsonResponse({
+            'error': '서버와의 통신 중 오류가 발생했습니다.'
+        }, status=500)
+
+@api_view(['POST'])
+@login_required
+def estimate_reject(request, pk):
+    """견적 거절"""
+    try:
+        response = requests.post(
+            f"{settings.COMMON_API_URL}/estimates/demand/response/{pk}/reject/",
+            headers={'Accept': 'application/json'}
+        )
+
+        if response.status_code == 200:
+            return JsonResponse({'message': '견적이 성공적으로 거절되었습니다.'})
+        else:
+            return JsonResponse({
+                'error': '견적 거절 처리 중 오류가 발생했습니다.'
+            }, status=400)
+
+    except Exception as e:
+        logger.error(f"견적 거절 처리 중 오류 발생: {str(e)}")
+        return JsonResponse({
+            'error': '서버와의 통신 중 오류가 발생했습니다.'
+        }, status=500)

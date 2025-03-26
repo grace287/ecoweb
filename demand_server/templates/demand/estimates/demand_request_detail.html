@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="estimate-detail">
+    <h2>견적 요청 상세</h2>
+    
+    <div class="estimate-info">
+        <p><strong>견적 번호:</strong> {{ estimate.estimate_number }}</p>
+        <p><strong>서비스:</strong> {% if estimate.service_categories %}
+            {% for category in estimate.service_categories %}
+                {{ category.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        {% else %}
+            미지정
+        {% endif %}</p>
+        <p><strong>측정 장소:</strong> {{ estimate.measurement_location.name }}</p>
+        <p><strong>주소:</strong> {{ estimate.address }}</p>
+        <p><strong>희망 일정:</strong> {{ estimate.preferred_schedule }}</p>
+        <p><strong>상태:</strong> {{ estimate.status }}</p>
+        <p><strong>요청일:</strong> {{ estimate.created_at }}</p>
+    </div>
+    
+    <!--  목록으로 돌아가기 버튼  -->
+    <a href="{% url 'estimate_list' %}" class="btn btn-outline-secondary" onclick="return confirmNavigation('견적 목록으로 돌아가시겠습니까?')">견적 목록</a>
+
+    {% if available_actions.can_cancel %}
+    <div class="actions">
+        <button onclick="cancelEstimate({{ estimate.id }})">요청 취소</button>
+    </div>
+    {% endif %}
+</div>
+
+
+<script>
+    // 견적 요청 상세 페이지 (request_estimate_detail.html)
+const requestDetailFunctions = {
+    // 견적 요청 상세 정보 조회
+    loadRequestDetail: async function(estimateId) {
+        try {
+            const response = await fetch(`/estimates/${estimateId}/request/detail/`);
+            if (!response.ok) throw new Error('견적 요청 정보를 불러오는데 실패했습니다.');
+            
+            const data = await response.json();
+            
+            // 견적 요청 정보 표시
+            document.getElementById('serviceCategory').textContent = data.service_categories.name;
+            document.getElementById('measurementLocation').textContent = data.measurement_locations.name;
+            document.getElementById('address').textContent = data.address;
+            document.getElementById('preferredSchedule').textContent = data.preferred_schedule;
+            document.getElementById('status').textContent = data.status_display;
+            document.getElementById('createdAt').textContent = data.created_at;
+            
+            // 견적 요청 상태에 따른 버튼 표시/숨김
+            const actionButtons = document.querySelector('.action-buttons');
+            if (data.status === 'REQUEST') {
+                actionButtons.style.display = 'block';
+            } else {
+                actionButtons.style.display = 'none';
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            alert('견적 요청 정보를 불러오는데 실패했습니다.');
+        }
+    },
+
+    // 견적 요청 취소 (아직 응답이 없는 경우에만 가능)
+    cancelRequest: async function(estimateId) {
+        if (!confirm('견적 요청을 취소하시겠습니까?')) return;
+        
+        try {
+            const response = await fetch(`/estimates/${estimateId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (response.ok) {
+                alert('견적 요청이 취소되었습니다.');
+                window.location.href = '/estimates/request/';  // 목록으로 이동
+            } else {
+                const data = await response.json();
+                throw new Error(data.message || '견적 요청 취소에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(error.message || '견적 요청 취소 중 오류가 발생했습니다.');
+        }
+    },
+
+    // 받은 견적 목록 보기 (해당 요청에 대한 견적들)
+    viewReceivedEstimates: function(estimateId) {
+        window.location.href = `/estimates/${estimateId}/responses/`;
+    },
+
+    // 채팅방으로 이동
+    goToChat: function(estimateId) {
+        window.location.href = `/chat/${estimateId}/`;
+    },
+
+    // 페이지 초기화
+    initPage: function(estimateId) {
+        // 페이지 로드 시 견적 요청 상세 정보 조회
+        this.loadRequestDetail(estimateId);
+        
+        // 이벤트 리스너 등록
+        document.getElementById('cancelBtn')?.addEventListener('click', () => this.cancelRequest(estimateId));
+        document.getElementById('viewResponsesBtn')?.addEventListener('click', () => this.viewReceivedEstimates(estimateId));
+        document.getElementById('chatBtn')?.addEventListener('click', () => this.goToChat(estimateId));
+    }
+};
+
+// CSRF 토큰 가져오기
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    const estimateId = document.getElementById('estimateId').value;
+    requestDetailFunctions.initPage(estimateId);
+
+    // 서비스 카테고리 표시
+    const serviceCategories = document.getElementById('serviceCategories');
+    if (serviceCategories && estimate.service_categories) {
+        const categoryNames = estimate.service_categories
+            .map(category => category.name)
+            .join(', ');
+        serviceCategories.textContent = categoryNames || '미지정';
+    }
+
+    // 측정 장소 표시
+    const measurementLocation = document.getElementById('measurementLocation');
+    if (measurementLocation && estimate.measurement_location) {
+        measurementLocation.textContent = estimate.measurement_location.name || '미지정';
+    }
+});
+</script>
+
+<style>
+.request-list-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.request-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.request-item:hover {
+    transform: translateY(-5px);
+}
+
+.request-item img {
+    width: 60px;
+    height: 60px;
+    margin-right: 20px;
+}
+
+.request-item .info {
+    flex-grow: 1;
+    text-align: left;
+}
+
+.request-item .info h4 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.request-item .info p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 16px;
+}
+
+.request-item .action {
+    text-align: right;
+}
+
+.request-item .action button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.request-item .action button:hover {
+    background-color: #0056b3;
+}
+
+.back-button {
+    display: block;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.back-button a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+.back-button a:hover {
+    color: #0056b3;
+}
+</style>
+{% endblock %}

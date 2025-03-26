@@ -46,14 +46,23 @@ urlpatterns = [
     path("profile/customization/update/", views.customization_update, name="customization_update"),
 
     # Estimates
+    # 게스트 견적 요청
     path('estimates_request_guest/', views.estimate_request_guest, name='estimate_request_guest'),
+    # 견적 요청 폼
     path('estimates/request/', views.estimate_request_form, name='estimate_request_form'),
+    # 견적 목록
+    path('estimates_list/', views.estimate_list, name='estimate_list'),
+    # 보낸요청 상세조회
+    path('estimates/<int:pk>/request/', views.request_estimate_detail, name='request_estimate_detail'),
+    # 견적 상세
+    path('estimates/<int:pk>/response/', views.received_estimate_detail, name='received_estimate_detail'),
     # path('estimates/request/guest/', views.estimate_request_guest, name='estimate_request_guest'),
     # path('estimates_request_form/', views.estimate_request_form, name='estimate_request_form'),
     # path('estimates/create/', views.create_estimate, name='create_estimate'),
-    path('estimates_list/', views.estimate_list, name='estimate_list'),
-    path('estimates/<int:estimate_id>/', views.received_estimate_detail, name='estimate_detail'),
-    # path('estimate_accept/', views.estimate_accept, name='estimate_accept'),
+    
+
+    path('estimates/<int:pk>/accept/', views.estimate_accept, name='estimate_accept'),
+    path('estimates/<int:pk>/reject/', views.estimate_reject, name='estimate_reject'),
     # path('estimates/detail/<int:estimate_id>/', views.estimate_detail, name='estimate_detail'),
 
     # Chat
