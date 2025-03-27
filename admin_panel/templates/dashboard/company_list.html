@@ -37,29 +37,28 @@
             </thead>
             <tbody>
                 {% for company in companies %}
-                <tr class="company-row" data-type="{{ company.user_type }}">
+                <tr class="company-row" data-type="{{ company.type }}">
                     <td>
-                        <span class="company-name">{{ company.company_name }}</span>
+                        <span class="company-name">{{ company.name }}</span>
                     </td>
                     <td>
-                        <span class="badge {% if company.user_type == 'provider' %}badge-primary{% else %}badge-success{% endif %}">
-                            {{ company.get_user_type_display }}
+                        <span class="badge {% if company.type == 'provider' %}badge-primary{% else %}badge-success{% endif %}">
+                            {{ company.get_type_display }}
                         </span>
                     </td>
                     <td>
-                        {% if company.user_type == "provider" %}
-                            <span class="badge {% if company.status == 'approved' %}badge-success{% elif company.status == 'pending' %}badge-warning{% else %}badge-danger{% endif %}">
-                                {{ company.get_status_display }}
-                            </span>
-                        {% else %}
-                            <span class="badge badge-info">자동 가입</span>
-                        {% endif %}
+                        {{ company.get_status_display }}
                     </td>
                     <td>{{ company.created_at|date:"Y-m-d" }}</td>
                     <td>
                         <a href="{% url 'company_detail' company.pk %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-eye"></i> 상세보기
                         </a>
+                        {% if company.type == "provider" %}
+                            <button class="btn btn-sm btn-outline-success approve-btn" data-provider-id="{{ company.pk }}">
+                                <i class="fas fa-check"></i> 승인
+                            </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -166,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const filterBtns = document.querySelectorAll('.filter-btn');
     const companyRows = document.querySelectorAll('.company-row');
     const generateFakeDataBtn = document.getElementById('generate-fake-data');
+    const approveButtons = document.querySelectorAll('.approve-btn');
 
     filterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
@@ -196,6 +196,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
                 alert('데이터 생성 중 오류가 발생했습니다.');
             });
+    });
+
+    approveButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const providerId = this.dataset.providerId;
+
+            fetch('/api/approve-request/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ provider_id: providerId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('승인 중 오류가 발생했습니다.');
+            });
+        });
     });
 });
 </script>

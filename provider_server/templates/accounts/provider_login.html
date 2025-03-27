@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="{% static 'css/accounts/login.css' %}">
 {% endblock %}
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 {% block content %}
 <style>
         /* 기본 스타일 */
@@ -181,7 +181,7 @@
         <div class="overlay"></div>
     </div>
     <div class="main-back">
-        <a href="#" id="returnToMain">
+        <a href="#" onclick="returnToMain()" id="returnToMain">
             <i class="bi bi-arrow-left"></i>
             메인으로 돌아가기
         </a>
@@ -263,42 +263,28 @@
                 });
             }
 
-            const returnButton = document.getElementById('returnToMain');
-    
-            returnButton.addEventListener('click', async function(e) {
-                e.preventDefault();
-
-                // 확인 창 띄우기
-                const userConfirmed = confirm("메인 페이지로 이동하시겠습니까?");
-                if (!userConfirmed) {
-                    return; // 사용자가 취소를 누르면 중단
-                }
-                
-                try {
-                    const response = await fetch(`${DEMAND_API_URL}/api/main-url/`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('메인 페이지 URL을 가져오는데 실패했습니다.');
-                    }
-                    
-                    const data = await response.json();
-                    window.location.href = data.main_url;
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                    // 기본 URL로 폴백
-                    window.location.href = 'http://localhost:8000/main';
-                }
-            });
         });
         </script>
 
-
+<!-- 전환 안내 -->
+<script>
+    function returnToMain() {
+      Swal.fire({
+        title: '대행사 회원으로 전환하시겠습니까?',
+        text: '확인 시 메인 페이지로 이동합니다.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '전환하기',
+        cancelButtonText: '취소'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = "http://3.82.25.34:8000/";
+        }
+      });
+    }
+    </script>
     <style>
     /* 기존 스타일 유지하면서 수정 */
     .error-message {
