@@ -4,19 +4,279 @@
 {% block title %}견적 목록 - EcoAnE{% endblock %}
 
 {% block content %}
+<style>
+/* 전체 컨테이너 스타일 */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 페이지 제목 스타일 */
+h1.text-center {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* 검색 영역 스타일 */
+.row.mb-4 {
+    margin-bottom: 25px;
+}
+
+.input-group {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.form-control {
+    border: 1px solid #e0e0e0;
+    padding: 12px 15px;
+    font-size: 15px;
+}
+
+.btn-outline-primary {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    padding: 12px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: #fff;
+}
+
+/* 탭 네비게이션 스타일 */
+.nav-pills {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    list-style: none;
+    padding-left: 0;
+}
+
+.nav-pills .nav-item {
+    margin: 0;
+}
+
+.nav-pills .nav-link {
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-weight: 500;
+    color: #6c757d;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+}
+
+.nav-pills .nav-link:hover {
+    color: #0d6efd;
+    border-color: #0d6efd;
+    background-color: #e9f2ff;
+}
+
+/* 상태 필터 드롭다운 스타일 */
+.form-select {
+    padding: 12px 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #495057;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+.form-select:focus {
+    border-color: #0d6efd;
+    outline: none;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* 테이블 스타일 */
+.table-responsive {
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 15px 12px;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody td {
+    padding: 15px 12px;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    color: #495057;
+    font-size: 14px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* 상태 배지 스타일 */
+.badge {
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 20px;
+}
+
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+.badge.bg-primary {
+    background-color: #0d6efd !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+/* 페이지네이션 스타일 */
+.pagination {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    list-style: none;
+    padding-left: 0;
+}
+
+.pagination .page-item .page-link {
+    border-radius: 6px;
+    padding: 10px 15px;
+    color: #0d6efd;
+    border: 1px solid #dee2e6;
+    background-color: #fff;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.pagination .page-item .page-link:hover {
+    background-color: #e9f2ff;
+    border-color: #0d6efd;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+/* 로딩 스피너 스타일 */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+    color: #0d6efd;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px;
+    }
+    
+    h1.text-center {
+        font-size: 24px;
+    }
+    
+    .nav-pills .nav-link {
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    
+    .table thead th, .table tbody td {
+        padding: 12px 8px;
+        font-size: 13px;
+    }
+}
+
+/* 상태별 색상 */
+.status-request { color: #6c757d; }
+.status-response { color: #17a2b8; }
+.status-approved { color: #28a745; }
+.status-rejected { color: #dc3545; }
+
+/* 추가 세련된 스타일 */
+.table thead th {
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 13px;
+}
+
+.table tbody tr {
+    transition: transform 0.2s ease;
+}
+
+.table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+    position: relative;
+}
+
+.badge {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.nav-pills .nav-link {
+    letter-spacing: 0.3px;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nav-pills .nav-link.active {
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.25);
+}
+</style>
 <div class="container mt-5">
     <h1 class="text-center mb-4">견적 목록</h1>
-
-    <!-- 견적 유형 탭 -->
-    <ul class="nav nav-pills mb-4 justify-content-center">
-        <li class="nav-item">
-            <a class="nav-link active" id="requestTab" onclick="loadEstimates('request')">보낸 견적 요청</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="responseTab" onclick="loadEstimates('response')">받은 견적서</a>
-        </li>
-    </ul>
-
     <!-- 상태 필터 -->
     <div class="row mb-4">
         <div class="col-md-8">
@@ -25,6 +285,15 @@
                 <button class="btn btn-outline-primary" onclick="searchEstimates()">검색</button>
             </div>
         </div>
+
+        <!-- 탭 필터 -->
+    <!-- <ul class="nav nav-pills justify-content-center mb-4" id="statusTabs">
+        <li class="nav-item"><a class="nav-link active" href="#" data-status="">전체보기</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="REQUEST">견적 요청중</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="RESPONSE">견적서 수신</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="APPROVED">승인완료</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-status="REJECTED">거절됨</a></li>
+    </ul> -->
         <div class="col-md-4">
             <select class="form-select" id="statusFilter" onchange="loadEstimates(currentPage)">
                 <option value="">전체보기</option>
@@ -63,19 +332,7 @@
     </nav>
 </div>
 
-<style>
-.nav-pills .nav-link.active {
-    background-color: #0d6efd;
-}
-.nav-pills .nav-link {
-    color: #0d6efd;
-    cursor: pointer;
-}
-.badge {
-    font-size: 0.9em;
-    padding: 0.5em 1em;
-}
-</style>
+
 
 <script>
 let currentPage = 1;
@@ -172,11 +429,11 @@ function updateEstimatesList(estimates) {
         console.log(`➡️ #${index + 1} 견적`, estimate);
 
         const statusClass = {
-            'REQUEST': 'bg-secondary',
+            'REQUEST': 'bg-info',
             'RESPONSE': 'bg-primary',
             'APPROVED': 'bg-success',
             'REJECTED': 'bg-danger'
-        }[estimate.status] || 'bg-secondary';
+        }[estimate.status] || 'bg-primary';
 
         tbody.innerHTML += `
             <tr onclick="viewEstimateDetail('${estimate.id}', '${estimate.status}')" style="cursor: pointer">

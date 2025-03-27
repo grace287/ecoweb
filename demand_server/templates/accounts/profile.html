@@ -37,21 +37,21 @@
         </div>
         <div class="form-group">
           <label for="company_name">업체명</label>
-          <input type="text" id="company_name" name="company_name" value="{{ user.profile.company_name }}">
+          <input type="text" id="company_name" name="company_name" value="{{ user.company_name }}">
         </div>
         <div class="form-group">
           <label for="business_phone_number">담당자 휴대폰 번호</label>
-          <input type="tel" id="business_phone_number" name="business_phone_number" value="{{ user.profile.business_phone_number }}">
+          <input type="tel" id="business_phone_number" name="business_phone_number" value="{{ user.business_phone_number }}">
         </div>
         <div class="form-group">
           <label for="address">주소</label>
-          <input type="text" id="address" name="address" value="{{ user.profile.address }}">
+          <input type="text" id="address" name="address" value="{{ user.address }}">
         </div>
         <div class="form-group">
           <label for="address_detail">상세 주소</label>
-          <input type="text" id="address_detail" name="address_detail" value="{{ user.profile.address_detail }}">
+          <input type="text" id="address_detail" name="address_detail" value="{{ user.address_detail }}">
         </div>
-        <button type="submit" class="save-btn">정보 수정 저장</button>
+        <button type="submit" class="save-btn" action="{% url 'profile_edit' %}">정보 수정</button>
       </form>
     </div>
     <!-- 맞춤설정 (지역, 업종 선택) -->
@@ -67,6 +67,11 @@
             <option value="서울" {% if user.profile.region == "서울" %}selected{% endif %}>서울</option>
             <option value="부산" {% if user.profile.region == "부산" %}selected{% endif %}>부산</option>
             <option value="대구" {% if user.profile.region == "대구" %}selected{% endif %}>대구</option>
+            <option value="대전" {% if user.profile.region == "대전" %}selected{% endif %}>대전</option>
+            <option value="광주" {% if user.profile.region == "광주" %}selected{% endif %}>광주</option>
+            <option value="인천" {% if user.profile.region == "인천" %}selected{% endif %}>인천</option>
+            <option value="울산" {% if user.profile.region == "울산" %}selected{% endif %}>울산</option>
+            <option value="세종" {% if user.profile.region == "세종" %}selected{% endif %}>세종</option>
             <!-- 추가 옵션 -->
           </select>
         </div>
@@ -224,156 +229,360 @@ function confirmLogout() {
 <style>
 /* 전체 프로필 컨테이너 */
 .profile-container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 50px auto;
-  padding: 20px;
-  background: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
-  text-align: center;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
 }
 
 /* 헤더 및 제목 */
+.profile-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
 .profile-header h1 {
   font-size: 28px;
+  font-weight: 600;
   color: #333;
-  margin-bottom: 20px;
-}
-.profile-container h2 {
-  font-size: 22px;
-  color: #333;
-  margin: 20px 0;
-}
-
-/* 폼 그룹 */
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
-}
-.form-group label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-/* 저장 버튼 */
-.save-btn {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 10px 20px;
-  background-color: #3b82f6;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-.save-btn:hover {
-  background-color: #2563eb;
+  margin-bottom: 10px;
 }
 
 /* 탭 네비게이션 */
 .tab-nav {
   display: flex;
-  justify-content: space-around;
-  margin-bottom: 20px;
-  border-bottom: 2px solid #ccc;
+  justify-content: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #e0e0e0;
+  flex-wrap: wrap;
 }
+
 .tab-link {
   background: none;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 20px;
+  margin: 0 5px;
   cursor: pointer;
   font-size: 16px;
-  color: #333;
-  transition: color 0.3s, border-bottom 0.3s;
+  font-weight: 500;
+  color: #666;
+  position: relative;
+  transition: all 0.3s ease;
 }
+
+.tab-link:after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background-color: #3b82f6;
+  transition: width 0.3s ease;
+}
+
 .tab-link.active {
   color: #3b82f6;
-  border-bottom: 2px solid #3b82f6;
+}
+
+.tab-link.active:after {
+  width: 100%;
+}
+
+.tab-link:hover {
+  color: #3b82f6;
 }
 
 /* 탭 콘텐츠 */
 .tab-content {
   display: none;
-  text-align: left;
+  animation: fadeIn 0.5s ease;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .tab-content.active {
   display: block;
 }
 
-/* 쿠폰함 항목 */
-.coupon-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-.coupon-item {
-  background: #fff;
-  padding: 15px;
-  border: 1px dashed #ccc;
-  border-radius: 5px;
-  width: calc(50% - 20px);
-  box-sizing: border-box;
+.tab-content h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
-/* 거래내역 필터 및 항목 */
-.transaction-filter {
-  text-align: center;
+/* 설정 섹션 */
+.settings-section {
+  background: #f9f9f9;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.settings-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #444;
   margin-bottom: 20px;
 }
-.filter-btn {
-  background: #eee;
-  border: none;
-  padding: 8px 16px;
-  margin: 0 5px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.3s;
+
+/* 폼 그룹 */
+.form-group {
+  margin-bottom: 20px;
 }
-.filter-btn.active,
-.filter-btn:hover {
-  background: #3b82f6;
-  color: #fff;
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #555;
 }
-.transaction-list {
-  text-align: left;
-}
-.transaction-item {
-  padding: 15px;
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 15px;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.form-group input[readonly] {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* 저장 버튼 */
+.save-btn {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
+}
+
+.save-btn:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+}
+
+/* 쿠폰함 스타일 */
+.coupon-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.coupon-item {
+  background: linear-gradient(135deg, #fff 0%, #f5f7fa 100%);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px dashed #3b82f6;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease;
+}
+
+.coupon-item:hover {
+  transform: translateY(-5px);
+}
+
+.coupon-item:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.coupon-item h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
   margin-bottom: 10px;
 }
 
-/* 찜한 대행사 */
-.provider-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: center;
-}
-.provider-item {
-  background: #fff;
-  padding: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  width: calc(50% - 20px);
-  box-sizing: border-box;
+.coupon-item p {
+  color: #666;
+  margin-bottom: 5px;
 }
 
-/* 반응형 */
+/* 거래내역 스타일 */
+.transaction-filter {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-btn {
+  padding: 8px 16px;
+  background-color: #f1f5f9;
+  border: none;
+  border-radius: 20px;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-btn.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.filter-btn:hover:not(.active) {
+  background-color: #e2e8f0;
+}
+
+.transaction-list {
+  margin-top: 20px;
+}
+
+.transaction-item {
+  background-color: #fff;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border-left: 4px solid #e2e8f0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease;
+}
+
+.transaction-item:hover {
+  transform: translateX(5px);
+}
+
+.transaction-item[data-status="requested"] {
+  border-left-color: #64748b;
+}
+
+.transaction-item[data-status="completed"] {
+  border-left-color: #10b981;
+}
+
+.transaction-item[data-status="canceled"] {
+  border-left-color: #ef4444;
+}
+
+.transaction-item p {
+  margin: 0;
+  color: #555;
+}
+
+/* 찜한 대행사 스타일 */
+.provider-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.provider-item {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  border: 1px solid #eee;
+}
+
+.provider-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  border-color: #3b82f6;
+}
+
+.provider-item h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.provider-item p {
+  color: #666;
+  margin-bottom: 5px;
+}
+
+/* 로그아웃 영역 */
+.profile-footer {
+  margin-top: 40px;
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.logout-btn {
+  padding: 10px 20px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}
+
+/* 반응형 스타일 */
 @media (max-width: 768px) {
-  .coupon-item,
-  .provider-item {
-    width: calc(100% - 20px);
+  .profile-container {
+    padding: 20px 15px;
+    margin: 30px 15px;
+  }
+  
+  .tab-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 10px;
+  }
+  
+  .tab-link {
+    white-space: nowrap;
+    padding: 10px 15px;
+    font-size: 14px;
+  }
+  
+  .settings-section {
+    padding: 20px 15px;
+  }
+  
+  .coupon-list, .provider-list {
+    grid-template-columns: 1fr;
   }
 }
 </style>

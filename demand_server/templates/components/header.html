@@ -46,7 +46,7 @@
 
             <!-- 채팅 -->
             <li>
-                <a href="{% url 'chat' %}" 
+                <a href="#" 
                 {% if not request.user.is_authenticated %}
                     onclick="showLoginAlert(); return false;"
                 {% endif %}>

@@ -5,19 +5,34 @@
 {% block title %}견적 조회{% endblock %}
 
 {% block content %}
+<style>
+    button {
+        border :none;
+    }
+    .title {
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+    }
+    .export {
+        
+        float:right;
+    }
+</style>
+
 <div class="container mt-5">
     
 
     
 
     <div class="estimate-detail-container">
-        <h1 class="text-center mb-4">견적 조회</h1>
+        <h1 class="text-center mb-4 title">받은 견적</h1>
         <h2 class="text-center mb-4">견적서 <span class="text-primary">{{ estimate.request_user.name }}</span></h2>
         <div class="d-flex justify-content-between mb-3">
             <a href="{% url 'estimate_list' %}" class="btn btn-outline-secondary" onclick="return confirmNavigation('견적 목록으로 돌아가시겠습니까?')">견적 목록</a>
-            <div>
-                <button class="btn btn-outline-secondary me-2" onclick="downloadEstimatePDF()">PDF</button>
-                <button class="btn btn-outline-secondary" onclick="window.print()">인쇄</button>
+            <div class="d-flex justify-content-between export">
+                <button class="btn btn-outline-secondary me-2" onclick="downloadEstimatePDF()"><img src="{% static 'img/estimates/Download.png' %}" alt="PDF" style="width: 20px; height: 20px;"></button>
+                <button class="btn btn-outline-secondary" onclick="window.print()"><img src="{% static 'img/estimates/print.png' %}" alt="인쇄" style="width: 20px; height: 20px;"></button>
             </div>
         </div>
         <div class="info-grid">
@@ -87,7 +102,7 @@
         <div class="action-buttons text-center mt-4">
             <div class="btn-group mb-3 action-frame">
                 <button class="btn btn-success" onclick="confirmAction('견적을 수락하시겠습니까?', acceptEstimate)">견적 수락</button>
-                <button class="btn btn-danger" onclick="confirmAction('견적을 거절하시겠습니까?', rejectEstimate)">견적 거절</button>
+                <button class="btn btn-secondary" onclick="confirmAction('견적을 거절하시겠습니까?', rejectEstimate)">견적 거절</button>
             </div>
             <div class="btn-group action-frame">
                 <button class="btn btn-primary" onclick="confirmAction('결제 페이지로 이동하시겠습니까?', goToPayment)">결제하기</button>

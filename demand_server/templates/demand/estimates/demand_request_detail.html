@@ -1,6 +1,102 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
+<style>
+    .estimate-detail {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+}
+
+.estimate-detail h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #343a40;
+    font-weight: 600;
+}
+
+.estimate-info {
+    border-top: 1px solid #dee2e6;
+    padding-top: 20px;
+    margin-bottom: 30px;
+}
+
+.estimate-info p {
+    font-size: 16px;
+    margin: 10px 0;
+    line-height: 1.6;
+    color: #495057;
+}
+
+.estimate-info strong {
+    display: inline-block;
+    width: 120px;
+    color: #212529;
+}
+
+.actions {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.actions button {
+    background-color: #dc3545;
+    border: none;
+    color: white;
+    padding: 10px 22px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.actions button:hover {
+    background-color: #c82333;
+}
+
+.btn-back {
+    display: inline-block;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.btn-back a {
+    text-decoration: none;
+    color: #6c757d;
+    font-size: 16px;
+    border: 1px solid #ced4da;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-back a:hover {
+    color: #495057;
+    background-color: #f1f3f5;
+}
+
+@media (max-width: 576px) {
+    .estimate-info strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .estimate-info p {
+        font-size: 15px;
+    }
+
+    .estimate-detail {
+        padding: 20px;
+    }
+}
+
+</style>
+
 <div class="estimate-detail">
     <h2>견적 요청 상세</h2>
     
