@@ -3,8 +3,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from . import views
-from .views import landing, main, login, signup, signup_success
-from .views import check_id_duplicate, check_email_duplicate # 이 뷰를 import해야 합니다
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
@@ -29,9 +27,10 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', landing, name='landing'),
-    path('main', main, name='main'),
+    path('', views.landing, name='landing'),
+    path('main', views.main, name='main'),
     path('api/', include('api.urls')),
+   #  path('users/', include('users.urls')),
 
     # Accounts
     path('accounts/', include('allauth.urls')),
@@ -39,8 +38,8 @@ urlpatterns = [
     path('logout/', views.logout, name='logout'),
     path('signup/', views.signup, name='signup'),
     path('signup/success/', views.signup_success, name='signup_success'),
-    path("check-username-duplicate/", check_id_duplicate, name="check_id"),
-    path("check-email-duplicate/", check_email_duplicate, name="check_email_duplicate"),
+    path("check-username-duplicate/", views.check_id_duplicate, name="check_id"),
+    path("check-email-duplicate/", views.check_email_duplicate, name="check_email_duplicate"),
     path("profile", views.profile, name="profile"),
     path("profile/edit/", views.profile_edit, name="profile_edit"),
     path("profile/customization/update/", views.customization_update, name="customization_update"),

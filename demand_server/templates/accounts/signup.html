@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <form method="post" class="signup-form" action="{% url 'signup' %}">
+    <form class="signup-form" action="{% url 'signup' %}">
         {% csrf_token %}
 
         <!-- 1단계: 기본 정보 -->
@@ -145,6 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const jsonData = Object.fromEntries(formData.entries()); // ✅ JSON 변환
 
         console.log("📌 전송할 JSON 데이터:", jsonData); // ✅ 디버깅 로그 추가
+        const csrfToken = getCookie('csrftoken');
 
         try {
             const response = await fetch(this.action, {
@@ -154,7 +155,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     "X-CSRFToken": csrfToken,
                 },
                 body: JSON.stringify(jsonData),
+                credentials: "include", // ★ 필수
             });
+
             
 
             if (!response.ok) {
@@ -247,6 +250,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 });
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
 
 </script>
 

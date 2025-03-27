@@ -19,7 +19,12 @@ from django.contrib.auth import login as auth_login, get_backends
 from rest_framework.decorators import api_view
 from users.models import DemandUser
 import logging
-from django.urls import reverse
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from django.views.decorators.csrf import csrf_protect
+from django.utils.decorators import method_decorator
 
 ADMIN_PANEL_URL = settings.ADMIN_PANEL_URL
 COMMON_API_URL = settings.COMMON_API_URL
@@ -48,7 +53,6 @@ def get_demand_users(request):
     """Demand User 목록 반환"""
     demand_users = list(DemandUser.objects.values("id", "username", "email", "company_name", "created_at"))
     return JsonResponse({"demand_users": demand_users}, safe=False)
-
 
 # 로그인 시 랜딩페이지말고 main으로 리다이렉트.
 def landing(request):
@@ -110,91 +114,101 @@ def login(request):
 
     return render(request, "accounts/login_modal.html")
 
-@api_view(['GET'])
+@api_view(['POST'])
 def logout(request):
     auth_logout(request)
-    return redirect('main')
+    return Response({"success": True, "message": "로그아웃 완료"}, status=200)
 
-@api_view(['GET'])
-@csrf_protect
+
+@api_view(['GET', 'POST'])
+@csrf_exempt
 def signup(request):
-    """회원가입 API"""
-    """회원가입 API"""
     if request.method == "GET":
-        return render(request, "accounts/signup.html")  # ✅ HTML 페이지 렌더링 추가
+        return render(request, "accounts/signup.html")
 
     if request.method == "POST":
+        content_type = request.META.get('CONTENT_TYPE', '')
+        if "application/json" not in content_type:
+            return JsonResponse({
+                "success": False,
+                "error": f"지원하지 않는 Content-Type입니다: {content_type}"
+            }, status=415)
+
         try:
-            body_unicode = request.body.decode('utf-8')  # ✅ JSON 데이터 변환
-            data = json.loads(body_unicode)
-
-            print("📌 요청받은 데이터:", data)  # ✅ 요청 데이터 출력
-
-            username = data.get("username")
-            email = data.get("email")
-            password = data.get("password")
-            password_confirm = data.get("password_confirm")
-            company_name = data.get("company_name")
-            business_phone_number = data.get("business_phone_number")
-            address = data.get("address")
-            address_detail = data.get("address_detail")
-            recommend_id = data.get("recommend_id")
-
-            # ✅ 필수 필드 확인
-            required_fields = ["username", "email", "password", "company_name", "business_phone_number", "address"]
-            missing_fields = [field for field in required_fields if not data.get(field) or data.get(field).strip() == ""]
-
-
-            if missing_fields:
-                return JsonResponse({
-                    "success": False,
-                    "error": f"다음 필수 필드가 누락되었습니다: {', '.join(missing_fields)}"
-                }, status=400)
-
-            if password != password_confirm:
-                return JsonResponse({"success": False, "error": "비밀번호가 일치하지 않습니다."}, status=400)
-
-            # ✅ 중복 검사 개선
-            if DemandUser.objects.filter(username=username).exists():
-                return JsonResponse({
-                    "success": False,
-                    "error": f"❌ '{username}' 아이디는 이미 사용 중입니다. 다른 아이디를 입력해주세요."
-                }, status=400)
-
-            if DemandUser.objects.filter(email=email).exists():
-                return JsonResponse({
-                    "success": False,
-                    "error": f"❌ '{email}' 이메일은 이미 사용 중입니다. 다른 이메일을 입력해주세요."
-                }, status=400)
-            
-            # ✅ 새로운 사용자 생성
-            user = DemandUser(
-                username=username,
-                email=email,
-                company_name=company_name,
-                business_phone_number=business_phone_number,
-                address=address,
-                address_detail=address_detail,
-                recommend_id=recommend_id,
-                is_active=True,  # 자동 활성화
-                is_approved=True  # 자동 승인
-            )
-            user.set_password(password)
-            user.save()
-
-            return JsonResponse({"success": True, "redirect_url": "/signup/success/"}, status=201)
-
+            data = json.loads(request.body.decode('utf-8'))
         except json.JSONDecodeError:
-            return JsonResponse({"success": False, "error": "잘못된 JSON 데이터 형식입니다."}, status=400)
-        except Exception as e:
-            print("📌 서버 오류:", str(e))  # ✅ 디버깅 로그 추가
-            return JsonResponse({"success": False, "error": str(e)}, status=500)
+            return JsonResponse({"success": False, "error": "JSON 파싱 에러"}, status=400)
 
-    return JsonResponse({"success": False, "error": "잘못된 요청 방식입니다."}, status=405)
+        # 필드 수집
+        username = data.get("username", "").strip()
+        email = data.get("email", "").strip()
+        password = data.get("password", "").strip()
+        password_confirm = data.get("password_confirm", "").strip()
+        company_name = data.get("company_name", "").strip()
+        business_phone_number = data.get("business_phone_number", "").strip()
+        address = data.get("address", "").strip()
+        address_detail = data.get("address_detail", "").strip()
+        recommend_id = data.get("recommend_id", "").strip()
+
+        # 필수 항목 확인
+        required_fields = {
+            "username": username,
+            "email": email,
+            "password": password,
+            "company_name": company_name,
+            "business_phone_number": business_phone_number,
+            "address": address
+        }
+        missing = [k for k, v in required_fields.items() if not v]
+        if missing:
+            return JsonResponse({
+                "success": False,
+                "error": f"다음 필드 누락: {', '.join(missing)}"
+            }, status=400)
+
+        if password != password_confirm:
+            return JsonResponse({
+                "success": False,
+                "error": "비밀번호가 일치하지 않습니다."
+            }, status=400)
+
+        if DemandUser.objects.filter(username=username).exists():
+            return JsonResponse({"success": False, "error": "아이디 중복"}, status=400)
+
+        if DemandUser.objects.filter(email=email).exists():
+            return JsonResponse({"success": False, "error": "이메일 중복"}, status=400)
+
+        if recommend_id and not DemandUser.objects.filter(username=recommend_id).exists():
+            return JsonResponse({"success": False, "error": "추천인 아이디가 존재하지 않습니다."}, status=400)
+
+        # 생성
+        user = DemandUser(
+            username=username,
+            email=email,
+            company_name=company_name,
+            business_phone_number=business_phone_number,
+            address=address,
+            address_detail=address_detail,
+            recommend_id=recommend_id,
+            is_active=True,
+            is_approved=True
+        )
+        user.set_password(password)
+        user.save()
+
+        return JsonResponse({
+            "success": True,
+            "redirect_url": f"/signup/success/?username={user.username}"
+        }, status=201)
+
+    return JsonResponse({"success": False, "error": "지원되지 않는 메소드입니다."}, status=405)
+
 
 @api_view(['GET'])
-def signup_success(request):     
-    return render(request, "accounts/signup_success.html")
+def signup_success(request):
+    username = request.GET.get("username", "")
+    return render(request, "accounts/signup_success.html", {"username": username})
+
 
 @csrf_exempt
 def check_username_duplicate(request):

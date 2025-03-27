@@ -39,6 +39,37 @@
     </div>
 </div>
 
+
+<!-- 로그인 fetch -->
+
+<script>
+    document.getElementById("login-form").addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  const response = await fetch("/login/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCsrfToken(),
+    },
+    body: JSON.stringify({ username, password }),
+    credentials: "include",  // ✅ 세션 쿠키 보내기
+  });
+
+  const data = await response.json();
+
+  if (data.success) {
+    window.location.href = data.redirect_url;
+  } else {
+    alert(data.errors?.non_field_errors?.[0] || "로그인 실패");
+  }
+});
+
+</script>
+
 <script>
     function openModal() {
         document.getElementById('login-modal').style.display = 'block';

@@ -145,10 +145,9 @@
 
   <!-- 로그아웃 영역 -->
   <div class="profile-footer">
-    <form id="logoutForm" action="{% url 'logout' %}" method="post">
-      {% csrf_token %}
+    <div class="profile-footer">
       <button type="button" class="logout-btn" onclick="confirmLogout()">로그아웃</button>
-    </form>
+    </div>
   </div>
 </div>
 
@@ -179,11 +178,47 @@ document.querySelectorAll('.filter-btn').forEach(function(btn) {
   });
 });
 
-function confirmLogout() {
-  if(confirm("로그아웃 하시겠습니까?")) {
-    document.getElementById("logoutForm").submit();
+function getCsrfToken() {
+  const name = 'csrftoken';
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const trimmed = cookie.trim();
+    if (trimmed.startsWith(name + '=')) {
+      return decodeURIComponent(trimmed.split('=')[1]);
+    }
+  }
+  return '';
+}
+
+async function logout() {
+  try {
+    const response = await fetch("/logout/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
+      credentials: "include",
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      window.location.href = "/main";
+    } else {
+      alert(data.message || "로그아웃 실패");
+    }
+  } catch (error) {
+    console.error("로그아웃 오류:", error);
+    alert("네트워크 오류로 로그아웃 실패");
   }
 }
+
+function confirmLogout() {
+  if (confirm("로그아웃 하시겠습니까?")) {
+    logout();  // ✅ fetch 방식 호출
+  }
+}
+
 </script>
 
 <style>
