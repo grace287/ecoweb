@@ -19,6 +19,9 @@
                 <input type="password" name="password" placeholder="비밀번호 입력" required>
                 <button type="submit" class="btn btn-primary">로그인</button>
             </form>
+
+        
+
             <div class="error-message" style="display: none; color: red;"></div>
             <div class="social-login">
                 <a href="#">
@@ -39,6 +42,14 @@
     </div>
 </div>
 
+     <!-- ✅ 성공 메시지 표시 영역 -->
+     <div id="login-success-message" style="display: none; margin-top: 15px; color: green; font-weight: bold;">
+        🎉 로그인에 성공했습니다!
+    </div>
+
+    <div class="error-message" style="display: none; color: red;"></div>
+    ...
+</div>
 
 <!-- 로그인 fetch -->
 
@@ -144,4 +155,34 @@
 </script>
     
 
+<!-- 로그인성공 -->
+<script>
+    if (data.success) {
+    const successMsg = document.getElementById("login-success-message");
+    successMsg.style.display = "block";
+    successMsg.textContent = "🎉 로그인에 성공했습니다!";
+    
+    // 1.5초 뒤 리디렉션
+    setTimeout(() => {
+        window.location.href = data.redirect_url;
+    }, 1500);
+} else {
+    alert(data.errors?.non_field_errors?.[0] || "로그인 실패");
+}
+
+</script>
+
+<style>
+    #login-success-message {
+    padding: 10px;
+    background-color: #e6f4ea;
+    border: 1px solid #b2dfdb;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #2e7d32;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+</style>
 {% endblock %}

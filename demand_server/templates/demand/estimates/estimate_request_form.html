@@ -936,6 +936,115 @@
 </div>
 
 </div>
+<!-- 커스텀 알림 모달 -->
+<div id="customModal" class="custom-modal">
+    <div class="custom-modal-content">
+      <div class="custom-modal-header">
+        <!-- ✅ SVG 아이콘 -->
+        <svg class="modal-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-3-3v6m9-6a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 id="customModalTitle">견적 요청 확인</h3>
+      </div>
+      <div class="custom-modal-body" id="customModalBody">
+        <!-- 메시지 내용 동적 삽입 -->
+      </div>
+      <div class="custom-modal-footer">
+        <button class="btn cancel-btn" onclick="closeCustomModal()">취소</button>
+        <button class="btn confirm-btn" id="confirmCustomBtn">요청하기</button>
+      </div>
+    </div>
+  </div>
+<style>
+    .modal-icon {
+  width: 28px;
+  height: 28px;
+  color: #2563eb;
+}
+.custom-modal-body p {
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #333;
+}
+    .custom-modal {
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-modal-content {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: fadeIn 0.3s ease;
+}
+
+.custom-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.modal-icon {
+  font-size: 28px;
+}
+
+.custom-modal-body {
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+}
+
+.custom-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.custom-modal .btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.cancel-btn {
+  background-color: #e5e7eb;
+  color: #333;
+}
+
+.confirm-btn {
+  background-color: #2563eb;
+  color: white;
+}
+
+.confirm-btn:hover {
+  background-color: #1e40af;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+</style>
+<div id="toast" class="toast-message"></div>
+
 <!-- 다음 우편번호 서비스 스크립트 추가 (head 섹션에 추가) -->
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
@@ -965,7 +1074,7 @@ window.APP_CONFIG = {
         IS_AUTHENTICATED: {{ request.user.is_authenticated|lower }},
         ID: "{{ request.user.id }}",
         NAME: "{{ request.user.username }}",
-        EMAIL: "{{ request.user.email }}"
+        EMAIL: "{{ request.user.email }}",
     }
 };
 
@@ -1219,7 +1328,6 @@ const EstimateFlow = {
     },
 
     async submitEstimate() {
-        // 주소 입력 확인 (더 명확한 선택자 사용)
         const addressInput = document.querySelector('.chat-box[data-step="3"] .chat-input');
         this.data.address = addressInput ? addressInput.value.trim() : '';
 
@@ -1228,14 +1336,11 @@ const EstimateFlow = {
             measurement_location_id: this.data.selectedLocation,
             address: this.data.address,
             preferred_schedule: this.data.preferredSchedule,
-            contact_info: this.collectContactInfo() || {}  // ✅ contact_info가 없으면 빈 객체 반환
+            contact_info: this.collectContactInfo() || {}
         };
 
-        // 페이로드 상세 로깅 추가
-        console.log('📦 견적 요청 페이로드:', JSON.stringify(payload, null, 2));
-
-        // 모든 필드 검증 (수정된 부분)
-        if (!payload.service_category_codes || payload.service_category_codes.length === 0) {
+        // 유효성 체크
+        if (!payload.service_category_codes.length) {
             alert('최소 한 개의 서비스 카테고리를 선택해주세요.');
             return;
         }
@@ -1244,39 +1349,45 @@ const EstimateFlow = {
             return;
         }
         if (!payload.address) {
-            // 주소 입력 필드에 포커스 주기
             if (addressInput) {
-                // 해당 채팅 박스로 스크롤
                 const addressBox = document.querySelector('.chat-box[data-step="3"]');
-                if (addressBox) {
-                    addressBox.scrollIntoView({ behavior: 'smooth' });
-                }
+                addressBox?.scrollIntoView({ behavior: 'smooth' });
                 addressInput.focus();
-                alert('주소를 입력해주세요.');
-                return;
             }
+            alert('주소를 입력해주세요.');
+            return;
         }
         if (!payload.preferred_schedule) {
             alert('희망 일정을 선택해주세요.');
             return;
         }
 
-        try {
-            const result = await ApiService.createEstimate(payload);
-            this.handleEstimateSuccess(result);
-        } catch (error) {
-            // 에러 응답 상세 로깅
-            console.error('🚨 견적 요청 실패:', error);
-            
-            // 서버 응답 본문 확인
-            if (error.responseBody) {
-                console.error('🔍 서버 응답 본문:', error.responseBody);
-                alert(`견적 요청 실패: ${error.responseBody}`);
-            } else {
-                alert('견적 요청 중 오류가 발생했습니다. 다시 시도해주세요.');
+        // 요약 메시지 구성
+        const categoryNames = this.data.selectedCategories.map(code => {
+            const el = document.querySelector(`.category-item[data-code="${code}"]`);
+            return el ? el.getAttribute("data-name") : code;
+        }).join(', ');
+
+        const locationName = document.querySelector(`.location-btn.selected`)?.textContent || '미선택';
+
+        const summaryMessage = `
+    📌 서비스 항목: ${categoryNames}
+    📍 측정 장소: ${locationName}
+    🏠 주소: ${this.data.address}
+    📆 희망 일정: ${this.data.preferredSchedule || '미선택'}
+    `.trim();
+
+        // 커스텀 확인 모달로 요청
+        openCustomModal("견적 요청 내용을 확인해주세요", summaryMessage, async () => {
+            try {
+                const result = await ApiService.createEstimate(payload);
+                this.handleEstimateSuccess(result);
+            } catch (error) {
+                alert('요청 중 문제가 발생했습니다.');
             }
-        }
+        });
     },
+
 
     collectContactInfo() {
         // 사용자가 직접 입력한 연락처 정보 수집
@@ -1302,30 +1413,9 @@ const EstimateFlow = {
     handleEstimateSuccess(result) {
         console.log('✔ 견적 요청 성공:', result);
         
-        // 견적 요청 성공 메시지 표시
-        alert(`견적 요청이 성공적으로 접수되었습니다.\n견적 요청 번호: ${result.estimate_number}`);
-        
-        // 페이지 새로고침 (선택사항)
-        window.location.reload();
+        // 커스텀 완료 모달 호출
+    showSuccessModal(result);
     },
-
-    // handleEstimateSuccess(result) {
-    //     console.log('✔ 견적 요청 성공:', result);
-        
-    //     // 견적 번호 추가
-    //     const estimateNumberDisplay = document.createElement('div');
-    //     estimateNumberDisplay.innerHTML = `
-    //         <p>견적 요청 번호: <strong>${result.estimate_number}</strong></p>
-    //         <p>나중에 이 번호로 견적 상태를 조회할 수 있습니다.</p>
-    //     `;
-        
-    //     if (APP_CONFIG.USER && !APP_CONFIG.USER.IS_AUTHENTICATED) {
-    //         this.showSignupGuide(estimateNumberDisplay);
-    //     } else {
-    //         window.location.href = `/estimates/${result.estimate_id}/`;
-    //     }
-
-    // },
 
     showSignupGuide(additionalContent = null) {
         const signupGuide = document.querySelector('.signup-guide');
@@ -1392,6 +1482,79 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('시스템 초기화 중 오류가 발생했습니다. 페이지를 새로고침해주세요.');
     }
 });
+
+
+// showtoast
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3000);
+}
+// 모달창
+function openCustomModal(title, message, onConfirm) {
+  document.getElementById('customModalTitle').textContent = title;
+
+  const modalBody = document.getElementById('customModalBody');
+  modalBody.innerHTML = '';  // 기존 초기화
+
+  message.split('\n').forEach(line => {
+    const p = document.createElement('p');
+    p.textContent = line.trim();
+    modalBody.appendChild(p);
+  });
+
+  const modal = document.getElementById('customModal');
+  modal.style.display = 'flex';
+
+  const confirmBtn = document.getElementById('confirmCustomBtn');
+  const newBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+
+  newBtn.addEventListener('click', () => {
+    closeCustomModal();
+    onConfirm();
+  });
+}
+
+function closeCustomModal() {
+  const modal = document.getElementById('customModal');
+  modal.style.display = 'none';
+}
+
+// 완료모달
+function showSuccessModal(result) {
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <svg class="modal-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                     viewBox="0 0 24 24" stroke="currentColor" width="28" height="28">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M5 13l4 4L19 7"/>
+                </svg>
+                <h3>견적 요청 완료</h3>
+            </div>
+            <div class="custom-modal-body">
+                <p>요청이 성공적으로 접수되었습니다 🎉</p>
+                <p><strong>요청 번호: ${result.estimate_number}</strong></p>
+                <p>빠른 시일 내에 응답드릴게요 🙌</p>
+            </div>
+            <div class="custom-modal-footer">
+                <button class="btn confirm-btn" onclick="location.reload()">확인</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
 </script>
 
 <style>
